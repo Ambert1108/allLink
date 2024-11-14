@@ -1,0 +1,6 @@
+<svg version="1.1" width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" class="bi bi-calendar-plus" fill="currentColor" overflow="hidden"><style>
+.MsftOfcThm_Accent1_lumMod_40_lumOff_60_Fill {
+ fill:#B4C7E7; 
+}
+</style>
+<path d=" M 8 7 C 8.27614 7 8.5 7.22386 8.5 7.5 L 8.5 9 L 10 9 C 10.2761 9 10.5 9.22386 10.5 9.5 C 10.5 9.77614 10.2761 10 10 10 L 8.5 10 L 8.5 11.5 C 8.5 11.7761 8.27614 12 8 12 C 7.72386 12 7.5 11.7761 7.5 11.5 L 7.5 10 L 6 10 C 5.72386 10 5.5 9.77614 5.5 9.5 C 5.5 9.22386 5.72386 9 6 9 L 7.5 9 L 7.5 7.5 C 7.5 7.22386 7.72386 7 8 7 Z" stroke="none" stroke-width="1" stroke-dasharray="" stroke-dashoffset="1" fill="#B4C7E7" fill-opacity="1"/><path d=" M 3.5 0 C 3.77614 -1.11022e-16 4 0.223858 4 0.5 L 4 1 L 12 1 L 12 0.5 C 12 0.223858 12.2239 -5.55112e-17 12.5 -5.55112e-17 C 12.7761 -1.66533e-16 13 0.223858 13 0.5 L 13 1 L 14 1 C 15.1046 1 16 1.89543 16 3 L 16 14 C 16 15.1046 15.1046 16 14 16 L 2 16 C 0.895431 16 -2.22045e-16 15.1046 -2.22045e-16 14 L 0 3 C -4.44089e-16 1.89543 0.895431 1 2 1 L 3 1 L 3 0.5 C 3 0.223858 3.22386 -5.55112e-17 3.5 -5.55112e-17 Z M 1 4 L 1 14 C 1 14.5523 1.44772 15 2 15 L 14 15 C 14.5523 15 15 14.5523 15 14 L 15 4 L 1 4 Z" stroke="none" stroke-width="1" stroke-dasharray="" stroke-dashoffset="1" fill="#B4C7E7" fill-opacity="1"/></svg>
