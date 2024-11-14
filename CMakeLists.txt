@@ -7,19 +7,30 @@ set(PROJECT_LIBS)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+if(CMAKE_BUILD_TYPE AND (CMAKE_BUILD_TYPE STREQUAL "Debug"))
+	if (MSVC)
+		add_compile_options("/utf-8")
+		add_compile_options("/EHsc")  # deal with MSVC Warning C4530
+		add_compile_options("/Od")
+		add_compile_options(/w44251 /w44275)
+	endif (MSVC)
+endif()
+
 find_package(Threads REQUIRED)
 set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -MT")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -MT")
-set(CMAKE_PREFIX_PATH "D:/tools/SFML-2.6.1/lib/cmake/SFML" ${CMAKE_PREFIX_PATH})
 set(CMAKE_PREFIX_PATH "D:/tools/oatpp-1.3.0/build/Release/lib/cmake/oatpp-1.3.0" ${CMAKE_PREFIX_PATH})
 set(CMAKE_PREFIX_PATH "D:/tools/oatpp-websocket-1.3.0/build/Release/lib/cmake/oatpp-websocket-1.3.0" ${CMAKE_PREFIX_PATH})
 set(CMAKE_PREFIX_PATH "D:/tools/oatpp-1.3.0/build/Release/lib" ${CMAKE_PREFIX_PATH})
 set(CMAKE_PREFIX_PATH "D:/tools/oatpp-websocket-1.3.0/build/Release/lib" ${CMAKE_PREFIX_PATH})
+set(CMAKE_PREFIX_PATH "D:/tools/SFML-2.6.1/lib/cmake/SFML" ${CMAKE_PREFIX_PATH})
 set(CMAKE_PREFIX_PATH "D:/tools/SFML-2.6.1/lib" ${CMAKE_PREFIX_PATH})
 set(SFML_INCLUDE_DIRS "D:/tools/SFML-2.6.1/include" ${SFML_INCLUDE_DIRS})
 
 #find SFML include and library file
 message("====== FIND SFML LIBRARY AND INCLUDE ======")
+#set(SFML_STATIC_LIBRARIES TRUE)
 find_package(SFML 2 COMPONENTS graphics window system audio network REQUIRED)
 set(SFML_DIR "D:/tools/SFML-2.6.1/lib/cmake/SFML") 
 list(APPEND PROJECT_INCLUDE ${SFML_INCLUDE_DIRS})
@@ -166,3 +177,5 @@ add_definitions(
 
 # Add your source files here
 add_subdirectory(src)
+#add_subdirectory(test/localCapture)
+add_subdirectory(test/testWidget)

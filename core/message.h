@@ -9,7 +9,6 @@ namespace alllink {
 
   class hi {
   public:
-    // 静态方法
     static void PostMsg(const Message& message) {
       messageQueue.Push(message);
     }

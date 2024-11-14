@@ -6,10 +6,11 @@
 #include <string>
 #include <vector>
 
+
 #include "api/media_stream_interface.h"
 #include "api/peer_connection_interface.h"
-#include "presenter.h"
-#include "mediaclient.h"
+#include "vision.h"
+#include "signling.h"
 #include "rtc_base/thread.h"
 
 namespace alllink {
@@ -26,7 +27,6 @@ namespace alllink {
   protected:
     ~Controller();
     bool InitializePeerConnection();
-    bool ReinitializePeerConnectionForLoopback();
     bool CreatePeerConnection();
     void DeletePeerConnection();
     void EnsureStreamingUI();
@@ -90,6 +90,7 @@ namespace alllink {
     void OnSuccess(webrtc::SessionDescriptionInterface* desc) override;
     void OnFailure(webrtc::RTCError error) override;
   private:
-
+    SignlingInteractionSystem* client_;
+    VisionCnetralBase* vision_;
   };
 }

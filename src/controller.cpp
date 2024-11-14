@@ -105,5 +105,132 @@ namespace {
 }  // namespace
 
 namespace alllink {
-  
+  Controller::Controller(SignlingInteractionSystem* client, VisionCnetralBase* vcb)
+  : client_(client), vision_(vcb) {
+    client_->registerObserver(this);
+    vision_->registerObserver(this);
+  }
+
+  void Controller::Close() {
+
+  }
+
+  Controller::~Controller() {
+
+  }
+
+  bool Controller::InitializePeerConnection() {
+    return true;
+  }
+
+  bool Controller::CreatePeerConnection() {
+    return true;
+  }
+
+  void Controller::DeletePeerConnection() {
+
+  }
+
+  void Controller::EnsureStreamingUI() {
+
+  }
+
+  void Controller::AddTracks() {
+
+  }
+
+
+  //
+  // PeerConnectionObserver implementation.
+  //
+  void Controller::OnAddTrack(rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver,
+    const std::vector<rtc::scoped_refptr<webrtc::MediaStreamInterface>>& streams) {
+
+  }
+
+  void Controller::OnRemoveTrack(rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver) {
+
+  }
+
+  void Controller::OnIceCandidate(const webrtc::IceCandidateInterface* candidate) {
+
+  }
+
+
+  //
+  // SignlingInteractionObserver implementation.
+  //
+
+  void Controller::OnSignedIn() {
+
+  }
+
+
+  void Controller::OnDisconnected() {
+
+  }
+
+
+  void Controller::OnPeerConnected(int id, const std::string& name) {
+
+  }
+
+
+  void Controller::OnPeerDisconnected(int id) {
+
+  }
+
+
+  void Controller::OnMessageFromPeer(int peer_id, const std::string& message) {
+
+  }
+
+
+  void Controller::OnMessageSent(int err) {
+
+  }
+
+
+  void Controller::OnServerConnectionFailure() {
+
+  }
+
+
+  //
+  // VisionCnetralCallback implementation.
+  //
+
+  void Controller::StartLogin(const std::string& server, int port) {
+
+  }
+
+
+  void Controller::DisconnectFromServer() {
+
+  }
+
+
+  void Controller::ConnectToPeer(int peer_id) {
+
+  }
+
+
+  void Controller::DisconnectFromCurrentPeer() {
+
+  }
+
+
+  void Controller::CustomMessageCallback(int msg_id, void* data) {
+
+  }
+
+
+  // CreateSessionDescriptionObserver implementation.
+  void Controller::OnSuccess(webrtc::SessionDescriptionInterface* desc) {
+
+  }
+
+  void Controller::OnFailure(webrtc::RTCError error) {
+
+  }
 }

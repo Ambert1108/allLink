@@ -1,6 +1,6 @@
 #include "message.h"
 
-namespace wt {
+namespace alllink {
   // 在类外初始化静态成员变量
-  zx::ThreadSafeQueue<Message> hi::messageQueue;
+  base::ThreadSafeQueue<Message> hi::messageQueue;
 }

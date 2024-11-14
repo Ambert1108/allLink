@@ -1,6 +1,6 @@
 #pragma once
 #include "nlohmann/json.hpp"
-#include "nlohmann/fifo_map.hpp"
+#include "nlohmann/fifomap.hpp"
 
 #include <string>
 

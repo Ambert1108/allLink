@@ -48,7 +48,7 @@ namespace alllink {
       SIGNING_OUT,
     };
 
-    SignlingInteractionSystem(std::mutex locker);
+    SignlingInteractionSystem();
     ~SignlingInteractionSystem();
 
     bool isConnected() const;
@@ -73,6 +73,6 @@ namespace alllink {
   private:
     SignlingInteractionObserver* callback_;
     static constexpr const char* TAG = "WSClient";
-    std::mutex& locker_;
+    mutable std::mutex locker_{};
   };
 }

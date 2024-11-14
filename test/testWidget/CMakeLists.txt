@@ -1,7 +1,7 @@
-set(TARGET_NAME "AllLink.${PROJECT_VERSION}")
-aux_source_directory("${PROJECT_SOURCE_DIR}/src" CPP_LIST)
+set(TARGET_NAME "testWidget")
+aux_source_directory("${PROJECT_SOURCE_DIR}/test/testWidget" CPP_LIST)
 
-add_executable(${TARGET_NAME} ${CPP_LIST} logo.rc)
+add_executable(${TARGET_NAME} ${CPP_LIST})
 
 target_include_directories(${TARGET_NAME} PUBLIC ${PROJECT_INCLUDE})
 target_link_libraries(${TARGET_NAME} PRIVATE ${PROJECT_LIBS} ${WEBRTC_OBJ})
