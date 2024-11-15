@@ -6,6 +6,7 @@
 //#include <windows.h>
 #include <locale>
 #include <codecvt>
+#include <vector>
 
 #include "seeker/logger.h"
 #include "seeker/loggerApi.h"
@@ -119,7 +120,64 @@ namespace alllink {
 		bool fill_ = true;
 	};
 
-	class VariableStateGraphicModule : public VariableStateModule, public sf::Sprite{
+	class VariableStateRectangleModule : public VariableStateModule {
+	public:
+		VariableStateRectangleModule() : init_(false) {};
+
+		void init(int width, int height, int x, int y) {
+			if (init_) return;
+			this->setSize(sf::Vector2f(width, height));
+			this->setPosition(x, y);
+			init_ = true;
+		}
+
+		void setShape(int width, int height, sf::Color fillColor, sf::Color outlineColor, int outlineThickness) {
+			int w = this->getSize().x;
+			int h = this->getSize().y;
+			rectangle_.setSize(sf::Vector2f(width, height));
+			rectangle_.setPosition(sf::Vector2f(
+				this->getPosition().x + (w - width) / 2,
+				this->getPosition().y + (h - height) / 2
+			));
+			rectangle_.setFillColor(fillColor);
+			rectangle_.setOutlineThickness(outlineThickness);
+			rectangle_.setOutlineColor(outlineColor);
+		}
+
+		void render(sf::RenderTarget* tar) {
+			tar->draw(*this);
+			tar->draw(rectangle_);
+		}
+
+	protected:
+		sf::RectangleShape rectangle_;
+		bool init_;
+	};
+
+	class VariableStateVertxModule : public VariableStateModule {
+	public:
+		VariableStateVertxModule() : ver_(6), init_(false) {};
+
+		void init(int width, int height, int x, int y) {
+			if (init_) return;
+			this->setSize(sf::Vector2f(width, height));
+			this->setPosition(x, y);
+			init_ = true;
+		}
+
+		void setVer(std::vector<sf::Vertex> vec) { ver_.swap(vec); }
+
+		void render(sf::RenderTarget* tar) {
+			tar->draw(*this);
+			tar->draw(ver_.data(), ver_.size(), sf::Lines);
+		}
+
+	protected:
+		std::vector<sf::Vertex> ver_;
+		bool init_;
+	};
+
+	class VariableStateGraphicModule : public VariableStateModule {
 	public:
 		VariableStateGraphicModule() : texture_(nullptr) {};
 
@@ -134,29 +192,29 @@ namespace alllink {
 			if (init_) return;
 			texture_ = new sf::Texture();
 			this->setSize(sf::Vector2f(width, height));
-			this->VariableStateModule::setPosition(x, y);
+			this->setPosition(x, y);
 			init_ = true;
 		}
 
 		void setTexture(const std::string& textureFile, bool resetRect = false) {
 			texture_->loadFromFile(textureFile);
-			this->sf::Sprite::setTexture(*texture_, resetRect);
+			image_.setTexture(*texture_, resetRect);
 		}
 
 		virtual void setImage() {
-			int x = this->VariableStateModule::getPosition().x + 
-				(this->getSize().x - this->sf::Sprite::getGlobalBounds().width) / 2.f;
-			int y = this->VariableStateModule::getPosition().y + 
-				(this->getSize().y - this->sf::Sprite::getGlobalBounds().height) / 2.f;
-			this->sf::Sprite::setPosition(x, y);
+			int x = this->getPosition().x + 
+				(this->getSize().x - image_.getGlobalBounds().width) / 2.f;
+			int y = this->getPosition().y + 
+				(this->getSize().y - image_.getGlobalBounds().height) / 2.f;
+			image_.setPosition(x, y);
 		}
 
 		bool setImageSize(float width, float height) {
 			try {
 				auto size = texture_->getSize();
-				this->sf::Sprite::setOrigin(texture_->getSize().x / 2.f, texture_->getSize().y / 2.f);
-				this->sf::Sprite::setScale(width / size.x, height / size.y);
-				this->sf::Sprite::setOrigin(0, 0);
+				image_.setOrigin(texture_->getSize().x / 2.f, texture_->getSize().y / 2.f);
+				image_.setScale(width / size.x, height / size.y);
+				image_.setOrigin(0, 0);
 				setImage();
 			}
 			catch (std::exception& ex) {
@@ -166,8 +224,14 @@ namespace alllink {
 			return true;
 		}
 
+		void render(sf::RenderTarget* tar) {
+			tar->draw(*this);
+			tar->draw(image_);
+		}
+
 	protected:
 		sf::Texture* texture_;
+		sf::Sprite image_;
 		bool init_ = false;
 	};
 
