@@ -1,4 +1,5 @@
 #include "screen/screensink.h"
+#include <regex>
 
 namespace alllink {
 	LoginScreen::LoginScreen(sf::VideoMode mode, const sf::String& title, sf::Image icon,
@@ -41,36 +42,49 @@ namespace alllink {
 		startLogin = std::make_unique<HorizonGraphicTextsModule>();
 		isLogin = std::make_unique<HorizonGraphicTextsModule>();
 
-		createMeeting->init(138, 130, 425, 65);
-		createMeeting->setSource(15, fzchFile, createMeetingFile);
+		createMeeting->init(138 * wr, 130 * hr, 425 * wr, 65 * hr);
+		createMeeting->setSource(15 * wr, fzchFile, createMeetingFile);
 		createMeeting->setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225, 200));
 		createMeeting->setText(L"创建会议", sf::Color(0, 0, 0));
-		createMeeting->setImage();
+		createMeeting->setImageSize(144 * 0.667, 144 * 0.667);
 		createMeeting->setImageColor(sf::Color(124, 171, 214));
 
-		joinMeeting->init(138, 130, 425, 275);
-		joinMeeting->setSource(15, fzchFile, joinMeetingFile);
+		joinMeeting->init(138 * wr, 130 * hr, 425 * wr, 275 * hr);
+		joinMeeting->setSource(15 * wr, fzchFile, joinMeetingFile);
 		joinMeeting->setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225, 200));
 		joinMeeting->setText(L"加入会议", sf::Color(0, 0, 0));
-		joinMeeting->setImage();
+		joinMeeting->setImageSize(72 * wr, 72 * wr);
 		joinMeeting->setImageColor(sf::Color(124, 171, 214));
 
-		startLogin->init(140, 42, 95, 211);
-		startLogin->setSource(20, msyhFile, startLoginFile);
+		startLogin->init(140 * wr, 42 * hr, 95 * wr, 211 * hr);
+		startLogin->setSource(20 * wr, msyhFile, startLoginFile);
 		startLogin->setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225, 200));
 		startLogin->setText(L"请登录", sf::Color(0, 0, 0));
-		startLogin->setImage();
+		startLogin->setImageSize(40 * wr, 40 * wr);
 		startLogin->setFill(false);
 
-		isLogin->init(150, 42, 95, 211);
-		isLogin->setSource(20, msyhFile, isLoginFile);
+		isLogin->init(150 * wr, 42 * hr, 95 * wr, 211 * hr);
+		isLogin->setSource(20 * wr, msyhFile, isLoginFile);
 		isLogin->setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225, 200));
 		isLogin->setText(L"欢迎使用", sf::Color(0, 0, 0));
-		isLogin->setImage();
+		isLogin->setImageSize(40 * wr, 40 * wr);
 		isLogin->setFill(false);
 
 		todayDate.init(fzchFile);
-		todayDate.setCharacterSize(40);
+		todayDate.setCharacterSize(40 * wr);
+		std::string timePoint = seeker::time::toString(seeker::time::currentTime(), "%m-%d");
+		std::regex re1(R"((\d+)\.\d+)");
+		std::wregex re2(L"(\\d{2})-(\\d{2})");
+		std::string output = std::regex_replace(timePoint, re1, "$1");
+		todayDate.setString(std::regex_replace(WstrConv.from_bytes(output), re2, L"$1月$2日"));
+		todayDate.setPosition(sf::Vector2f(87 * wr, 87 * hr));
+		todayDate.setFillColor(sf::Color(0, 0, 0));
+
+		useId.init(msyhFile);
+		useId.setCharacterSize(20 * wr);
+		useId.setString(L"你好");
+		useId.setPosition(sf::Vector2f(105 * wr, 184 * hr));
+		useId.setFillColor(sf::Color(0, 0, 0));
 		return 0;
 	}
 
@@ -85,6 +99,8 @@ namespace alllink {
 		else {
 			isLogin->render(this);
 		}
+		this->draw(todayDate);
+		this->draw(useId);
 		this->display();
 	}
 
@@ -97,27 +113,24 @@ namespace alllink {
 			else if(joinMeeting->onClick(event, getMousePosition(), this)) {
 				//点击加入会议，进行响应
 			}
-			else if(startLogin->onClick(event, getMousePosition(), this)
-				&& type_ == LoginScreen::LoginType::OFFLINE) {
+			else if (startLogin->onClick(event, getMousePosition(), this) && type_ == LoginScreen::LoginType::OFFLINE) {
 				//点击登录，进行响应
-				I_LOG("3");
 				type_ = LoginScreen::LoginType::ONLINE;
+
+				/* 发送登录消息，视觉控制器处理过后将用户信息传给登录窗口 */
+				//useId.setString("3082");
+				hi::PostMsg({ msgTo(MessageType::START_LOGIN), nullptr });
 			}
-			else if (isLogin->onClick(event, getMousePosition(), this)
-				&& type_ == LoginScreen::LoginType::ONLINE) {
+			else if (isLogin->onClick(event, getMousePosition(), this) && type_ == LoginScreen::LoginType::ONLINE) {
 				//点击注销，进行响应
-				I_LOG("4");
 				type_ = LoginScreen::LoginType::OFFLINE;
+				useId.setString(L"你好");
 			}
 			switch (event.type) {
 			case sf::Event::Closed:
 				this->close();
 				break;
-
-			case sf::Event::KeyPressed:
-				if (event.key.code == sf::Keyboard::Escape) {
-					this->close();
-				}
+			default:
 				break;
 			}
 		}

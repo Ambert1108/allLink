@@ -75,4 +75,14 @@ namespace alllink {
     static constexpr const char* TAG = "WSClient";
     mutable std::mutex locker_{};
   };
+
+  struct UserInfo {
+    std::string id_;
+    std::string pwd_;
+  };
+
+  struct LinkInfo {
+    std::string serverIp_;
+    std::string serverPort_;
+  };
 }

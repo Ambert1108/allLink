@@ -115,5 +115,6 @@ namespace alllink {
   private:
     std::shared_ptr<BaseScreen> wnd = nullptr;
     VisionCnetralCallback* callback_;
+    Message msg;
   };
 }

@@ -4,12 +4,16 @@
 #include <SFML/System.hpp>
 
 //#include <windows.h>
+#include <locale>
+#include <codecvt>
 
 #include "seeker/logger.h"
 #include "seeker/loggerApi.h"
 
 
 namespace alllink {
+	static std::wstring_convert<std::codecvt_utf8<wchar_t>> WstrConv;
+
 	static int setCursor(sf::RenderWindow* win_, sf::Cursor::Type cursorType) {
 		sf::Cursor cursor;
 		if (cursor.loadFromSystem(cursorType)) {

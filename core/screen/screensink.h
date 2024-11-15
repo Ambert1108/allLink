@@ -2,16 +2,33 @@
 #include "basescreen.h"
 #include "config/path.h"
 #include "component/module.h"
+#include "message.h"
 
 #include "seeker/common.h"
 
 namespace alllink {
+
+	enum class MessageType : int {
+		/*登录窗口消息载体*/
+
+		CREATE_MEETING = 0,
+		JOIN_MEETING,
+		START_LOGIN,
+		START_LOGOUT,
+		SETTING
+
+
+	};
+
+	static constexpr int msgTo(MessageType msg) { return static_cast<int>(msg); }
+
 	class LoginScreen : public BaseScreen {
 	public:
 		enum class LoginType {
 			OFFLINE = 0,
 			ONLINE
 		};
+
 		LoginScreen(sf::VideoMode mode, const sf::String& title, sf::Image icon,
 			sf::Uint32 style = sf::Style::Default,
 			const sf::ContextSettings& settings = sf::ContextSettings());

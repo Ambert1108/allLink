@@ -54,6 +54,8 @@ namespace alllink {
 			sf::Uint32 style, const sf::ContextSettings& settings) 
 			: sf::RenderWindow(mode, title, style, settings) {
 			this->setIcon(64, 64, icon.getPixelsPtr());
+			wr = static_cast<float>(mode.width) / 640;
+			hr = static_cast<float>(mode.height) / 480;
 		};
 
 
@@ -85,5 +87,6 @@ namespace alllink {
 		std::shared_ptr<BaseScreen> lastScreen_ = nullptr;
 		sf::Event event{};
 		sf::Image icon_;
+		float wr, hr;
 	};
 }

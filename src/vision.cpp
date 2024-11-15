@@ -17,7 +17,9 @@ namespace alllink {
     : callback_(nullptr) {
     sf::Image icon;
     icon.loadFromFile(iconFile);
-    wnd = std::make_shared<LoginScreen>(sf::VideoMode(640, 480), "AllLink", icon, sf::Style::Default);
+    float wr = static_cast<float>(sf::VideoMode::getDesktopMode().width) / 1920;
+    float hr = static_cast<float>(sf::VideoMode::getDesktopMode().height) / 1080;
+    wnd = std::make_shared<LoginScreen>(sf::VideoMode(640 * wr, 480 * hr), "AllLink", icon, sf::Style::Titlebar | sf::Style::Close);
     I_LOG("init start");
     wnd->init();
     I_LOG("init finish");
@@ -72,7 +74,15 @@ namespace alllink {
   }
 
   void VisionCentralContoller::update() {
-    /* 处理自定义消息事件 */
+    /* 读取并处理自定义消息事件 */
+    if (!hi::GetMsg(msg)) return;
+    switch (msg.id) {
+    case msgTo(MessageType::START_LOGIN):
+      break;
+
+    default:
+      break;
+    }
   }
 
   void VisionCentralContoller::render() {
