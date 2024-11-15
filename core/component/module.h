@@ -18,6 +18,18 @@ namespace alllink {
 		return 0;
 	}
 
+	class BaseText : public sf::Text {
+	public:
+		bool init(const std::string& fontFile) {
+			if (!font_.loadFromFile(fontFile)) return false;
+			this->setFont(font_);
+			return true;
+		}
+
+	protected:
+		sf::Font font_;
+	};
+
 	class VariableStateModule :public sf::RectangleShape {
 	public:
 		VariableStateModule() {
@@ -103,52 +115,93 @@ namespace alllink {
 		bool fill_ = true;
 	};
 
-	class VerticalGraphicTextsModule : public VariableStateModule {
+	class VariableStateGraphicModule : public VariableStateModule, public sf::Sprite{
 	public:
-		VerticalGraphicTextsModule() = default;
+		VariableStateGraphicModule() : texture_(nullptr) {};
 
-		~VerticalGraphicTextsModule() {
+		virtual ~VariableStateGraphicModule() {
 			if (texture_) {
 				delete texture_;
 				texture_ = nullptr;
 			}
 		}
 
-		void init1(int textSize, const std::string& fontFile, const std::string& textureFile) {
-			font.loadFromFile(fontFile);
-			text_.setFont(font);
-			text_.setCharacterSize(textSize);
+		void init(int width, int height, int x, int y) {
+			if (init_) return;
 			texture_ = new sf::Texture();
-			texture_->loadFromFile(textureFile);
-			image.setTexture(*texture_);
+			this->setSize(sf::Vector2f(width, height));
+			this->VariableStateModule::setPosition(x, y);
+			init_ = true;
 		}
 
-		void init2(int width, int height, int x, int y) {
+		void setTexture(const std::string& textureFile, bool resetRect = false) {
+			texture_->loadFromFile(textureFile);
+			this->sf::Sprite::setTexture(*texture_, resetRect);
+		}
+
+		virtual void setImage() {
+			int x = this->VariableStateModule::getPosition().x + 
+				(this->getSize().x - this->sf::Sprite::getGlobalBounds().width) / 2.f;
+			int y = this->VariableStateModule::getPosition().y + 
+				(this->getSize().y - this->sf::Sprite::getGlobalBounds().height) / 2.f;
+			this->sf::Sprite::setPosition(x, y);
+		}
+
+		bool setImageSize(float width, float height) {
+			try {
+				auto size = texture_->getSize();
+				this->sf::Sprite::setOrigin(texture_->getSize().x / 2.f, texture_->getSize().y / 2.f);
+				this->sf::Sprite::setScale(width / size.x, height / size.y);
+				this->sf::Sprite::setOrigin(0, 0);
+				setImage();
+			}
+			catch (std::exception& ex) {
+				E_LOG("[VerticalWidget::init] catch exception:{}", ex.what());
+				return false;
+			}
+			return true;
+		}
+
+	protected:
+		sf::Texture* texture_;
+		bool init_ = false;
+	};
+
+	class GraphicTextsModule : public VariableStateModule {
+	public:
+		GraphicTextsModule() : texture_(nullptr) {};
+
+		virtual ~GraphicTextsModule() {
+			if (texture_) {
+				delete texture_;
+				texture_ = nullptr;
+			}
+		}
+
+		void init(int width, int height, int x, int y) {
+			texture_ = new sf::Texture();
 			this->setSize(sf::Vector2f(width, height));
 			this->setPosition(x, y);
 		}
 
-		void setText(const sf::String& text, sf::Color textColor) {
-			text_.setString(text);
-			int x = this->getPosition().x + (this->getSize().x - text_.getGlobalBounds().width) / 2.f;
-			int y = this->getPosition().y + this->getSize().y - 20;
-			text_.setPosition(x, y);
-			text_.setColor(textColor);
+		void setSource(int textSize, const std::string& fontFile, const std::string& textureFile, bool rect = false) {
+			text_.init(fontFile);
+			text_.setCharacterSize(textSize);
+			texture_->loadFromFile(textureFile);
+			image.setTexture(*texture_, rect);
 		}
 
-		void setImage() {
-			int x = this->getPosition().x + (this->getSize().x - image.getGlobalBounds().width) / 2.f;
-			int y = this->getPosition().y + 10;
-			image.setPosition(x, y);
-		}
+		virtual void setText(const sf::String& text, sf::Color textColor) = 0;
 
-		void setImageColor(sf::Color imageColor){ image.setColor(sf::Color(117, 188, 255)); }
+		virtual void setImage() = 0;
 
-		virtual bool setImageSize(int width, int height) {
+		void setImageColor(sf::Color imageColor) { image.setColor(sf::Color(117, 188, 255)); }
+
+		bool setImageSize(float width, float height) {
 			try {
 				auto size = texture_->getSize();
 				image.setOrigin(texture_->getSize().x / 2.f, texture_->getSize().y / 2.f);
-				image.setScale(2, 2);
+				image.setScale(width / size.x, height / size.y);
 				image.setOrigin(0, 0);
 				setImage();
 			}
@@ -165,10 +218,45 @@ namespace alllink {
 			tar->draw(text_);
 		}
 
-	private:
-		sf::Font font;
-		sf::Text text_;
-		sf::Texture* texture_ = nullptr;
+	protected:
+		BaseText text_;
+		sf::Texture* texture_;
 		sf::Sprite image;
+	};
+
+	class VerticalGraphicTextsModule : public GraphicTextsModule {
+	public:
+		void setText(const sf::String& text, sf::Color textColor) override {
+			text_.setString(text);
+			int x = this->getPosition().x + (this->getSize().x - text_.getGlobalBounds().width) / 2.f;
+			int y = this->getPosition().y + this->getSize().y - 20;
+			text_.setPosition(x, y);
+			text_.setFillColor(textColor);
+			text_.setOutlineColor(textColor);
+		}
+
+		void setImage() override {
+			int x = this->getPosition().x + (this->getSize().x - image.getGlobalBounds().width) / 2.f;
+			int y = this->getPosition().y + 10;
+			image.setPosition(x, y);
+		}
+	};
+
+	class HorizonGraphicTextsModule : public VerticalGraphicTextsModule {
+	public:
+		void setText(const sf::String& text, sf::Color textColor) override {
+			text_.setString(text);
+			int x = this->getPosition().x + 10;
+			int y = this->getPosition().y + (this->getSize().y - text_.getGlobalBounds().height) / 2.f;
+			text_.setPosition(x, y);
+			text_.setFillColor(textColor);
+			text_.setOutlineColor(textColor);
+		}
+
+		void setImage() override {
+			int x = this->getPosition().x + this->getSize().x - image.getGlobalBounds().width - 10;
+			int y = this->getPosition().y + (this->getSize().y - image.getGlobalBounds().height) / 2.f;
+			image.setPosition(x, y);
+		}
 	};
 }

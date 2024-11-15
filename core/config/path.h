@@ -7,7 +7,7 @@ namespace alllink {
 	*/
 
 	static std::string fzchFile = "./resources/fonts/fzch.ttf";
-	static std::string msyhFile = "./resources/fonts/msyc.ttc";
+	static std::string msyhFile = "./resources/fonts/msyh.ttc";
 	static std::string msyhbdFile = "./resources/fonts/msyhbd.ttc";
 	static std::string msyhlFile = "./resources/fonts/msyhl.ttc";
 
