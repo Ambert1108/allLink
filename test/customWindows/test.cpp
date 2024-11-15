@@ -3,40 +3,55 @@
 #include "component/module.h"
 
 #include <SFML/Graphics.hpp>
+#include <Windows.h>
 #include <iostream>
 
-int main() {
+using namespace alllink;
+sf::RenderWindow window;
+HWND hwnd;
+// 窗口位置和拖动状态
+sf::Vector2i dragOffset;
+bool isDragging = false;
+sf::Vector2i screenSize;
+int maxX = 0;
+int minX = 0;
+int maxY = 0;
+int minY = 0;
+VariableStateRectangleModule square;
+VariableStateVertxModule horizontalLine;
+VariableStateVertxModule cross;
+
+void initWindow(int width, int height) {
   // 创建一个无边框窗口
-  sf::RenderWindow window(sf::VideoMode(1280, 720), "无边框窗口", sf::Style::None);
+  window.create(sf::VideoMode(width, height), "无边框窗口", sf::Style::None);
   int wndWidth = window.getSize().x;
   int wndHeight = window.getSize().y;
-  // 窗口位置和拖动状态
-  sf::Vector2i dragOffset;
-  bool isDragging = false;
+
+  // 获取窗口句柄
+  hwnd = window.getSystemHandle();
+  SetWindowLongPtr(hwnd, GWL_STYLE, WS_MINIMIZEBOX);
+  ShowWindow(hwnd, 1);
 
   // 获取屏幕尺寸
-  sf::Vector2i screenSize;
   screenSize.x = sf::VideoMode::getDesktopMode().width;
   screenSize.y = sf::VideoMode::getDesktopMode().height;
   I_LOG("window size is {}:{}", wndWidth, wndHeight);
 
   // 计算窗口移动允许的边界
   int margin = 40; // 边缘留出的空间
-  int maxX = screenSize.x - margin; // 窗口左上角最大x坐标
-  int minX = 0 - (wndWidth - margin); // 窗口左上角最小x坐标
-  int maxY = screenSize.y - margin * 3; // 窗口左上角最大y坐标
-  int minY = 0 - (wndHeight - margin); // 窗口左上角最小y坐标
+  maxX = screenSize.x - margin; // 窗口左上角最大x坐标
+  minX = 0 - (wndWidth - margin); // 窗口左上角最小x坐标
+  maxY = screenSize.y - margin * 3; // 窗口左上角最大y坐标
+  minY = 0 - (wndHeight - margin); // 窗口左上角最小y坐标
   I_LOG("min:max x={}:{}, y={}:{}", minX, maxX, minY, maxY);
-  using namespace alllink;
   // 创建一个方块
-  VariableStateRectangleModule square;
-  square.init(50, 30, wndWidth - 100, 0);
-  square.setShape(10, 10, sf::Color(0, 0, 0, 0), sf::Color::Black, 1);
+  square.set(50, 30, wndWidth - 100, 0);
+  square.setShapeSize(10, 10);
+  square.setShapeColor(sf::Color(0, 0, 0, 0), sf::Color::Black, 1);
   square.setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225, 200));
 
   // 创建一条横线
-  VariableStateVertxModule horizontalLine;
-  horizontalLine.init(50, 30, wndWidth - 150, 0);
+  horizontalLine.set(50, 30, wndWidth - 150, 0);
   horizontalLine.setVer({
     sf::Vertex(sf::Vector2f(wndWidth - 150 + 19, 15), sf::Color::Black),
       sf::Vertex(sf::Vector2f(wndWidth - 150 + 31, 15), sf::Color::Black)
@@ -44,32 +59,95 @@ int main() {
   horizontalLine.setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225, 200));
 
   // 创建一个交叉（×）
-  VariableStateVertxModule cross;
-  cross.init(50, 30, wndWidth - 50, 0);
-  
+  cross.set(50, 30, wndWidth - 50, 0);
   cross.setVer({
     sf::Vertex(sf::Vector2f(wndWidth - 50 + 19, 9), sf::Color::Black),
     sf::Vertex(sf::Vector2f(wndWidth - 50 + 31, 21), sf::Color::Black),
     sf::Vertex(sf::Vector2f(wndWidth - 50 + 31, 9), sf::Color::Black),
     sf::Vertex(sf::Vector2f(wndWidth - 50 + 19, 21), sf::Color::Black)
-      
     });
   cross.setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225, 200));
+}
 
+int main() {
+  initWindow(1280, 720);
+  sf::View view = window.getDefaultView(); // 获取默认视图
+  view.reset(sf::FloatRect(0, 0, 1280, 720)); // 重置视图到原始大小
+  window.setView(view);
+  auto wndPos = window.getPosition();
+  bool isDesktop = false;
   // 主循环
   while (window.isOpen()) {
     sf::Event event;
     while (window.pollEvent(event)) {
       sf::Vector2i mousePosWin = sf::Mouse::getPosition(window);
       sf::Vector2f mousePosView = window.mapPixelToCoords(mousePosWin);
-      if (square.onClick(event, mousePosView, &window)) {
 
-      }
+      // 按下窗口最小化，窗口失焦隐藏
       if (horizontalLine.onClick(event, mousePosView, &window)) {
-
+        ShowWindow(hwnd, SW_MINIMIZE);
       }
+
+      // 按下窗口最大化
+      if (square.onClick(event, mousePosView, &window)) {
+        isDesktop = !isDesktop;
+        if (isDesktop) {
+          //initWindow(sf::VideoMode::getDesktopMode().width, sf::VideoMode::getDesktopMode().height);
+          sf::FloatRect visibleArea(0.f, 0.f, sf::VideoMode::getDesktopMode().width, sf::VideoMode::getDesktopMode().height);
+          window.setView(sf::View(visibleArea));
+          window.setSize(sf::Vector2u(sf::VideoMode::getDesktopMode().width, sf::VideoMode::getDesktopMode().height));
+          window.setPosition(sf::Vector2i(0, 0));
+
+          square.set(50, 30, sf::VideoMode::getDesktopMode().width - 100, 0);
+          square.setShapePos(square.getPosition().x + 20, square.getPosition().y + 10);
+
+          horizontalLine.set(50, 30, sf::VideoMode::getDesktopMode().width - 150, 0);
+          horizontalLine.setVer({
+            sf::Vertex(sf::Vector2f(sf::VideoMode::getDesktopMode().width - 150 + 19, 15), sf::Color::Black),
+            sf::Vertex(sf::Vector2f(sf::VideoMode::getDesktopMode().width - 150 + 31, 15), sf::Color::Black)
+            });
+          cross.set(50, 30, sf::VideoMode::getDesktopMode().width - 50, 0);
+          cross.setVer({
+            sf::Vertex(sf::Vector2f(sf::VideoMode::getDesktopMode().width - 50 + 19, 9), sf::Color::Black),
+            sf::Vertex(sf::Vector2f(sf::VideoMode::getDesktopMode().width - 50 + 31, 21), sf::Color::Black),
+            sf::Vertex(sf::Vector2f(sf::VideoMode::getDesktopMode().width - 50 + 31, 9), sf::Color::Black),
+            sf::Vertex(sf::Vector2f(sf::VideoMode::getDesktopMode().width - 50 + 19, 21), sf::Color::Black)
+            });
+        }
+        else {
+          //initWindow(1280, 720);
+          sf::FloatRect visibleArea(0.f, 0.f, 1280, 720);
+          window.setView(sf::View(visibleArea));
+          window.setSize(sf::Vector2u(1280, 720));
+          window.setPosition(wndPos);
+
+          square.set(50, 30, 1280 - 100, 0);
+          square.setShapePos(square.getPosition().x + 20, square.getPosition().y + 10);
+
+          horizontalLine.set(50, 30, 1280 - 150, 0);
+          horizontalLine.setVer({
+            sf::Vertex(sf::Vector2f(1280 - 150 + 19, 15), sf::Color::Black),
+            sf::Vertex(sf::Vector2f(1280 - 150 + 31, 15), sf::Color::Black)
+            });
+
+          cross.set(50, 30, 1280 - 50, 0);
+          cross.setVer({
+            sf::Vertex(sf::Vector2f(1280 - 50 + 19, 9), sf::Color::Black),
+            sf::Vertex(sf::Vector2f(1280 - 50 + 31, 21), sf::Color::Black),
+            sf::Vertex(sf::Vector2f(1280 - 50 + 31, 9), sf::Color::Black),
+            sf::Vertex(sf::Vector2f(1280 - 50 + 19, 21), sf::Color::Black)
+            });
+        }
+      }
+
+      // 按下窗口关闭
       if (cross.onClick(event, mousePosView, &window)) {
         window.close();
+      }
+
+      // 窗口重新获得焦点，显示窗口
+      if (event.type == sf::Event::GainedFocus) {
+        ShowWindow(hwnd, SW_SHOW);
       }
 
       // 处理鼠标按下事件
