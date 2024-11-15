@@ -233,7 +233,7 @@ namespace alllink {
 		void setText(const sf::String& text, sf::Color textColor) override {
 			text_.setString(text);
 			int x = this->getPosition().x + (this->getSize().x - text_.getGlobalBounds().width) / 2.f;
-			int y = this->getPosition().y + this->getSize().y - 20;
+			int y = this->getPosition().y + this->getSize().y - text_.getGlobalBounds().height - 10;
 			text_.setPosition(x, y);
 			text_.setFillColor(textColor);
 			text_.setOutlineColor(textColor);

@@ -185,3 +185,4 @@ add_definitions(
 add_subdirectory(src)
 #add_subdirectory(test/localCapture)
 add_subdirectory(test/testWidget)
+add_subdirectory(test/customWindows)
