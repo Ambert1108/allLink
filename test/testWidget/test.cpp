@@ -27,13 +27,22 @@ int main() {
   HorizonGraphicTextsModule src2;
   src2.init(140, 42, 95, 211);
   src2.setSource(20, font2File, image2File);
-  src2.setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225, 200));
+  src2.setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225));
   src2.setText(L"请登录", sf::Color(0, 0, 0));
   src2.setImage();
   src2.setFill(false);
+
+  InputBoxMoudule input;
+  input.init(228, 32, 20, 20);
+  input.setText(font2File);
+  input.setColor(sf::Color(215, 215, 215), sf::Color(205, 205, 205), sf::Color(255, 255, 255));
   
   while (wnd->isOpen()) {
     while (wnd->pollEvent(event)) {
+      if (event.type == sf::Event::Closed) {
+        wnd->close();
+        break;
+      }
       sf::Vector2i mousePosWin = sf::Mouse::getPosition(*wnd);
       sf::Vector2f mousePosView = wnd->mapPixelToCoords(mousePosWin);
       if (src1.onClick(event, mousePosView, wnd)) {
@@ -42,22 +51,23 @@ int main() {
       else if (src2.onClick(event, mousePosView, wnd)) {
         std::cout << "请登录" << std::endl;
       }
-      switch (event.type) {
-      case sf::Event::Closed:
-        wnd->close();
-        break;
-  
-      case sf::Event::KeyPressed:
-        if (event.key.code == sf::Keyboard::Escape) {
-          wnd->close();
-        }
-        break;
+      else if (input.onClick(event, mousePosView, wnd)) {
+        input.setActive(true);
       }
+      else {
+        if (event.type == sf::Event::MouseButtonPressed
+          && event.key.code == sf::Mouse::Left) {
+          input.setActive(false);
+        }
+      }
+      input.eventProcess(event);
     }
-  
+    
     wnd->clear(sf::Color(240, 240, 240));
     src1.render(wnd);
     src2.render(wnd);
+    //I_LOG("draw, color is {}", input.getFillColor().toInteger());
+    input.render(wnd);
     wnd->display();
   }
 	return 0;

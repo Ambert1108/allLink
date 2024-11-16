@@ -19,7 +19,7 @@ namespace alllink {
     icon.loadFromFile(iconFile);
     float wr = static_cast<float>(sf::VideoMode::getDesktopMode().width) / 1920;
     float hr = static_cast<float>(sf::VideoMode::getDesktopMode().height) / 1080;
-    wnd = std::make_shared<LoginScreen>(sf::VideoMode(640 * wr, 480 * hr), "AllLink", icon, sf::Style::Titlebar | sf::Style::Close);
+    wnd = std::make_shared<StartScreen>(sf::VideoMode(640 * wr, 480 * hr), "AllLink", icon, CustomScreen::Style::Minisize);
     I_LOG("init start");
     wnd->init();
     I_LOG("init finish");

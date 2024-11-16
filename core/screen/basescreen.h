@@ -32,23 +32,7 @@ namespace alllink {
 		};
 	};
 
-	class WinOperQueue {
-	protected:
-		std::deque<WinOper> operQueue;
-	public:
-		int getWinOper(WinOper& winOper) {
-			if (operQueue.empty()) {
-				return -1;
-			}
-			else {
-				winOper = operQueue.front();
-				operQueue.pop_front();
-				return 0;
-			}
-		}
-	};
-
-	class BaseScreen : public sf::RenderWindow, public WinOperQueue {
+	class BaseScreen : public sf::RenderWindow {
 	public:
 		BaseScreen(sf::VideoMode mode, const sf::String& title, sf::Image icon, 
 			sf::Uint32 style, const sf::ContextSettings& settings) 
@@ -73,8 +57,6 @@ namespace alllink {
 
 		virtual void eventProcess() = 0;
 
-		void setLastScreen(std::shared_ptr<BaseScreen> screen) { lastScreen_ = screen; }
-
 		const sf::String getTitle()const { return title_; }
 
 		void setTitle(sf::String title) { title_ = title; }
@@ -84,7 +66,6 @@ namespace alllink {
 	protected:
 		virtual ~BaseScreen() {};
 		sf::String title_ = "baseScreen";
-		std::shared_ptr<BaseScreen> lastScreen_ = nullptr;
 		sf::Event event{};
 		sf::Image icon_;
 		float wr, hr;

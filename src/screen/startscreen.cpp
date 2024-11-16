@@ -2,9 +2,8 @@
 #include <regex>
 
 namespace alllink {
-	LoginScreen::LoginScreen(sf::VideoMode mode, const sf::String& title, sf::Image icon,
-		sf::Uint32 style, const sf::ContextSettings& settings)
-		: BaseScreen(mode, title, icon, style, settings) {
+	StartScreen::StartScreen(sf::VideoMode mode, const sf::String& title, sf::Image icon, int style)
+		: CustomScreen(mode, title, icon, style) {
 		this->icon_ = icon;
 		this->setFramerateLimit(60);
 		this->setVisible(false);
@@ -13,30 +12,30 @@ namespace alllink {
 		startLogin = nullptr;
 	}
 
-	LoginScreen::~LoginScreen() {
+	StartScreen::~StartScreen() {
 	}
 
-	std::shared_ptr<BaseScreen> LoginScreen::Next() { 
-		return nullptr;
+	std::shared_ptr<BaseScreen> StartScreen::Next() {
+		//切换至会议界面，具体传参待开发
+		return std::make_shared<StreamScreen>();
 	}
 
+	std::shared_ptr<BaseScreen> StartScreen::Last() { return nullptr; }
 
-	std::shared_ptr<BaseScreen> LoginScreen::Last() { return lastScreen_; }
 
-
-	void LoginScreen::OnEnter() {
+	void StartScreen::OnEnter() {
 		//TODO:设置界面可见
 		this->setVisible(true);
 	}
 
 
-	void LoginScreen::OnExit() {
+	void StartScreen::OnExit() {
 		//TODO:设置界面不可见
 		this->setVisible(false);
 	}
 
 
-	int LoginScreen::init() {
+	int StartScreen::init() {
 		createMeeting = std::make_unique<VerticalGraphicTextsModule>();
 		joinMeeting = std::make_unique<VerticalGraphicTextsModule>();
 		startLogin = std::make_unique<HorizonGraphicTextsModule>();
@@ -46,7 +45,7 @@ namespace alllink {
 		createMeeting->setSource(15 * wr, fzchFile, createMeetingFile);
 		createMeeting->setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225, 200));
 		createMeeting->setText(L"创建会议", sf::Color(0, 0, 0));
-		createMeeting->setImageSize(144 * 0.667, 144 * 0.667);
+		createMeeting->setImageSize(72 * wr, 72 * wr);
 		createMeeting->setImageColor(sf::Color(124, 171, 214));
 
 		joinMeeting->init(138 * wr, 130 * hr, 425 * wr, 275 * hr);
@@ -89,11 +88,22 @@ namespace alllink {
 	}
 
 
-	void LoginScreen::show() {
+	void StartScreen::show() {
 		this->clear(sf::Color(240, 240, 240));
+		switch (style_) {
+		case CustomScreen::All:
+			this->square.render(this);
+			[[fallthrough]];
+		case CustomScreen::Minisize:
+			this->horizontalLine.render(this);
+			[[fallthrough]];
+		case CustomScreen::Close:
+			this->cross.render(this);
+			break;
+		}
 		createMeeting->render(this);
 		joinMeeting->render(this);
-		if (type_ == LoginScreen::LoginType::OFFLINE) {
+		if (type_ == LoginType::OFFLINE) {
 			startLogin->render(this);
 		}
 		else {
@@ -105,26 +115,31 @@ namespace alllink {
 	}
 
 
-	void LoginScreen::eventProcess() {
+	void StartScreen::eventProcess() {
 		while (this->pollEvent(event)) {
+			this->checkStatus(event);
+
 			if (createMeeting->onClick(event, getMousePosition(), this)) {
 				//点击创建会议，进行响应
+				hi::PostMsg({ msgTo(MessageType::CREATE_MEETING), nullptr });
 			}
 			else if(joinMeeting->onClick(event, getMousePosition(), this)) {
 				//点击加入会议，进行响应
+				hi::PostMsg({ msgTo(MessageType::JOIN_MEETING), nullptr });
 			}
-			else if (startLogin->onClick(event, getMousePosition(), this) && type_ == LoginScreen::LoginType::OFFLINE) {
+			else if (startLogin->onClick(event, getMousePosition(), this) && type_ == LoginType::OFFLINE) {
 				//点击登录，进行响应
-				type_ = LoginScreen::LoginType::ONLINE;
+				type_ = LoginType::ONLINE;
 
 				/* 发送登录消息，视觉控制器处理过后将用户信息传给登录窗口 */
 				//useId.setString("3082");
 				hi::PostMsg({ msgTo(MessageType::START_LOGIN), nullptr });
 			}
-			else if (isLogin->onClick(event, getMousePosition(), this) && type_ == LoginScreen::LoginType::ONLINE) {
+			else if (isLogin->onClick(event, getMousePosition(), this) && type_ == LoginType::ONLINE) {
 				//点击注销，进行响应
-				type_ = LoginScreen::LoginType::OFFLINE;
+				type_ = LoginType::OFFLINE;
 				useId.setString(L"你好");
+				hi::PostMsg({ msgTo(MessageType::START_LOGOUT), nullptr });
 			}
 			switch (event.type) {
 			case sf::Event::Closed:
@@ -136,5 +151,5 @@ namespace alllink {
 		}
 	}
 
-	LoginScreen::LoginType LoginScreen::type() const { return type_; }
+	StartScreen::LoginType StartScreen::type() const { return type_; }
 }
