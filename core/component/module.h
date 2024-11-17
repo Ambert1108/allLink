@@ -339,79 +339,85 @@ namespace alllink {
 
 	class InputBoxMoudule : public VariableStateModule {
 	public:
-
-		void render(sf::RenderTarget* tar) {
-			tar->draw(*this);
-			tar->draw(inputText);
-		}
-
 		void init(int width, int height, int x, int y) {
 			this->setSize(sf::Vector2f(width, height));
 			this->setPosition(x, y);
 		}
 
-		void setText(const std::string& fontFile, sf::Color color = sf::Color::Black) {
+		void setText(const std::string& fontFile, const sf::String& defaultText = L"请输入文本", sf::Color color = sf::Color::Black) {
 			inputText.init(fontFile);
 			inputText.setCharacterSize(this->getSize().y  / 1.5);
-			inputText.setString("g1LIJ");
+			inputText.setString(defaultText);
 			inputText.setPosition(
 				this->getPosition().x + 5, 
-				this->getPosition().y + (this->getSize().y - inputText.getGlobalBounds().height) / 2);
-			inputText.setFillColor(color);
-			inputText.setString("");
-		}
-
-		std::string getEnterText() {
-			std::string retText = enterText;
-			return retText;
-		}
-
-		void saveInput() {
-			enterText = inputText.getString();
-			enterText.erase(std::remove(enterText.begin(), enterText.end(), cursorChar), enterText.end());
-			enterText.erase(std::remove(enterText.begin(), enterText.end(), saveChar), enterText.end());
-			I_LOG("enter text [{}]", enterText);
-		}
-
-		int eventProcess(sf::Event& event_) {
-			if (!isActive) {
-				return -1;
-			}
-			updateCursor();
-			if (event_.type == sf::Event::TextEntered && event_.text.unicode < 128) {
-				char tmpChar = static_cast<char>(event_.text.unicode);
-				insertText(tmpChar);
-			}
-			if (event_.type == sf::Event::KeyPressed) {
-				if (event_.key.code == sf::Keyboard::Left) {
-					moveCursor(true);
-				}
-				else if (event_.key.code == sf::Keyboard::Right) {
-					moveCursor(false);
-				}
-				else if (event_.key.code == sf::Keyboard::Backspace) {
-					backspaceText();
-				}
-			}
-			return 0;
+				this->getPosition().y + (this->getSize().y - inputText.getGlobalBounds().height) / 2 - 3);
+			textColor = color;
+			this->setFillColor(sf::Color(232, 230, 230));
+			this->setOutlineThickness(2);
+			this->setOutlineColor(sf::Color(200, 200, 200));
 		}
 
 		int setActive(bool active_) {
 			isActive = active_;
 			if (isActive) {
+				if (first) {
+					inputText.setString("");
+					inputText.setFillColor(textColor);
+					first = false;
+				}
 				this->setOutlineThickness(2);
 				this->setOutlineColor(sf::Color(38, 138, 209));
 				this->setFillColor(pressColor);
 			}
 			else {
-				this->setOutlineThickness(0);
+				this->setOutlineThickness(2);
+				this->setOutlineColor(sf::Color(200, 200, 200));
 				this->setFillColor(fillColor);
-				if (inputText.getString() == saveChar
-					|| inputText.getString() == cursorChar) {
-					inputText.setString("");
-				}
 			}
 			return 0;
+		}
+
+		std::string getEnterText() { return text; }
+
+		void eventProcess(sf::Event& event_) {
+			if (!isActive) return;
+			if (event_.type == sf::Event::TextEntered 
+				&& (event_.text.unicode > 32 && event_.text.unicode <= 126)) {
+				if (inputText.getGlobalBounds().width >= this->getSize().x - 20) {
+					inputText.setFillColor(sf::Color(220, 20, 20));
+				}
+				else {
+					inputText.setFillColor(sf::Color::Black);
+					if (cursorPosition < text.length()) {
+						text.insert(cursorPosition, 1, event_.text.unicode);
+					}
+					else {
+						text += event_.text.unicode;
+					}
+					cursorPosition++;
+					inputText.setString(text);
+				}
+			}
+			if (event_.type == sf::Event::KeyPressed) {
+				if (event_.key.code == sf::Keyboard::Left) {
+					if (cursorPosition > 0) {
+						cursorPosition--;
+					}
+				}
+				else if (event_.key.code == sf::Keyboard::Right) {
+					if (cursorPosition < text.length()) {
+						cursorPosition++;
+					}
+				}
+				else if (event_.key.code == sf::Keyboard::Backspace) {
+					if (cursorPosition > 0) {
+						text.erase(cursorPosition - 1, 1);
+						cursorPosition--;
+						inputText.setString(text);
+						inputText.setFillColor(sf::Color::Black);
+					}
+				}
+			}
 		}
 
 		bool onClick(sf::Event& event_, sf::Vector2f mousePos_,
@@ -459,82 +465,36 @@ namespace alllink {
 			return flag;
 		}
 
-	protected:
-		int updateCursor() {
-			std::string tmpStr = inputText.getString();
-			if (tmpStr.size() < 1) {
-				tmpStr = cursorChar;
-				cursorPos = 0;
-				inputText.setString(tmpStr);
-			}
+		void render(sf::RenderTarget* tar) {
+			tar->draw(*this);
 			cursorBlinkCount++;
-			if (cursorBlinkCount > cursorBlinkMax) {
+			if (cursorBlinkCount >= 30) {
+				showCursor = !showCursor;
 				cursorBlinkCount = 0;
-				std::swap(cursorChar, saveChar);
-				tmpStr[cursorPos] = cursorChar;
-				inputText.setString(tmpStr);
 			}
-			return 0;
+			tar->draw(inputText);
+			if (showCursor && isActive) {
+				sf::Vertex cursor[2];
+				sf::Vector2f cursorPos = inputText.findCharacterPos(cursorPosition);
+
+				cursor[0].position = sf::Vector2f(cursorPos.x, cursorPos.y);
+				cursor[1].position = sf::Vector2f(cursorPos.x, cursorPos.y + this->getSize().y - 6);
+
+				cursor[0].color = sf::Color::Black;
+				cursor[1].color = sf::Color::Black;
+
+				tar->draw(cursor, 2, sf::Lines);
+			}
 		}
 
-		int insertText(sf::String inText_, bool clear = false) {
-			if (inText_.getSize() < 1) return -1;
-
-			for (char tmpChar : inText_) {
-				if (tmpChar < ' ' || tmpChar >= '~') continue;
-				std::string tmpStr = inputText.getString();
-				std::string retStr = tmpStr.substr(0, cursorPos) + tmpChar + tmpStr.substr(cursorPos);
-				inputText.setString(retStr);
-				if (inputText.getGlobalBounds().width > this->getSize().x - 10) {
-					inputText.setFillColor(sf::Color(220, 20, 20));
-					inputText.setString(tmpStr);
-					return -3;
-				}
-				cursorPos++;
-				inputText.setString(retStr);
-			}
-			saveInput();
-			return 0;
-		}
-
-		int moveCursor(bool left_) {
-			std::string tmpStr = inputText.getString();
-			int tmpPos = cursorPos;
-			if (left_) {
-				tmpPos--;
-			}
-			else {
-				tmpPos++;
-			}
-			if (tmpPos < 0 || tmpPos >= tmpStr.size()) {
-				return -1;
-			}
-			std::swap(tmpStr[cursorPos], tmpStr[tmpPos]);
-			cursorPos = tmpPos;
-			inputText.setString(tmpStr);
-			return 0;
-		}
-
-		int backspaceText() {
-			std::string tmpStr = inputText.getString();
-			if (cursorPos == 0) {
-				return -1;
-			}
-			std::string retStr = tmpStr.substr(0, cursorPos - 1) + tmpStr.substr(cursorPos);
-			cursorPos--;
-			inputText.setString(retStr);
-			inputText.setFillColor(sf::Color(20, 20, 20));
-			return 0;
-		}
-
+	protected:
 		BaseText inputText;
-
-		int cursorPos = 0; //光标位置
-		const int cursorBlinkMax = 15; //光标闪烁次数
+		std::string text{};
+		sf::Color textColor;
+		int cursorPosition = 0; //光标位置
 		int cursorBlinkCount = 0;
-		wchar_t cursorChar = L'|';
-		wchar_t saveChar = L' ';
-		std::string enterText = "";
+		bool showCursor = false;
 		bool isActive = false;
+		bool first = true;
 	};
 }

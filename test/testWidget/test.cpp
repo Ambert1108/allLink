@@ -2,6 +2,7 @@
 #include <SFML/Window.hpp>
 
 #include "component/module.h"
+#include "component/widget.h"
 
 int main() {
   using namespace alllink;
@@ -32,10 +33,14 @@ int main() {
   src2.setImage();
   src2.setFill(false);
 
-  InputBoxMoudule input;
-  input.init(228, 32, 20, 20);
-  input.setText(font2File);
-  input.setColor(sf::Color(215, 215, 215), sf::Color(205, 205, 205), sf::Color(255, 255, 255));
+  //InputBoxMoudule input;
+  //input.init(228, 32, 20, 20);
+  //input.setText(font2File);
+  //input.setColor(sf::Color(215, 215, 215), sf::Color(205, 205, 205), sf::Color(255, 255, 255));
+
+  EnterDescriptionWidget inputWidget(264, 94, 20, 20);
+  inputWidget.setInput(font2File);
+  inputWidget.setDescription(font2File, L"服务器地址");
   
   while (wnd->isOpen()) {
     while (wnd->pollEvent(event)) {
@@ -51,23 +56,28 @@ int main() {
       else if (src2.onClick(event, mousePosView, wnd)) {
         std::cout << "请登录" << std::endl;
       }
-      else if (input.onClick(event, mousePosView, wnd)) {
-        input.setActive(true);
-      }
-      else {
-        if (event.type == sf::Event::MouseButtonPressed
-          && event.key.code == sf::Mouse::Left) {
-          input.setActive(false);
-        }
-      }
-      input.eventProcess(event);
+      inputWidget.eventProcess(event, wnd);
+      //else if (input.onClick(event, mousePosView, wnd)) {
+      //  input.setActive(true);
+      //}
+      //else {
+      //  if (event.type == sf::Event::MouseButtonPressed
+      //    && event.key.code == sf::Mouse::Left) {
+      //    input.setActive(false);
+      //  }
+      //}
+      //if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::S) {
+      //  I_LOG("save input:{}", input.getEnterText());
+      //}
+      //input.eventProcess(event);
     }
     
     wnd->clear(sf::Color(240, 240, 240));
     src1.render(wnd);
     src2.render(wnd);
+    inputWidget.render(wnd);
     //I_LOG("draw, color is {}", input.getFillColor().toInteger());
-    input.render(wnd);
+    //input.render(wnd);
     wnd->display();
   }
 	return 0;

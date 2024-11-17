@@ -2,6 +2,7 @@
 #include "basescreen.h"
 #include "config/path.h"
 #include "component/module.h"
+#include "component/widget.h"
 #include "message.h"
 
 #include "seeker/common.h"
