@@ -57,7 +57,7 @@ namespace alllink {
 
 		loginButton->init(98 * wr, 48 * hr, 176 * wr, 287 * hr);
 		loginButton->setText(msyhFile, L"登录", sf::Color::White);
-		loginButton->setStateColor(sf::Color(104, 141, 196), sf::Color(213, 229, 240));
+		loginButton->setStateColor(sf::Color(143, 170, 220), sf::Color(218, 227, 243));
 
 		screenDescriptionText.init(msyhbdFile);
 		screenDescriptionText.setCharacterSize(17 * hr);
@@ -96,16 +96,48 @@ namespace alllink {
 		if (!isActive) return;
 		while (this->pollEvent(event)) {
 			this->checkStatus(event);
-			if (loginButton->onClick(event, getMousePosition(), this) && loginButton->getActive()) {
+			if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Tab) {
+				currentInputBox = (currentInputBox % 3) + 1;
+				I_LOG("{}", currentInputBox);
+				if (currentInputBox == 1) {
+					inputSeverAddrWidget->setInputActive(true);
+					inputUserPwdWidget->setInputActive(false);
+				}
+				else if (currentInputBox == 2) {
+					inputUserIdWidget->setInputActive(true);
+					inputSeverAddrWidget->setInputActive(false);
+				}
+				else if (currentInputBox == 3) {
+					inputUserPwdWidget->setInputActive(true);
+					inputUserIdWidget->setInputActive(false);
+				}
+			}
+			else {
+				if (inputSeverAddrWidget->eventProcess(event, this)) {
+					currentInputBox = 1;
+					inputUserIdWidget->setInputActive(false);
+					inputUserPwdWidget->setInputActive(false);
+				}
+				if (inputUserIdWidget->eventProcess(event, this)) {
+					currentInputBox = 2;
+					inputSeverAddrWidget->setInputActive(false);
+					inputUserPwdWidget->setInputActive(false);
+				}
+				if (inputUserPwdWidget->eventProcess(event, this)) {
+					currentInputBox = 3;
+					inputSeverAddrWidget->setInputActive(false);
+					inputUserIdWidget->setInputActive(false);
+				}
+			}
+			if ((loginButton->onClick(event, getMousePosition(), this) 
+				|| (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Enter)) 
+				&& loginButton->getActive()) {
 				std::vector<std::string> info{ 
 					inputSeverAddrWidget->getInput(),
 					inputUserIdWidget->getInput(),
 					inputUserPwdWidget->getInput() };
 				hi::PostMsg({ msgTo(MessageType::IS_LOGIN), info});
 			}
-			inputSeverAddrWidget->eventProcess(event, this);
-			inputUserIdWidget->eventProcess(event, this);
-			inputUserPwdWidget->eventProcess(event, this);
 			if (!inputSeverAddrWidget->empty()
 				&& !inputUserIdWidget->empty()
 				&& !inputUserPwdWidget->empty()) {

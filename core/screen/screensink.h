@@ -151,6 +151,7 @@ namespace alllink {
 		BaseText screenDescriptionText;
 		float wr, hr;
 		sf::Vector2i wndPosition;
+		int currentInputBox = 1;
 	};
 
 	/*

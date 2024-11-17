@@ -39,7 +39,8 @@ namespace alllink {
 			description.setString(text);
 		}
 
-		void eventProcess(sf::Event event, sf::RenderWindow* win) {
+		bool eventProcess(sf::Event event, sf::RenderWindow* win) {
+			bool isClick = false;
 			sf::Vector2i mousePosWin = sf::Mouse::getPosition(*win);
 			sf::Vector2f mouseWindowPos = win->mapPixelToCoords(mousePosWin);
 			sf::Vector2f mousePosView(
@@ -48,6 +49,7 @@ namespace alllink {
 			);
 			if (inputBox.onClick(event, mousePosView, win)) {
 				inputBox.setActive(true);
+				isClick = true;
 			}
 			else {
 				if (event.type == sf::Event::MouseButtonPressed
@@ -56,6 +58,7 @@ namespace alllink {
 				}
 			}
 			inputBox.eventProcess(event);
+			return isClick;
 		}
 
 		void render(sf::RenderTarget* tar) {
@@ -73,6 +76,7 @@ namespace alllink {
 		bool empty() const { return inputBox.inputEmpty(); }
 
 		bool getInputActive() const { return inputBox.getActive(); }
+		void setInputActive(bool val) { inputBox.setActive(val); }
 
 	protected:
 		InputBoxMoudule inputBox;
