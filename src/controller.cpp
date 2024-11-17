@@ -200,8 +200,10 @@ namespace alllink {
   // VisionCnetralCallback implementation.
   //
 
-  void Controller::StartLogin(const std::string& server, int port) {
-
+  bool Controller::StartLogin(const LinkInfo& link, const UserInfo& user) {
+    //调用信令接口实现登录
+    I_LOG("[Controller::StartLogin] login user:{} to {}:{} success", user.id_, link.serverIp_, link.serverPort_);
+    return true;
   }
 
 
@@ -210,8 +212,9 @@ namespace alllink {
   }
 
 
-  void Controller::ConnectToPeer(int peer_id) {
-
+  bool Controller::ConnectToPeer(int peer_id) {
+    //调用信令接口连接对端
+    return true;
   }
 
 

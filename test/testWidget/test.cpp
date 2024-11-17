@@ -41,7 +41,12 @@ int main() {
   EnterDescriptionWidget inputWidget(264, 94, 20, 20);
   inputWidget.setInput(font2File);
   inputWidget.setDescription(font2File, L"服务器地址");
-  
+
+  TextRectangle textRect;
+  textRect.init(98, 48, 200, 400);
+  textRect.setText(font2File, L"登录", sf::Color::White);
+  textRect.setStateColor(sf::Color(104, 141, 196), sf::Color(213, 229, 240));
+  std::string saveText{};
   while (wnd->isOpen()) {
     while (wnd->pollEvent(event)) {
       if (event.type == sf::Event::Closed) {
@@ -56,6 +61,9 @@ int main() {
       else if (src2.onClick(event, mousePosView, wnd)) {
         std::cout << "请登录" << std::endl;
       }
+      else if (textRect.onClick(event, mousePosView, wnd) && textRect.getActive() && !saveText.empty()) {
+        std::cout << "进行登录" << std::endl;
+      }
       inputWidget.eventProcess(event, wnd);
       //else if (input.onClick(event, mousePosView, wnd)) {
       //  input.setActive(true);
@@ -66,9 +74,14 @@ int main() {
       //    input.setActive(false);
       //  }
       //}
-      //if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::S) {
-      //  I_LOG("save input:{}", input.getEnterText());
-      //}
+      if (!inputWidget.getInputActive()) {
+        if (inputWidget.getInput().empty()) textRect.setActive(false);
+        else {
+          saveText = inputWidget.getInput();
+          I_LOG("save:{}", saveText);
+          textRect.setActive(true);
+        }
+      }
       //input.eventProcess(event);
     }
     
@@ -76,6 +89,7 @@ int main() {
     src1.render(wnd);
     src2.render(wnd);
     inputWidget.render(wnd);
+    textRect.render(wnd);
     //I_LOG("draw, color is {}", input.getFillColor().toInteger());
     //input.render(wnd);
     wnd->display();

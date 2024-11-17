@@ -21,14 +21,12 @@ namespace alllink {
 		minY = 0 - (wndSize_.height - margin); // 窗口左上角最小y坐标
 		switch (style_) {
 		case All:
-      I_LOG("square set");
 			square.set(50, 30, wndSize_.width - 100, 0);
 			square.setShapeSize(10, 10);
 			square.setShapeColor(sf::Color(0, 0, 0, 0), sf::Color::Black, 1);
 			square.setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225, 200));
 			[[fallthrough]];
 		case Minisize:
-      I_LOG("line set");
 			horizontalLine.set(50, 30, wndSize_.width - 150, 0);
 			horizontalLine.setVer({
 				sf::Vertex(sf::Vector2f(wndSize_.width - 150 + 19, 15), sf::Color::Black),
@@ -37,7 +35,6 @@ namespace alllink {
 			horizontalLine.setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225, 200));
 			[[fallthrough]];
 		case Close:
-      I_LOG("cross set");
 			cross.set(50, 30, wndSize_.width - 50, 0);
 			cross.setVer({
 				sf::Vertex(sf::Vector2f(wndSize_.width - 50 + 19, 9), sf::Color::Black),
@@ -114,7 +111,8 @@ namespace alllink {
 
     // 按下窗口关闭
     if (cross.onClick(event, mousePosView, this)) {
-      this->close();
+      //this->close();
+      needClose();
     }
     else {
       // 处理鼠标按下事件

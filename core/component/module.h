@@ -101,13 +101,14 @@ namespace alllink {
 			fillColor = fillColor_;
 			hoverColor = hoverColor_;
 			pressColor = pressColor_;
-			I_LOG("fill color:{}, hover:{}, press:{}", fillColor.toInteger(), hoverColor.toInteger(), pressColor.toInteger());
 			this->setFillColor(fillColor_);
 			return 0;
 		}
 
+		/* 设置是否启用点击检测 */
 		void setActivate(bool val) { activate_ = val; }
 
+		/* 设置是否启用鼠标交互 */
 		void setFill(bool val) { fill_ = val; }
 
 		virtual void render(sf::RenderTarget* win_) = 0;
@@ -377,7 +378,11 @@ namespace alllink {
 			return 0;
 		}
 
-		std::string getEnterText() { return text; }
+		std::string getEnterText() const { return text; }
+
+		bool inputEmpty() const { return text.empty(); }
+
+		bool getActive() const { return isActive; }
 
 		void eventProcess(sf::Event& event_) {
 			if (!isActive) return;
@@ -496,5 +501,51 @@ namespace alllink {
 		bool showCursor = false;
 		bool isActive = false;
 		bool first = true;
+	};
+
+	class TextRectangle : public VariableStateModule {
+	public:
+		TextRectangle() : isActive(false) {};
+
+		void init(int width, int height, int x, int y) {
+			this->setSize(sf::Vector2f(width, height));
+			this->setPosition(x, y);
+			this->fill_ = false;
+		}
+
+		void setText(const std::string& fontFile, const sf::String& text, sf::Color textColor) {
+			text_.init(fontFile);
+			text_.setCharacterSize(this->getSize().y / 2.5);
+			text_.setFillColor(textColor);
+			text_.setString(text);
+			text_.setPosition(
+				this->getPosition().x + (this->getSize().x - text_.getGlobalBounds().width) / 2,
+				this->getPosition().y + (this->getSize().y - this->getSize().y / 2) / 2);
+		}
+
+		void setStateColor(sf::Color active, sf::Color inactive) {
+			activeColor = active;
+			inactiveColor = inactive;
+			this->setFillColor(inactiveColor);
+		}
+
+		void setActive(bool val) { 
+			isActive = val;
+			if (isActive) this->setFillColor(activeColor);
+			else this->setFillColor(inactiveColor);
+		}
+
+		bool getActive() const { return isActive; }
+
+		void render(sf::RenderTarget* tar) {
+			tar->draw(*this);
+			tar->draw(text_);
+		}
+
+	protected:
+		BaseText text_;
+		bool isActive;
+		sf::Color activeColor;
+		sf::Color inactiveColor;
 	};
 }

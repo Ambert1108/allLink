@@ -26,7 +26,6 @@ namespace alllink {
 			x(2), y(h) {};
 
 		void setInput(const std::string& fontFile, const sf::String& defaultText = L"请输入文本", sf::Color color = sf::Color::Black) {
-			I_LOG("w:{}, h:{}, x:{}, y:{}", w, h, x, y);
 			inputBox.init(w - 5, h / 1.5, x + 5, y);
 			inputBox.setText(fontFile, defaultText, color);
 			inputBox.setColor(sf::Color(215, 215, 215), sf::Color(205, 205, 205), sf::Color(255, 255, 255));
@@ -44,8 +43,8 @@ namespace alllink {
 			sf::Vector2i mousePosWin = sf::Mouse::getPosition(*win);
 			sf::Vector2f mouseWindowPos = win->mapPixelToCoords(mousePosWin);
 			sf::Vector2f mousePosView(
-				mouseWindowPos.x - x,
-				mouseWindowPos.y - y
+				mouseWindowPos.x - x_,
+				mouseWindowPos.y - y_
 			);
 			if (inputBox.onClick(event, mousePosView, win)) {
 				inputBox.setActive(true);
@@ -65,9 +64,15 @@ namespace alllink {
 			inputBox.render(this);
 			this->display();
 			sf::Sprite sprite(this->getTexture());
-			sprite.setPosition(x, y);
+			sprite.setPosition(x_, y_);
 			tar->draw(sprite);
 		}
+
+		std::string getInput() const { return inputBox.getEnterText(); }
+
+		bool empty() const { return inputBox.inputEmpty(); }
+
+		bool getInputActive() const { return inputBox.getActive(); }
 
 	protected:
 		InputBoxMoudule inputBox;

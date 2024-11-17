@@ -76,11 +76,11 @@ namespace alllink {
     // VisionCnetralCallback implementation.
     //
 
-    void StartLogin(const std::string& server, int port) override;
+    bool StartLogin(const LinkInfo& link, const UserInfo& user) override;
 
     void DisconnectFromServer() override;
 
-    void ConnectToPeer(int peer_id) override;
+    bool ConnectToPeer(int peer_id) override;
 
     void DisconnectFromCurrentPeer() override;
 

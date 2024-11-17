@@ -4,6 +4,7 @@
 #include <memory>
 #include <string>
 #include <mutex>
+#include <regex>
 
 #include "api/async_dns_resolver.h"
 #include "api/task_queue/pending_task_safety_flag.h"
@@ -83,6 +84,22 @@ namespace alllink {
 
   struct LinkInfo {
     std::string serverIp_;
-    std::string serverPort_;
+    uint16_t serverPort_;
+    LinkInfo() = default;
+    LinkInfo(const std::string& addr) {
+      try {
+        std::regex pattern(R"((\d+\.\d+\.\d+\.\d+):(\d+))");
+        std::smatch matches;
+        if (!std::regex_match(addr, matches, pattern)) throw std::runtime_error("");
+        if (matches.size() != 3) throw std::runtime_error("");
+        // 0是整个匹配，1是IP，2是端口
+        serverIp_ = matches[1];
+        std::string port = matches[2];
+        serverPort_ = std::atoi(port.c_str());
+      }
+      catch (std::exception& ex) {
+        E_LOG("[LinkInfo::conductor] Failed to resolve server addr:{}", addr);
+      }
+    }
   };
 }

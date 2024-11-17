@@ -36,12 +36,10 @@ namespace alllink {
 	public:
 		BaseScreen(sf::VideoMode mode, const sf::String& title, sf::Image icon, 
 			sf::Uint32 style, const sf::ContextSettings& settings) 
-			: sf::RenderWindow(mode, title, style, settings) {
+			: sf::RenderWindow(mode, title, style, settings), isActive(false) {
 			this->setIcon(64, 64, icon.getPixelsPtr());
-			wr = static_cast<float>(mode.width) / 640;
-			hr = static_cast<float>(mode.height) / 480;
 		};
-
+		virtual ~BaseScreen() {};
 
 		virtual std::shared_ptr<BaseScreen> Next() = 0;
 
@@ -64,10 +62,9 @@ namespace alllink {
 		sf::Vector2f getMousePosition() { return this->mapPixelToCoords(sf::Mouse::getPosition(*this)); }
 
 	protected:
-		virtual ~BaseScreen() {};
 		sf::String title_ = "baseScreen";
 		sf::Event event{};
 		sf::Image icon_;
-		float wr, hr;
+		bool isActive;
 	};
 }

@@ -21,11 +21,11 @@ namespace alllink {
   class VisionCnetralCallback {
   public:
     /*通知控制器登录信令服务器*/
-    virtual void StartLogin(const std::string& server, int port) = 0;
+    virtual bool StartLogin(const LinkInfo& link, const UserInfo& user) = 0;
     /*通知控制器登出信令服务器*/
     virtual void DisconnectFromServer() = 0;
     /*通知控制器连接对端peer*/
-    virtual void ConnectToPeer(int peer_id) = 0;
+    virtual bool ConnectToPeer(int peer_id) = 0;
     /*通知控制器与对端断开连接*/
     virtual void DisconnectFromCurrentPeer() = 0;
     /*控制器自定义消息处理函数*/
@@ -113,7 +113,8 @@ namespace alllink {
     void render();
 
   private:
-    std::shared_ptr<BaseScreen> wnd = nullptr;
+    std::shared_ptr<BaseScreen> wnd = nullptr; //流式窗口
+    std::unique_ptr<BaseScreen> loginWnd = nullptr;
     VisionCnetralCallback* callback_;
     Message msg;
   };

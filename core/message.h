@@ -1,10 +1,11 @@
 #pragma once
 #include "savequeue.h"
+#include <any>
 
 namespace alllink {
 	struct Message {
 		int id;
-		void* data;
+		std::any data;
 	};
 
   class hi {

@@ -4,6 +4,8 @@
 namespace alllink {
 	StartScreen::StartScreen(sf::VideoMode mode, const sf::String& title, sf::Image icon, int style)
 		: CustomScreen(mode, title, icon, style) {
+		wr = static_cast<float>(mode.width) / 640;
+		hr = static_cast<float>(mode.height) / 480;
 		this->icon_ = icon;
 		this->setFramerateLimit(60);
 		this->setVisible(false);
@@ -12,12 +14,11 @@ namespace alllink {
 		startLogin = nullptr;
 	}
 
-	StartScreen::~StartScreen() {
-	}
+	StartScreen::~StartScreen() { }
 
 	std::shared_ptr<BaseScreen> StartScreen::Next() {
 		//切换至会议界面，具体传参待开发
-		return std::make_shared<StreamScreen>();
+		//return std::make_shared<StreamScreen>();
 	}
 
 	std::shared_ptr<BaseScreen> StartScreen::Last() { return nullptr; }
@@ -26,12 +27,14 @@ namespace alllink {
 	void StartScreen::OnEnter() {
 		//TODO:设置界面可见
 		this->setVisible(true);
+		isActive = true;
 	}
 
 
 	void StartScreen::OnExit() {
 		//TODO:设置界面不可见
 		this->setVisible(false);
+		isActive = false;
 	}
 
 
@@ -42,35 +45,35 @@ namespace alllink {
 		isLogin = std::make_unique<HorizonGraphicTextsModule>();
 
 		createMeeting->init(138 * wr, 130 * hr, 425 * wr, 65 * hr);
-		createMeeting->setSource(15 * wr, fzchFile, createMeetingFile);
+		createMeeting->setSource(15 * hr, fzchFile, createMeetingFile);
 		createMeeting->setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225, 200));
 		createMeeting->setText(L"创建会议", sf::Color(0, 0, 0));
 		createMeeting->setImageSize(72 * wr, 72 * wr);
 		createMeeting->setImageColor(sf::Color(124, 171, 214));
 
 		joinMeeting->init(138 * wr, 130 * hr, 425 * wr, 275 * hr);
-		joinMeeting->setSource(15 * wr, fzchFile, joinMeetingFile);
+		joinMeeting->setSource(15 * hr, fzchFile, joinMeetingFile);
 		joinMeeting->setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225, 200));
 		joinMeeting->setText(L"加入会议", sf::Color(0, 0, 0));
 		joinMeeting->setImageSize(72 * wr, 72 * wr);
 		joinMeeting->setImageColor(sf::Color(124, 171, 214));
 
 		startLogin->init(140 * wr, 42 * hr, 95 * wr, 211 * hr);
-		startLogin->setSource(20 * wr, msyhFile, startLoginFile);
+		startLogin->setSource(20 * hr, msyhFile, startLoginFile);
 		startLogin->setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225, 200));
 		startLogin->setText(L"请登录", sf::Color(0, 0, 0));
 		startLogin->setImageSize(40 * wr, 40 * wr);
 		startLogin->setFill(false);
 
 		isLogin->init(150 * wr, 42 * hr, 95 * wr, 211 * hr);
-		isLogin->setSource(20 * wr, msyhFile, isLoginFile);
+		isLogin->setSource(20 * hr, msyhFile, isLoginFile);
 		isLogin->setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225, 200));
 		isLogin->setText(L"欢迎使用", sf::Color(0, 0, 0));
 		isLogin->setImageSize(40 * wr, 40 * wr);
 		isLogin->setFill(false);
 
 		todayDate.init(fzchFile);
-		todayDate.setCharacterSize(40 * wr);
+		todayDate.setCharacterSize(40 * hr);
 		std::string timePoint = seeker::time::toString(seeker::time::currentTime(), "%m-%d");
 		std::regex re1(R"((\d+)\.\d+)");
 		std::wregex re2(L"(\\d{2})-(\\d{2})");
@@ -80,7 +83,7 @@ namespace alllink {
 		todayDate.setFillColor(sf::Color(0, 0, 0));
 
 		useId.init(msyhFile);
-		useId.setCharacterSize(20 * wr);
+		useId.setCharacterSize(20 * hr);
 		useId.setString(L"你好");
 		useId.setPosition(sf::Vector2f(105 * wr, 184 * hr));
 		useId.setFillColor(sf::Color(0, 0, 0));
@@ -89,7 +92,8 @@ namespace alllink {
 
 
 	void StartScreen::show() {
-		this->clear(sf::Color(240, 240, 240));
+		if (!isActive) return;
+		this->clear(sf::Color(242, 242, 242));
 		switch (style_) {
 		case CustomScreen::All:
 			this->square.render(this);
@@ -116,6 +120,7 @@ namespace alllink {
 
 
 	void StartScreen::eventProcess() {
+		if (!isActive) return;
 		while (this->pollEvent(event)) {
 			this->checkStatus(event);
 
@@ -128,11 +133,7 @@ namespace alllink {
 				hi::PostMsg({ msgTo(MessageType::JOIN_MEETING), nullptr });
 			}
 			else if (startLogin->onClick(event, getMousePosition(), this) && type_ == LoginType::OFFLINE) {
-				//点击登录，进行响应
-				type_ = LoginType::ONLINE;
-
 				/* 发送登录消息，视觉控制器处理过后将用户信息传给登录窗口 */
-				//useId.setString("3082");
 				hi::PostMsg({ msgTo(MessageType::START_LOGIN), nullptr });
 			}
 			else if (isLogin->onClick(event, getMousePosition(), this) && type_ == LoginType::ONLINE) {
@@ -141,15 +142,13 @@ namespace alllink {
 				useId.setString(L"你好");
 				hi::PostMsg({ msgTo(MessageType::START_LOGOUT), nullptr });
 			}
-			switch (event.type) {
-			case sf::Event::Closed:
-				this->close();
-				break;
-			default:
-				break;
-			}
 		}
 	}
 
 	StartScreen::LoginType StartScreen::type() const { return type_; }
+
+	void StartScreen::setUseId(const std::string& id) {
+		useId.setString(id);
+		type_ = LoginType::ONLINE;
+	}
 }

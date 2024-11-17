@@ -12,13 +12,16 @@ namespace alllink {
 	enum class MessageType : int {
 		/*登录窗口消息载体*/
 
+		/* 开始窗口消息 */
+
 		CREATE_MEETING = 0,
 		JOIN_MEETING,
 		START_LOGIN,
 		START_LOGOUT,
-		SETTING
+		SETTING,
 
-
+		/* 登录窗口消息 */
+		IS_LOGIN
 	};
 
 	static constexpr int msgTo(MessageType msg) { return static_cast<int>(msg); }
@@ -34,6 +37,8 @@ namespace alllink {
 		CustomScreen(sf::VideoMode mode, const sf::String& title, sf::Image icon, int style);
 
 		void checkStatus(sf::Event& event);
+
+		virtual void needClose() { I_LOG("need close nothing"); };
 
 	protected:
 		Style style_;
@@ -92,6 +97,11 @@ namespace alllink {
 
 		LoginType type() const;
 
+		void setUseId(const std::string& id);
+
+	protected:
+		void needClose() override { this->close(); }
+
 	private:
 		std::unique_ptr<VerticalGraphicTextsModule> createMeeting;
 		std::unique_ptr<VerticalGraphicTextsModule> joinMeeting;
@@ -102,6 +112,7 @@ namespace alllink {
 		BaseText useId;
 		LoginType type_{ LoginType::OFFLINE };
 		sf::RectangleShape taskSide;
+		float wr, hr;
 	};
 
 	/*
@@ -110,11 +121,6 @@ namespace alllink {
 	*/
 	class LoginScreen : public CustomScreen {
 	public:
-		enum class LoginType {
-			OFFLINE = 0,
-			ONLINE
-		};
-
 		LoginScreen(sf::VideoMode mode, const sf::String& title,
 			sf::Image icon, int style = CustomScreen::Style::All);
 
@@ -134,18 +140,17 @@ namespace alllink {
 
 		void eventProcess() override;
 
-		LoginType type() const;
+	protected:
+		void needClose() override { OnExit(); }
 
 	private:
-		std::unique_ptr<VerticalGraphicTextsModule> createMeeting;
-		std::unique_ptr<VerticalGraphicTextsModule> joinMeeting;
-		std::unique_ptr<HorizonGraphicTextsModule> startLogin;
-		std::unique_ptr<HorizonGraphicTextsModule> isLogin;
-		std::unique_ptr<VariableStateGraphicModule> setting;
-		BaseText todayDate;
-		BaseText useId;
-		LoginType type_{ LoginType::OFFLINE };
-		sf::RectangleShape taskSide;
+		std::unique_ptr<EnterDescriptionWidget> inputSeverAddrWidget;
+		std::unique_ptr<EnterDescriptionWidget> inputUserIdWidget;
+		std::unique_ptr<EnterDescriptionWidget> inputUserPwdWidget;
+		std::unique_ptr <TextRectangle> loginButton;
+		BaseText screenDescriptionText;
+		float wr, hr;
+		sf::Vector2i wndPosition;
 	};
 
 	/*
@@ -169,6 +174,7 @@ namespace alllink {
 	* 可以切换至上一个流式界面。
 	*/
 	class StreamScreen : public CustomScreen {
+	public:
 
 	};
 }
