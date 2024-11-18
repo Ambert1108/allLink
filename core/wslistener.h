@@ -1,25 +1,38 @@
 #pragma once
+#include "oatpp-websocket/Connector.hpp"
+#include "oatpp/network/tcp/client/ConnectionProvider.hpp"
 #include "oatpp-websocket/ConnectionHandler.hpp"
 #include "oatpp-websocket/WebSocket.hpp"
-
+#include "oatpp/parser/json/mapping/ObjectMapper.hpp"
 #include "signinfo.hpp"
+
+#include "seeker/logger.h"
+#include "seeker/loggerApi.h"
 
 namespace alllink {
   class WSListenObserver {
-    virtual void OnINVITE(const SignInfo& info) = 0;
-    virtual void OnOK(const SignInfo& info) = 0;
+  public:
+    /* 一般请求 */
+
+    virtual void OnFORWARD(const SignInfo& info) = 0;
+    virtual void OnACK(const SignInfo& info) = 0;
     virtual void OnBYE(const SignInfo& info) = 0;
     virtual void OnCANCEL(const SignInfo& info) = 0;
-    virtual void OnACK(const SignInfo& info) = 0;
-    virtual void OnUnauthorized(const SignInfo& info) = 0;
     virtual void OnHeartbeat(const SignInfo& info) = 0;
+
+    /* 一般响应 */
+
+    virtual void OnOK(const SignInfo& info) = 0;
+    virtual void OnTrying(const SignInfo& info) = 0;
+    virtual void OnRinging(const SignInfo& info) = 0;
+    virtual void OnUnauthorized(const SignInfo& info) = 0;
   protected:
     virtual ~WSListenObserver() {}
   };
 
   class WSListener : public oatpp::websocket::WebSocket::Listener {
   public:
-    WSListener(std::mutex& lock);
+    WSListener();
 
     void registerObserver(WSListenObserver* callback);
 
@@ -45,7 +58,6 @@ namespace alllink {
 
   private:
     static constexpr const char* TAG = "Client_WSListener";
-    std::mutex& locker_;
     oatpp::data::stream::BufferOutputStream messageBuffer;
     WSListenObserver* callback_;
   };

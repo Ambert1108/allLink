@@ -30,14 +30,12 @@ namespace alllink {
 		this->setVisible(true);
 		this->setPosition(wndPosition);
 		isActive = true;
-		I_LOG("on enter");
 	}
 
 	void LoginScreen::OnExit() {
 		if (!isActive) return;
 		this->setVisible(false);
 		isActive = false;
-		I_LOG("on exit");
 	}
 
 	int LoginScreen::init() {
@@ -98,7 +96,6 @@ namespace alllink {
 			this->checkStatus(event);
 			if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Tab) {
 				currentInputBox = (currentInputBox % 3) + 1;
-				I_LOG("{}", currentInputBox);
 				if (currentInputBox == 1) {
 					inputSeverAddrWidget->setInputActive(true);
 					inputUserPwdWidget->setInputActive(false);

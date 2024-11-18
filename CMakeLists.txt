@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.11)
-project(AllLink VERSION 0.0.1)
+project(AllLink VERSION 0.0.2)
 set(ObjType console CACHE STRING "build object type")
 set(PROJECT_INCLUDE ${PROJECT_SOURCE_DIR}/inc)
 list(APPEND PROJECT_INCLUDE ${PROJECT_SOURCE_DIR}/core)
@@ -8,7 +8,7 @@ set(PROJECT_LIBS)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-option(IS_RELEASE on)
+set(IS_RELEASE on)
 if(CMAKE_BUILD_TYPE AND (CMAKE_BUILD_TYPE STREQUAL "Debug"))
 	set(IS_RELEASE off)
 	if (MSVC)
@@ -20,13 +20,13 @@ if(CMAKE_BUILD_TYPE AND (CMAKE_BUILD_TYPE STREQUAL "Debug"))
 endif()
 
 find_package(Threads REQUIRED)
-if(IS_RELEASE)
-set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -MT")
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -MT")
-set(CMAKE_PREFIX_PATH "D:/tools/oatpp-1.3.0/build/Release/lib/cmake/oatpp-1.3.0" ${CMAKE_PREFIX_PATH})
-set(CMAKE_PREFIX_PATH "D:/tools/oatpp-websocket-1.3.0/build/Release/lib/cmake/oatpp-websocket-1.3.0" ${CMAKE_PREFIX_PATH})
-set(CMAKE_PREFIX_PATH "D:/tools/oatpp-1.3.0/build/Release/lib" ${CMAKE_PREFIX_PATH})
-set(CMAKE_PREFIX_PATH "D:/tools/oatpp-websocket-1.3.0/build/Release/lib" ${CMAKE_PREFIX_PATH})
+if(CMAKE_BUILD_TYPE AND (CMAKE_BUILD_TYPE STREQUAL "Release"))
+	set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -MT")
+	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -MT")
+	set(CMAKE_PREFIX_PATH "D:/tools/oatpp-1.3.0/build/Release/lib/cmake/oatpp-1.3.0" ${CMAKE_PREFIX_PATH})
+	set(CMAKE_PREFIX_PATH "D:/tools/oatpp-websocket-1.3.0/build/Release/lib/cmake/oatpp-websocket-1.3.0" ${CMAKE_PREFIX_PATH})
+	set(CMAKE_PREFIX_PATH "D:/tools/oatpp-1.3.0/build/Release/lib" ${CMAKE_PREFIX_PATH})
+	set(CMAKE_PREFIX_PATH "D:/tools/oatpp-websocket-1.3.0/build/Release/lib" ${CMAKE_PREFIX_PATH})
 endif()
 set(CMAKE_PREFIX_PATH "D:/tools/SFML-2.6.1/lib/cmake/SFML" ${CMAKE_PREFIX_PATH})
 set(CMAKE_PREFIX_PATH "D:/tools/SFML-2.6.1/lib" ${CMAKE_PREFIX_PATH})
@@ -64,16 +64,16 @@ message(STATUS "opencv include:${OpenCV_INCLUDE_DIRS}")
 message(STATUS "opencv lib:${OpenCV_LIBS}")
 
 #find WebRTC include and library file
-if(IS_RELEASE)
+if(CMAKE_BUILD_TYPE AND (CMAKE_BUILD_TYPE STREQUAL "Release"))
 	message("====== FIND WEBRTC LIBRARY AND INCLUDE ======")
-	set(LIBWEBRTC_PATH "D:/tools/webrtc/libwebrtc/src")
+	set(LIBWEBRTC_PATH "D:/tools/webrtc2/src")
 	list(APPEND WEBRTC_INCLUDE ${LIBWEBRTC_PATH})
 	list(APPEND WEBRTC_INCLUDE "${LIBWEBRTC_PATH}/third_party/abseil-cpp")
 	list(APPEND WEBRTC_INCLUDE "${LIBWEBRTC_PATH}/third_party/jsoncpp/source/include")
 	list(APPEND WEBRTC_INCLUDE "${LIBWEBRTC_PATH}/third_party/libyuv/include")
 
-	file(GLOB_RECURSE WEBRTC_LIB "${LIBWEBRTC_PATH}/out/release_x64/obj/*.lib")
-	file(GLOB_RECURSE WEBRTC_OBJ "D:/tools/webrtc/lib/*.obj")
+	file(GLOB_RECURSE WEBRTC_LIB "${LIBWEBRTC_PATH}/out/Release/obj/*.lib")
+	file(GLOB_RECURSE WEBRTC_OBJ "D:/tools/webrtc2/webrtc/lib/*.obj")
 
 	message(STATUS "webrtc include:${WEBRTC_INCLUDE}")
 	message(STATUS "webrtc lib:${WEBRTC_LIB}")
@@ -177,7 +177,7 @@ add_definitions(
 -DLIBYUV_DISABLE_SVE 
 -DLIBYUV_DISABLE_SME 
 -DLIBYUV_DISABLE_LSX 
--DLIBYUV_DISABLE_LASX 
+-DLIBYUV_DISABLE_LASX  
 -DHAVE_WEBRTC_VIDEO
 )
 

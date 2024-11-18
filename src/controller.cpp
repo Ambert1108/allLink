@@ -202,7 +202,15 @@ namespace alllink {
 
   bool Controller::StartLogin(const LinkInfo& link, const UserInfo& user) {
     //调用信令接口实现登录
-    I_LOG("[Controller::StartLogin] login user:{} to {}:{} success", user.id_, link.serverIp_, link.serverPort_);
+    if (!client_->connectServer(link)) {
+      W_LOG("[Controller::StartLogin] link server {}:{} failed", link.serverIp_, link.serverPort_);
+      return false;
+    }
+    if (!client_->login(user)) {
+      W_LOG("[Controller::StartLogin] {} login failed", user.id_);
+      return false;
+    }
+    I_LOG("[Controller::StartLogin] login user:{} to {}:{} done", user.id_, link.serverIp_, link.serverPort_);
     return true;
   }
 

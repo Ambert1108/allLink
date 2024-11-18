@@ -15,8 +15,49 @@
 #include "seeker/loggerApi.h"
 
 #include "wslistener.h"
+#include "message.h"
+#include "utils/InvokeTimer.hpp"
 
 namespace alllink {
+  struct UserInfo {
+    std::string id_;
+    std::string pwd_;
+  };
+
+  struct LinkInfo {
+    std::string serverIp_;
+    uint16_t serverPort_;
+
+    LinkInfo() = default;
+
+    explicit LinkInfo(const std::string& addr) {
+      try {
+        std::regex pattern(R"((\d+\.\d+\.\d+\.\d+):(\d+))");
+        std::smatch matches;
+        if (!std::regex_match(addr, matches, pattern)) throw std::runtime_error("");
+        if (matches.size() != 3) throw std::runtime_error("");
+        // 0是整个匹配，1是IP，2是端口
+        serverIp_ = matches[1];
+        std::string port = matches[2];
+        serverPort_ = std::stoi(port);
+      }
+      catch (std::exception& ex) {
+        E_LOG("[LinkInfo::conductor] Failed to resolve server addr:{}", addr);
+      }
+    }
+
+    bool operator==(const LinkInfo& other) const {
+      return serverIp_ == other.serverIp_ && serverPort_ == other.serverPort_;
+    }
+
+    LinkInfo& operator=(const LinkInfo& other) {
+      if (this != &other) {
+        serverIp_ = other.serverIp_;
+        serverPort_ = other.serverPort_;
+      }
+      return *this;
+    }
+  };
 
   struct SignlingInteractionObserver {
     /*通知 控制器 信令服务器成功登录*/
@@ -41,12 +82,37 @@ namespace alllink {
   class SignlingInteractionSystem : public WSListenObserver {
   public:
     enum State {
-      NOT_CONNECTED,
-      RESOLVING,
-      SIGNING_IN,
-      CONNECTED,
-      SIGNING_OUT_WAITING,
-      SIGNING_OUT,
+      NONE,
+
+      // 未登录
+      LOGIN_OUT = 1,
+
+      // 已登录
+      LOGIN_ON,
+
+      // 作为主叫生成Offer SDP并发送FORWARD后，等待接收Trying
+      CALLING,
+
+      // 作为主叫收到Trying后，继续等待接收Ringing
+      TRYING,
+
+      // 作为主叫收到Ringing后，继续等待接收OK，并从中取出SDP
+      RINGING,
+
+      // 作为主叫收到OK并成功解析SDP后，作为主叫接通
+      CALLER,
+
+      // 作为被叫收到FORWARD后，等待用户响应以发送Ringing
+      FORWARDING,
+
+      // 作为被叫用户确认接通后，生成Answer SDP并发送OK
+      RINGEE,
+
+      // 作为被叫发送OK后，等待收到ACK
+      ACKING,
+
+      // 作为被叫收到ACK后，作为被叫接通
+      CALLEE
     };
 
     SignlingInteractionSystem();
@@ -56,50 +122,48 @@ namespace alllink {
 
     void registerObserver(SignlingInteractionObserver* callback);
 
-    void connect(const std::string& server, int port);
+    bool connectServer(const LinkInfo& info);
+
+    bool login(const UserInfo& info);
 
   protected:
+    void logout();
     //
     // WSListenObserver implementation.
     //
 
-    void OnINVITE(const SignInfo& info) override;
-    void OnOK(const SignInfo& info) override;
+    void OnFORWARD(const SignInfo& info) override;
+    void OnACK(const SignInfo& info) override;
     void OnBYE(const SignInfo& info) override;
     void OnCANCEL(const SignInfo& info) override;
-    void OnACK(const SignInfo& info) override;
-    void OnUnauthorized(const SignInfo& info) override;
     void OnHeartbeat(const SignInfo& info) override;
 
+    void OnOK(const SignInfo& info) override;
+    void OnTrying(const SignInfo & info) override;
+    void OnRinging(const SignInfo& info) override;
+    void OnUnauthorized(const SignInfo& info) override;
+
   private:
+    bool ToREGISTER(const SignInfo& info);
+    bool ToFORWARD(const SignInfo& info);
+    bool ToACK(const SignInfo& info);
+    bool ToBYE(const SignInfo& info);
+    bool ToCANCEL(const SignInfo& info);
+    bool ToINFO(const SignInfo& info);
+    bool ToHeartbeat(const SignInfo& info);
+    bool ToOK(const SignInfo& info);
+    bool ToTrying(const SignInfo& info);
+    bool ToRinging(const SignInfo& info);
+
     SignlingInteractionObserver* callback_;
     static constexpr const char* TAG = "WSClient";
-    mutable std::mutex locker_{};
-  };
-
-  struct UserInfo {
-    std::string id_;
-    std::string pwd_;
-  };
-
-  struct LinkInfo {
-    std::string serverIp_;
-    uint16_t serverPort_;
-    LinkInfo() = default;
-    LinkInfo(const std::string& addr) {
-      try {
-        std::regex pattern(R"((\d+\.\d+\.\d+\.\d+):(\d+))");
-        std::smatch matches;
-        if (!std::regex_match(addr, matches, pattern)) throw std::runtime_error("");
-        if (matches.size() != 3) throw std::runtime_error("");
-        // 0是整个匹配，1是IP，2是端口
-        serverIp_ = matches[1];
-        std::string port = matches[2];
-        serverPort_ = std::atoi(port.c_str());
-      }
-      catch (std::exception& ex) {
-        E_LOG("[LinkInfo::conductor] Failed to resolve server addr:{}", addr);
-      }
-    }
+    std::shared_ptr<oatpp::websocket::WebSocket> client;
+    std::shared_ptr<WSListener> listener;
+    aom::InvokeTimerPtr listenBody;
+    LinkInfo linkInfo;
+    State signalState{ LOGIN_OUT };
+    int64_t lastBeatPoint = 0;
+    int64_t HeartbeatInterval = 1000; //心跳间隔
+    int64_t cseq_ = 0;
   };
 }

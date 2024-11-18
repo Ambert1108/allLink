@@ -11,9 +11,10 @@ namespace alllink {
 
 	class SignInfo {
 	public:
+		SignInfo() = default;
 		SignInfo(json json_) : js(json_) {};
 		//callid
-		std::string call_id() {
+		std::string call_id() const {
 			if (js["Call_ID"].is_null()) {
 				return "";
 			}
@@ -23,7 +24,7 @@ namespace alllink {
 			js["Call_ID"] = input;
 		}
 		//userid
-		std::string userid() {
+		std::string userid() const {
 			if (js["userId"].is_null()) {
 				return "";
 			}
@@ -33,7 +34,7 @@ namespace alllink {
 			js["userId"] = input;
 		}
 		//password
-		std::string password() {
+		std::string password() const {
 			if (js["password"].is_null()) {
 				return "";
 			}
@@ -43,7 +44,7 @@ namespace alllink {
 			js["password"] = input;
 		}
 		//cseq
-		int cseq() {
+		int cseq() const {
 			if (js["Cseq"].is_null()) {
 				return -1;
 			}
@@ -53,7 +54,7 @@ namespace alllink {
 			js["Cseq"] = input;
 		}
 		//sdp
-		std::string sdp() {
+		std::string sdp() const {
 			if (js["SDP"].is_null()) {
 				return "";
 			}
@@ -63,7 +64,7 @@ namespace alllink {
 			js["SDP"] = input;
 		}
 		//meth
-		std::string meth() {
+		std::string meth() const {
 			if (js["meth"].is_null()) {
 				return "";
 			}
@@ -73,7 +74,7 @@ namespace alllink {
 			js["meth"] = input;
 		}
 		//isresponse
-		bool isresponse() {
+		bool isresponse() const {
 			if (js["isResponse"].is_null()) {
 				return false;
 			}
@@ -83,7 +84,7 @@ namespace alllink {
 			js["isResponse"] = input;
 		}
 		//from
-		std::string from() {
+		std::string from() const {
 			if (js["from"].is_null()) {
 				return "";
 			}
@@ -93,7 +94,7 @@ namespace alllink {
 			js["from"] = input;
 		}
 		//to
-		std::string to() {
+		std::string to() const {
 			if (js["to"].is_null()) {
 				return "";
 			}
@@ -103,7 +104,7 @@ namespace alllink {
 			js["to"] = input;
 		}
 		//signal
-		std::string signal() {
+		std::string signal() const {
 			if (js["signal"].is_null()) {
 				return "";
 			}
@@ -113,7 +114,7 @@ namespace alllink {
 			js["signal"] = input;
 		}
 		//reason
-		std::string reason() {
+		std::string reason() const {
 			if (js["reason"].is_null()) {
 				return "";
 			}
@@ -123,7 +124,7 @@ namespace alllink {
 			js["reason"] = input;
 		}
 		//cmeth
-		std::string cmeth() {
+		std::string cmeth() const {
 			if (js["Cmeth"].is_null()) {
 				return "";
 			}
@@ -133,7 +134,7 @@ namespace alllink {
 			js["Cmeth"] = input;
 		}
 		//statuscode
-		int statuscode() {
+		int statuscode() const {
 			if (js["statusCode"].is_null()) {
 				return -1;
 			}
@@ -142,8 +143,7 @@ namespace alllink {
 		void set_statuscode(int input) {
 			js["statusCode"] = input;
 		}
-
-	private:
-			json js;
+		
+		json js;
 	};
 }

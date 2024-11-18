@@ -92,8 +92,6 @@ namespace alllink {
       break;
     case msgTo(MessageType::IS_LOGIN): {
       // 收到登录窗口用户输入交互
-      std::shared_ptr<StartScreen> point = std::dynamic_pointer_cast<StartScreen>(wnd);
-      if (!point) break;
 
       // 取出消息中的登录信息
       std::vector<std::string> loginInfo = std::any_cast<std::vector<std::string>>(msg.data);
@@ -101,17 +99,25 @@ namespace alllink {
         W_LOG("[VisionCentralContoller::update] login info is empty");
         break;
       }
-      I_LOG("[debug] server addr:{}, useId:{}, usePwd:{}", loginInfo.at(0), loginInfo.at(1), loginInfo.at(2));
-      // 将用户名提供给开始窗口
-      point->setUseId(loginInfo.at(1));
+      D_LOG("[debug] server addr:{}, useId:{}, usePwd:{}", loginInfo.at(0), loginInfo.at(1), loginInfo.at(2));
 
       //调用中控器的回调接口进行具体的登录操作
-      callback_->StartLogin(loginInfo.at(0), {loginInfo.at(1), loginInfo.at(2)});
+      callback_->StartLogin(LinkInfo(loginInfo.at(0)), {loginInfo.at(1), loginInfo.at(2)});
       //TODO:如果登录成功，调用OnExit方法关闭登录窗口
       //TODO:如果登录失败，调用setError方法告知用户，让用户重新登录
 
-      //这里先假设登录成功
+      //这里先假设
+      break;
+    }
+    case msgTo(MessageType::LOGIN_SUCCESS): {
+      //收到信令回复登录成功，关闭登录窗口
       loginWnd->OnExit();
+
+      // 将用户名提供给开始窗口
+      std::shared_ptr<StartScreen> point = std::dynamic_pointer_cast<StartScreen>(wnd);
+      if (!point) break;
+      std::string userId = std::any_cast<std::string>(msg.data);
+      point->setUseId(userId);
       break;
     }
     default:

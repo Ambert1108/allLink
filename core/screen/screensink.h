@@ -9,23 +9,6 @@
 
 namespace alllink {
 
-	enum class MessageType : int {
-		/*登录窗口消息载体*/
-
-		/* 开始窗口消息 */
-
-		CREATE_MEETING = 0,
-		JOIN_MEETING,
-		START_LOGIN,
-		START_LOGOUT,
-		SETTING,
-
-		/* 登录窗口消息 */
-		IS_LOGIN
-	};
-
-	static constexpr int msgTo(MessageType msg) { return static_cast<int>(msg); }
-
 	class CustomScreen : public BaseScreen {
 	public:
 		enum Style {
@@ -38,7 +21,7 @@ namespace alllink {
 
 		void checkStatus(sf::Event& event);
 
-		virtual void needClose() { I_LOG("need close nothing"); };
+		virtual void needClose() { this->close(); };
 
 	protected:
 		Style style_;
@@ -98,9 +81,6 @@ namespace alllink {
 		LoginType type() const;
 
 		void setUseId(const std::string& id);
-
-	protected:
-		void needClose() override { this->close(); }
 
 	private:
 		std::unique_ptr<VerticalGraphicTextsModule> createMeeting;
