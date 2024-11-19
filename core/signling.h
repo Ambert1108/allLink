@@ -22,6 +22,20 @@ namespace alllink {
   struct UserInfo {
     std::string id_;
     std::string pwd_;
+
+    UserInfo() = default;
+
+    bool operator==(const UserInfo& other) const {
+      return id_ == other.id_ && pwd_ == other.pwd_;
+    }
+
+    UserInfo& operator=(const UserInfo& other) {
+      if (this != &other) {
+        id_ = other.id_;
+        pwd_ = other.pwd_;
+      }
+      return *this;
+    }
   };
 
   struct LinkInfo {
@@ -161,6 +175,7 @@ namespace alllink {
     std::shared_ptr<WSListener> listener;
     aom::InvokeTimerPtr listenBody;
     LinkInfo linkInfo;
+    UserInfo userInfo;
     State signalState{ LOGIN_OUT };
     int64_t lastBeatPoint = 0;
     int64_t HeartbeatInterval = 1000; //心跳间隔

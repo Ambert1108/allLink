@@ -22,8 +22,10 @@ namespace alllink {
     wnd = std::make_shared<StartScreen>(sf::VideoMode(640 * wr, 480 * hr), "AllLink", icon, CustomScreen::Style::Minisize);
     wnd->init();
     wnd->OnEnter();
-    loginWnd = std::make_unique<LoginScreen>(sf::VideoMode(478 * wr, 353 * hr), "AllLink", icon, CustomScreen::Style::Minisize);
+    loginWnd = std::make_shared<LoginScreen>(sf::VideoMode(478 * wr, 353 * hr), "AllLink", icon, CustomScreen::Style::Minisize);
     loginWnd->init();
+    enterWnd = std::make_shared<EnterScreen>(sf::VideoMode(356 * wr, 562 * hr), "AllLink", icon, CustomScreen::Style::Minisize);
+    enterWnd->init();
   }
 
   VisionCentralContoller::~VisionCentralContoller() {
@@ -40,11 +42,11 @@ namespace alllink {
     }
   }
        
-  void VisionCentralContoller::switchNextScreen() {
+  void VisionCentralContoller::switchStreamScreen() {
 
   }
 
-  void VisionCentralContoller::switchLastScreen() {
+  void VisionCentralContoller::switchStartScreen() {
 
   }
 
@@ -64,24 +66,35 @@ namespace alllink {
   
   }
 
-  void VisionCentralContoller::sendCustomMessage(int msg_id, void* data) {
-
-  }
-
   void VisionCentralContoller::pollEvent() {
     /* 处理窗口事件 */
     wnd->eventProcess();
     loginWnd->eventProcess();
+    enterWnd->eventProcess();
   }
 
   void VisionCentralContoller::update() {
     /* 读取并处理自定义消息事件 */
     if (!hi::GetMsg(msg)) return;
     switch (msg.id) {
-    case msgTo(MessageType::CREATE_MEETING):
+    case msgTo(MessageType::CREATE_MEETING): {
+      if (type_ == VisionType::LOGOUT) break;
+      //收到开始窗口请求创建会议交互，显示进入会议窗口
+      if (!enterWnd->OnEnter()) break;
+      std::shared_ptr<EnterScreen> point = std::dynamic_pointer_cast<EnterScreen>(enterWnd);
+      if (!point) break;
+      point->setType(EnterScreen::EnterType::CREATE);
       break;
-    case msgTo(MessageType::JOIN_MEETING):
+    }
+    case msgTo(MessageType::JOIN_MEETING): {
+      if (type_ == VisionType::LOGOUT) break;
+      //收到开始窗口请求加入会议交互，显示进入会议窗口
+      if (!enterWnd->OnEnter()) break;
+      std::shared_ptr<EnterScreen> point = std::dynamic_pointer_cast<EnterScreen>(enterWnd);
+      if (!point) break;
+      point->setType(EnterScreen::EnterType::JOIN);
       break;
+    }
     case msgTo(MessageType::START_LOGIN):
       // 收到开始窗口请求登录交互，显示登录窗口
       loginWnd->OnEnter();
@@ -99,7 +112,7 @@ namespace alllink {
         W_LOG("[VisionCentralContoller::update] login info is empty");
         break;
       }
-      D_LOG("[debug] server addr:{}, useId:{}, usePwd:{}", loginInfo.at(0), loginInfo.at(1), loginInfo.at(2));
+      I_LOG("[debug] server addr:{}, useId:{}, usePwd:{}", loginInfo.at(0), loginInfo.at(1), loginInfo.at(2));
 
       //调用中控器的回调接口进行具体的登录操作
       callback_->StartLogin(LinkInfo(loginInfo.at(0)), {loginInfo.at(1), loginInfo.at(2)});
@@ -109,10 +122,22 @@ namespace alllink {
       //这里先假设
       break;
     }
+    case msgTo(MessageType::IS_ENTER): {
+      if (type_ == VisionType::LOGOUT) break;
+      std::vector<std::string> meetingInfo = std::any_cast<std::vector<std::string>>(msg.data);
+      if (meetingInfo.empty()) {
+        break;
+      }
+      I_LOG("[debug] meeting id is {}", meetingInfo.at(0));
+      
+      //调用中控器的回调接口进行通话连接
+      callback_->ConnectToPeer(meetingInfo.at(0));
+      break;
+    }
     case msgTo(MessageType::LOGIN_SUCCESS): {
       //收到信令回复登录成功，关闭登录窗口
       loginWnd->OnExit();
-
+      type_ = VisionType::LOGIN;
       // 将用户名提供给开始窗口
       std::shared_ptr<StartScreen> point = std::dynamic_pointer_cast<StartScreen>(wnd);
       if (!point) break;
@@ -128,5 +153,6 @@ namespace alllink {
   void VisionCentralContoller::render() {
     wnd->show();
     loginWnd->show();
+    enterWnd->show();
   }
 }

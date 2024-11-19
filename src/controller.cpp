@@ -52,7 +52,28 @@
 #include "rtc_base/strings/json.h"
 #include "test/vcm_capturer.h"
 
-namespace {
+namespace alllink {
+
+  std::string GetEnvVarOrDefault(const char* env_var_name,
+    const char* default_value) {
+    std::string value;
+    const char* env_var = getenv(env_var_name);
+    if (env_var)
+      value = env_var;
+
+    if (value.empty())
+      value = default_value;
+
+    return value;
+  }
+
+  std::string GetPeerConnectionString() {
+    return GetEnvVarOrDefault("WEBRTC_CONNECT", "stun:stun.l.google.com:19302");
+  }
+
+  std::string GetDefaultServerName() {
+    return GetEnvVarOrDefault("WEBRTC_SERVER", "localhost");
+  }
 
   class DummySetSessionDescriptionObserver : public webrtc::SetSessionDescriptionObserver {
   public:
@@ -120,15 +141,64 @@ namespace alllink {
   }
 
   bool Controller::InitializePeerConnection() {
+    peerConnectionFactory_ = webrtc::CreatePeerConnectionFactory(
+      nullptr /* network_thread */, nullptr /* worker_thread */,
+      nullptr /* signal thread */, nullptr /* default_adm */,
+      webrtc::CreateBuiltinAudioEncoderFactory(),
+      webrtc::CreateBuiltinAudioDecoderFactory(),
+      std::make_unique<webrtc::VideoEncoderFactoryTemplate<
+      webrtc::LibvpxVp8EncoderTemplateAdapter,
+      webrtc::LibvpxVp9EncoderTemplateAdapter,
+      webrtc::OpenH264EncoderTemplateAdapter,
+      webrtc::LibaomAv1EncoderTemplateAdapter>>(),
+      std::make_unique<webrtc::VideoDecoderFactoryTemplate<
+      webrtc::LibvpxVp8DecoderTemplateAdapter,
+      webrtc::LibvpxVp9DecoderTemplateAdapter,
+      webrtc::OpenH264DecoderTemplateAdapter,
+      webrtc::Dav1dDecoderTemplateAdapter>>(),
+      nullptr /* audio_mixer */, nullptr /* audio_processing */);
+
+    if (!peerConnectionFactory_) {
+      E_LOG("[Controller::InitializePeerConnection] Failed to initialize PeerConnectionFactory");
+      DeletePeerConnection();
+      return false;
+    }
+
+    if (!CreatePeerConnection()) {
+      E_LOG("[Controller::InitializePeerConnection] CreatePeerConnection failed");
+      DeletePeerConnection();
+      return false;
+    }
+    D_LOG("init PeerConnection");
+    AddTracks();
+    D_LOG("init finish");
+
     return true;
   }
 
   bool Controller::CreatePeerConnection() {
-    return true;
+    webrtc::PeerConnectionInterface::RTCConfiguration config;
+    config.sdp_semantics = webrtc::SdpSemantics::kUnifiedPlan;
+    webrtc::PeerConnectionInterface::IceServer server;
+    server.uri = GetPeerConnectionString();
+    config.servers.push_back(server);
+
+    webrtc::PeerConnectionDependencies pc_dependencies(this);
+    auto error_or_peer_connection =
+      peerConnectionFactory_->CreatePeerConnectionOrError(
+        config, std::move(pc_dependencies));
+    if (error_or_peer_connection.ok()) {
+      peerConnection_ = std::move(error_or_peer_connection.value());
+    }
+    return peerConnection_ != nullptr;
   }
 
   void Controller::DeletePeerConnection() {
-
+    vision_->stopLocalRenderer();
+    vision_->stopRemoteRenderer();
+    peerConnection_ = nullptr;
+    peerConnectionFactory_ = nullptr;
+    meetId_.clear();
   }
 
   void Controller::EnsureStreamingUI() {
@@ -136,7 +206,44 @@ namespace alllink {
   }
 
   void Controller::AddTracks() {
+    if (!peerConnection_->GetSenders().empty()) {
+      return;  // 轨道已添加
+    }
 
+    // 创建音频轨道
+    rtc::scoped_refptr<webrtc::AudioTrackInterface> audio_track(
+      peerConnectionFactory_->CreateAudioTrack(
+        "audio_label",
+        peerConnectionFactory_->CreateAudioSource(cricket::AudioOptions())
+        .get()));
+    // 添加音频轨道到peerConnection
+    auto result_or_error = peerConnection_->AddTrack(audio_track, { "stream_id" });
+    if (!result_or_error.ok()) {
+      E_LOG("Failed to add audio track to PeerConnection:{}", result_or_error.error().message());
+    }
+
+    // 寻找本地采集设备
+    rtc::scoped_refptr<CapturerTrackSource> video_device = CapturerTrackSource::Create();
+    if (video_device) {
+      // 创建视频轨道
+      rtc::scoped_refptr<webrtc::VideoTrackInterface> video_track_(
+        peerConnectionFactory_->CreateVideoTrack(video_device, "video_label"));
+
+      // 向视觉控制器添加本地渲染器
+      vision_->startLocalRenderer(video_track_.get());
+
+      // 添加视频轨道到peerConnection
+      result_or_error = peerConnection_->AddTrack(video_track_, { "stream_id" });
+      if (!result_or_error.ok()) {
+        E_LOG("Failed to add video track to PeerConnection: {}", result_or_error.error().message());
+      }
+    }
+    else {
+      E_LOG("OpenVideoCaptureDevice failed");
+    }
+
+    // 通知视觉控制器切换界面至会议画面
+    vision_->switchStreamScreen();
   }
 
 
@@ -220,8 +327,21 @@ namespace alllink {
   }
 
 
-  bool Controller::ConnectToPeer(int peer_id) {
-    //调用信令接口连接对端
+  bool Controller::ConnectToPeer(const std::string& to) {
+    //用户触发
+    if (peerConnection_.get()) {
+      E_LOG("[Controller::ConnectToPeer] Only one call can be established at a time");
+      return false;
+    }
+    if (!InitializePeerConnection()) {
+      E_LOG("[Controller::ConnectToPeer] init peer connection failed");
+      return false;
+    }
+    meetId_ = to;
+    // 创建offer sdp
+    // 生成offer后会通过OnSuccess回调函数传回offer
+    // 在OnSuccess函数中触发信令流程
+    peerConnection_->CreateOffer(this, webrtc::PeerConnectionInterface::RTCOfferAnswerOptions());
     return true;
   }
 

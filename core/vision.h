@@ -25,7 +25,7 @@ namespace alllink {
     /*通知控制器登出信令服务器*/
     virtual void DisconnectFromServer() = 0;
     /*通知控制器连接对端peer*/
-    virtual bool ConnectToPeer(int peer_id) = 0;
+    virtual bool ConnectToPeer(const std::string& to) = 0;
     /*通知控制器与对端断开连接*/
     virtual void DisconnectFromCurrentPeer() = 0;
     /*控制器自定义消息处理函数*/
@@ -75,20 +75,22 @@ namespace alllink {
 
     virtual void registerObserver(VisionCnetralCallback* callback) = 0;
 
-    virtual void switchNextScreen() = 0;
+    virtual void switchStreamScreen() = 0;
 
-    virtual void switchLastScreen() = 0;
+    virtual void switchStartScreen() = 0;
 
     virtual void startLocalRenderer(webrtc::VideoTrackInterface* local_video) = 0;
     virtual void stopLocalRenderer() = 0;
     virtual void startRemoteRenderer(webrtc::VideoTrackInterface* remote_video) = 0;
     virtual void stopRemoteRenderer() = 0;
-
-    virtual void sendCustomMessage(int msg_id, void* data) = 0;
   };
 
   class VisionCentralContoller : public VisionCnetralBase {
   public:
+    enum class VisionType {
+      LOGIN = 0,
+      LOGOUT
+    };
 
     VisionCentralContoller();
     ~VisionCentralContoller();
@@ -96,16 +98,14 @@ namespace alllink {
     void registerObserver(VisionCnetralCallback* callback);
     void run();
 
-    void switchNextScreen();
+    void switchStreamScreen();
 
-    void switchLastScreen();
+    void switchStartScreen();
 
     void startLocalRenderer(webrtc::VideoTrackInterface* local_video);
     void stopLocalRenderer();
     void startRemoteRenderer(webrtc::VideoTrackInterface* remote_video);
     void stopRemoteRenderer();
-
-    void sendCustomMessage(int msg_id, void* data);
 
   protected:
     void pollEvent();
@@ -114,8 +114,10 @@ namespace alllink {
 
   private:
     std::shared_ptr<BaseScreen> wnd = nullptr; //流式窗口
-    std::unique_ptr<BaseScreen> loginWnd = nullptr;
+    std::shared_ptr<BaseScreen> loginWnd = nullptr;
+    std::shared_ptr<BaseScreen> enterWnd = nullptr;
     VisionCnetralCallback* callback_;
     Message msg;
+    VisionType type_{ VisionType::LOGOUT };
   };
 }

@@ -45,15 +45,17 @@ namespace alllink {
 
 		virtual std::shared_ptr<BaseScreen> Last() = 0;
 
-		virtual void OnEnter() = 0;
+		virtual bool OnEnter() = 0;
 
-		virtual void OnExit() = 0;
+		virtual bool OnExit() = 0;
 
 		virtual int init() = 0;
 
 		virtual void show() = 0;
 
 		virtual void eventProcess() = 0;
+
+		virtual void OnFailed() = 0;
 
 		const sf::String getTitle()const { return title_; }
 

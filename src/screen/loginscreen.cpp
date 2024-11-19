@@ -15,7 +15,7 @@ namespace alllink {
 		loginButton = nullptr;
 	}
 
-	LoginScreen::~LoginScreen() { }
+	LoginScreen::~LoginScreen() {  }
 
 	std::shared_ptr<BaseScreen> LoginScreen::Next() {
 		return nullptr;
@@ -25,17 +25,20 @@ namespace alllink {
 		return nullptr;
 	}
 
-	void LoginScreen::OnEnter() {
-		if (isActive) return;
+	bool LoginScreen::OnEnter() {
+		if (isActive) return false;
 		this->setVisible(true);
 		this->setPosition(wndPosition);
 		isActive = true;
+		return true;
 	}
 
-	void LoginScreen::OnExit() {
-		if (!isActive) return;
+	bool LoginScreen::OnExit() {
+		if (!isActive) return false;
 		this->setVisible(false);
 		isActive = false;
+		reset();
+		return true;
 	}
 
 	int LoginScreen::init() {
@@ -44,13 +47,13 @@ namespace alllink {
 		inputUserPwdWidget = std::make_unique<EnterDescriptionWidget>(159 * wr, 94 * hr, 274 * wr, 168 * hr);
 		loginButton = std::make_unique<TextRectangle>();
 
-		inputSeverAddrWidget->setInput(msyhFile);
+		inputSeverAddrWidget->setInput(msyhFile, L"ip:port");
 		inputSeverAddrWidget->setDescription(msyhFile, L"服务器地址");
 
-		inputUserIdWidget->setInput(msyhFile);
+		inputUserIdWidget->setInput(msyhFile, "");
 		inputUserIdWidget->setDescription(msyhFile, L"用户名");
 
-		inputUserPwdWidget->setInput(msyhFile);
+		inputUserPwdWidget->setInput(msyhFile, "");
 		inputUserPwdWidget->setDescription(msyhFile, L"密码");
 
 		loginButton->init(98 * wr, 48 * hr, 176 * wr, 287 * hr);
@@ -134,6 +137,7 @@ namespace alllink {
 					inputUserIdWidget->getInput(),
 					inputUserPwdWidget->getInput() };
 				hi::PostMsg({ msgTo(MessageType::IS_LOGIN), info});
+				loginButton->setActive(false);
 			}
 			if (!inputSeverAddrWidget->empty()
 				&& !inputUserIdWidget->empty()
@@ -142,5 +146,15 @@ namespace alllink {
 			}
 			else loginButton->setActive(false);
 		}
+	}
+
+	void LoginScreen::OnFailed() {
+
+	}
+
+	void LoginScreen::reset() {
+		inputSeverAddrWidget->resetInput();
+		inputUserIdWidget->resetInput();
+		inputUserPwdWidget->resetInput();
 	}
 }

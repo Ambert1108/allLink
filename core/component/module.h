@@ -348,10 +348,14 @@ namespace alllink {
 		void setText(const std::string& fontFile, const sf::String& defaultText = L"请输入文本", sf::Color color = sf::Color::Black) {
 			inputText.init(fontFile);
 			inputText.setCharacterSize(this->getSize().y  / 1.5);
-			inputText.setString(defaultText);
+			defaultDesc = defaultText;
+			if (defaultDesc.isEmpty()) inputText.setString(L"你好");
+			else inputText.setString(defaultText);
 			inputText.setPosition(
 				this->getPosition().x + 5, 
 				this->getPosition().y + (this->getSize().y - inputText.getGlobalBounds().height) / 2 - 3);
+			if (defaultDesc.isEmpty()) inputText.setString("");
+			inputText.setFillColor(sf::Color(255, 255, 255, 150));
 			textColor = color;
 			this->setFillColor(sf::Color(232, 230, 230));
 			this->setOutlineThickness(2);
@@ -364,6 +368,7 @@ namespace alllink {
 				if (first) {
 					inputText.setString("");
 					inputText.setFillColor(textColor);
+					cursorPosition = 0;
 					first = false;
 				}
 				this->setOutlineThickness(2);
@@ -381,6 +386,13 @@ namespace alllink {
 		std::string getEnterText() const { return text; }
 
 		bool inputEmpty() const { return text.empty(); }
+
+		void resetText() {
+			first = true;
+			inputText.setString(defaultDesc);
+			inputText.setFillColor(sf::Color(255, 255, 255, 150));
+			text.clear(); 
+		}
 
 		bool getActive() const { return isActive; }
 
@@ -493,6 +505,7 @@ namespace alllink {
 		}
 
 	protected:
+		sf::String defaultDesc;
 		BaseText inputText;
 		std::string text{};
 		sf::Color textColor;

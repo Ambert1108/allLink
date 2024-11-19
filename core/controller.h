@@ -80,7 +80,7 @@ namespace alllink {
 
     void DisconnectFromServer() override;
 
-    bool ConnectToPeer(int peer_id) override;
+    bool ConnectToPeer(const std::string& to) override;
 
     void DisconnectFromCurrentPeer() override;
 
@@ -92,5 +92,9 @@ namespace alllink {
   private:
     SignlingInteractionSystem* client_;
     VisionCnetralBase* vision_;
+    rtc::scoped_refptr<webrtc::PeerConnectionInterface> peerConnection_;
+    rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface>
+      peerConnectionFactory_;
+    std::string meetId_;
   };
 }

@@ -20,7 +20,7 @@ namespace alllink {
   }
 
   SignlingInteractionSystem::~SignlingInteractionSystem() {
-    logout();
+    if(client) logout();
     if(listenBody) listenBody->Cancel();
     oatpp::base::Environment::destroy();
   }
@@ -34,30 +34,38 @@ namespace alllink {
   }
 
   bool SignlingInteractionSystem::connectServer(const LinkInfo& info) {
+    if (info.serverIp_.empty() || info.serverPort_ < 8888) return false;
     if (linkInfo == info) {
       W_LOG("[SignlingInteractionSystem::connectServer] server addr {}:{} is same",
         info.serverIp_, info.serverPort_);
       return false;
     }
 
-    if (client) {
-      logout();
-      I_LOG("[SignlingInteractionSystem::connectServer] login out! old server is {}:{}, new server is {}:{}",
-        linkInfo.serverIp_, linkInfo.serverPort_, info.serverIp_, info.serverPort_);
-    }
+    try {
+      if (client) {
+        logout();
+        I_LOG("[SignlingInteractionSystem::connectServer] login out! old server is {}:{}, new server is {}:{}",
+          linkInfo.serverIp_, linkInfo.serverPort_, info.serverIp_, info.serverPort_);
+      }
 
-    linkInfo = info;
-    auto connectionProvider = 
-      oatpp::network::tcp::client::ConnectionProvider::createShared({ linkInfo.serverIp_, linkInfo.serverPort_ });
-    auto connector = oatpp::websocket::Connector::createShared(connectionProvider);
-    auto connection = connector->connect("/connectWS");
-    client = oatpp::websocket::WebSocket::createShared(connection, true);
-    client->setListener(listener);
-    signalState = State::LOGIN_ON;
+      linkInfo = info;
+      auto connectionProvider =
+        oatpp::network::tcp::client::ConnectionProvider::createShared({ linkInfo.serverIp_, linkInfo.serverPort_ });
+      auto connector = oatpp::websocket::Connector::createShared(connectionProvider);
+      auto connection = connector->connect("/connectWS");
+      client = oatpp::websocket::WebSocket::createShared(connection, true);
+      client->setListener(listener);
+      signalState = State::LOGIN_ON;
+    }
+    catch (std::exception& ex) {
+      E_LOG("[SignlingInteractionSystem::connectServer] connect sever failed:{}", ex.what());
+      return false;
+    }
     return true;
   }
 
   bool SignlingInteractionSystem::login(const UserInfo& info) {
+    userInfo = info;
     SignInfo msg;
     msg.set_meth("REGISTER");
     msg.set_isresponse(false);

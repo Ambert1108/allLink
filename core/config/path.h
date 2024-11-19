@@ -35,5 +35,5 @@ namespace alllink {
 	/*
 	* 素材路径:图标
 	*/
-	static std::string iconFile = "./resources/comp/icon.png";
+	static std::string iconFile = "./resources/comp/icon2.png";
 }

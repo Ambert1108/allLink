@@ -75,7 +75,10 @@ namespace alllink {
 
 		bool empty() const { return inputBox.inputEmpty(); }
 
+		void resetInput() { inputBox.resetText(); }
+
 		bool getInputActive() const { return inputBox.getActive(); }
+
 		void setInputActive(bool val) { inputBox.setActive(val); }
 
 	protected:

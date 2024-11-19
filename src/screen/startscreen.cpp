@@ -24,17 +24,19 @@ namespace alllink {
 	std::shared_ptr<BaseScreen> StartScreen::Last() { return nullptr; }
 
 
-	void StartScreen::OnEnter() {
+	bool StartScreen::OnEnter() {
 		//TODO:设置界面可见
 		this->setVisible(true);
 		isActive = true;
+		return true;
 	}
 
 
-	void StartScreen::OnExit() {
+	bool StartScreen::OnExit() {
 		//TODO:设置界面不可见
 		this->setVisible(false);
 		isActive = false;
+		return true;
 	}
 
 

@@ -30,7 +30,7 @@ namespace alllink {
 
 
 	enum class MessageType : int {
-		/*登录窗口消息载体*/
+		/*全局消息载体*/
 
 		/* 开始窗口消息 */
 
@@ -42,6 +42,9 @@ namespace alllink {
 
 		/* 登录窗口消息 */
 		IS_LOGIN,
+
+		/* 加入会议窗口消息 */
+		IS_ENTER,
 
 		/* 信令消息 */
 		LOGIN_SUCCESS

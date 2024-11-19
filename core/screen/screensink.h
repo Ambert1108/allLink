@@ -68,15 +68,17 @@ namespace alllink {
 
 		std::shared_ptr<BaseScreen> Last() override;
 
-		void OnEnter() override;
+		bool OnEnter() override;
 
-		void OnExit() override;
+		bool OnExit() override;
 
 		int init() override;
 
 		void show() override;
 
 		void eventProcess() override;
+
+		void OnFailed() override {}
 
 		LoginType type() const;
 
@@ -110,9 +112,9 @@ namespace alllink {
 
 		std::shared_ptr<BaseScreen> Last() override;
 
-		void OnEnter() override;
+		bool OnEnter() override;
 
-		void OnExit() override;
+		bool OnExit() override;
 
 		int init() override;
 
@@ -120,10 +122,14 @@ namespace alllink {
 
 		void eventProcess() override;
 
+		void OnFailed() override;
+
 	protected:
 		void needClose() override { OnExit(); }
 
 	private:
+		void reset();
+
 		std::unique_ptr<EnterDescriptionWidget> inputSeverAddrWidget;
 		std::unique_ptr<EnterDescriptionWidget> inputUserIdWidget;
 		std::unique_ptr<EnterDescriptionWidget> inputUserPwdWidget;
@@ -139,7 +145,49 @@ namespace alllink {
 	* 无法进行界面切换，最终目的只是获取用户输入。
 	*/
 	class EnterScreen : public CustomScreen {
+	public:
+		enum class EnterType {
+			NONE = 0,
+			CREATE,
+			JOIN
+		};
 
+		EnterScreen(sf::VideoMode mode, const sf::String& title,
+			sf::Image icon, int style = CustomScreen::Style::All);
+
+		~EnterScreen();
+
+		std::shared_ptr<BaseScreen> Next() override;
+
+		std::shared_ptr<BaseScreen> Last() override;
+
+		bool OnEnter() override;
+
+		bool OnExit() override;
+
+		int init() override;
+
+		void show() override;
+
+		void eventProcess() override;
+
+		void OnFailed() override;
+
+		void setType(EnterType type);
+
+	protected:
+		void needClose() override { OnExit(); }
+
+	private:
+		void reset();
+
+		std::unique_ptr<EnterDescriptionWidget> inputMeetingIdWidget;
+		std::unique_ptr <TextRectangle> createButton;
+		std::unique_ptr <TextRectangle> joinButton;
+		BaseText screenDescriptionText;
+		float wr, hr;
+		sf::Vector2i wndPosition;
+		EnterType type_{ EnterType::NONE };
 	};
 
 	/*

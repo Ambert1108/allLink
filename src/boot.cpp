@@ -10,6 +10,7 @@
 #include <string>
 #include <vector>
 #include <conio.h>
+#include <any>
 
 #include "controller.h"
 #include "vision.h"
@@ -30,17 +31,3 @@ int main(int argc, char* argv[]) {
   vcc.run();
   return 0;
 }
-std::string replace_with_integer_parts(const std::string& input) {
-  // 正则表达式匹配小数点及其后的数字
-  std::regex re(R"((\d+)\.\d+)");
-  // 替换为只保留整数部分
-  std::string output = std::regex_replace(input, re, "$1");
-  return output;
-}
-
-//int main() {
-//  std::string input = "11.41-13.12";
-//  std::string result = replace_with_integer_parts(input);
-//  std::cout << result << std::endl; // 输出: 11-13
-//  return 0;
-//}
