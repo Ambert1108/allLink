@@ -38,13 +38,13 @@ namespace alllink {
     }
   };
 
-  struct LinkInfo {
+  struct ServerInfo {
     std::string serverIp_;
     uint16_t serverPort_;
 
-    LinkInfo() = default;
+    ServerInfo() = default;
 
-    explicit LinkInfo(const std::string& addr) {
+    explicit ServerInfo(const std::string& addr) {
       try {
         std::regex pattern(R"((\d+\.\d+\.\d+\.\d+):(\d+))");
         std::smatch matches;
@@ -56,15 +56,15 @@ namespace alllink {
         serverPort_ = std::stoi(port);
       }
       catch (std::exception& ex) {
-        E_LOG("[LinkInfo::conductor] Failed to resolve server addr:{}", addr);
+        E_LOG("[ServerInfo::conductor] Failed to resolve server addr:{}", addr);
       }
     }
 
-    bool operator==(const LinkInfo& other) const {
+    bool operator==(const ServerInfo& other) const {
       return serverIp_ == other.serverIp_ && serverPort_ == other.serverPort_;
     }
 
-    LinkInfo& operator=(const LinkInfo& other) {
+    ServerInfo& operator=(const ServerInfo& other) {
       if (this != &other) {
         serverIp_ = other.serverIp_;
         serverPort_ = other.serverPort_;
@@ -74,20 +74,8 @@ namespace alllink {
   };
 
   struct SignlingInteractionObserver {
-    /*通知 控制器 信令服务器成功登录*/
-    virtual void OnSignedIn() = 0;
-    /*通知 控制器 登出信令服务器*/
-    virtual void OnDisconnected() = 0;
-    /*通知 控制器 其他客户端登录信令服务器*/
-    virtual void OnPeerConnected(int id, const std::string& name) = 0;
-    /*通知 控制器 其他客户端登出信令服务器*/
-    virtual void OnPeerDisconnected(int peer_id) = 0;
-    /*通知 控制器 接收到其他客户端发送过来的信息*/
-    virtual void OnMessageFromPeer(int peer_id, const std::string& message) = 0;
-    /*通知 控制器 信息已发送*/
-    virtual void OnMessageSent(int err) = 0;
-    /*通知 控制器 登录信令服务器失败*/
-    virtual void OnServerConnectionFailure() = 0;
+    /*通知 中控器 接收到信令转发的其他客户端发送过来的信息*/
+    virtual void OnMessageFromSignaling(const SignInfo& info) = 0;
 
   protected:
     virtual ~SignlingInteractionObserver() {}
@@ -136,9 +124,11 @@ namespace alllink {
 
     void registerObserver(SignlingInteractionObserver* callback);
 
-    bool connectServer(const LinkInfo& info);
+    bool connectServer(const ServerInfo& info);
 
     bool login(const UserInfo& info);
+
+    bool sendToPeer(const std::string& to, const std::string& message);
 
   protected:
     void logout();
@@ -158,23 +148,14 @@ namespace alllink {
     void OnUnauthorized(const SignInfo& info) override;
 
   private:
-    bool ToREGISTER(const SignInfo& info);
-    bool ToFORWARD(const SignInfo& info);
-    bool ToACK(const SignInfo& info);
-    bool ToBYE(const SignInfo& info);
-    bool ToCANCEL(const SignInfo& info);
-    bool ToINFO(const SignInfo& info);
-    bool ToHeartbeat(const SignInfo& info);
-    bool ToOK(const SignInfo& info);
-    bool ToTrying(const SignInfo& info);
-    bool ToRinging(const SignInfo& info);
+    bool ToSignaling(const SignInfo& info);
 
     SignlingInteractionObserver* callback_;
     static constexpr const char* TAG = "WSClient";
     std::shared_ptr<oatpp::websocket::WebSocket> client;
     std::shared_ptr<WSListener> listener;
     aom::InvokeTimerPtr listenBody;
-    LinkInfo linkInfo;
+    ServerInfo serverInfo;
     UserInfo userInfo;
     State signalState{ LOGIN_OUT };
     int64_t lastBeatPoint = 0;

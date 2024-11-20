@@ -133,7 +133,7 @@ namespace alllink {
   }
 
   void Controller::Close() {
-
+    DeletePeerConnection();
   }
 
   Controller::~Controller() {
@@ -141,9 +141,13 @@ namespace alllink {
   }
 
   bool Controller::InitializePeerConnection() {
+    if (!signaling_thread_.get()) {
+      signaling_thread_ = rtc::Thread::CreateWithSocketServer();
+      signaling_thread_->Start();
+    }
     peerConnectionFactory_ = webrtc::CreatePeerConnectionFactory(
       nullptr /* network_thread */, nullptr /* worker_thread */,
-      nullptr /* signal thread */, nullptr /* default_adm */,
+      signaling_thread_.get() /* signal thread */, nullptr /* default_adm */,
       webrtc::CreateBuiltinAudioEncoderFactory(),
       webrtc::CreateBuiltinAudioDecoderFactory(),
       std::make_unique<webrtc::VideoEncoderFactoryTemplate<
@@ -241,9 +245,6 @@ namespace alllink {
     else {
       E_LOG("OpenVideoCaptureDevice failed");
     }
-
-    // 通知视觉控制器切换界面至会议画面
-    vision_->switchStreamScreen();
   }
 
 
@@ -252,15 +253,36 @@ namespace alllink {
   //
   void Controller::OnAddTrack(rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver,
     const std::vector<rtc::scoped_refptr<webrtc::MediaStreamInterface>>& streams) {
-
+    hi::PostMsg({ msgTo(MessageType::ADD_TRACK), receiver->track().release() });
   }
 
   void Controller::OnRemoveTrack(rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver) {
-
+    hi::PostMsg({ msgTo(MessageType::REMOVE_TRACK), receiver->track().release() });
   }
 
+  // 生成offer/answer后PeerConnectionObserver会通过此函数上传生成的candidate
   void Controller::OnIceCandidate(const webrtc::IceCandidateInterface* candidate) {
+    //if (loopback_) {
+    //  if (!peerConnection_->AddIceCandidate(candidate)) {
+    //    W_LOG("Failed to apply the received candidate");
+    //  }
+    //  return;
+    //}
 
+    Json::Value jmessage;
+    jmessage["sdpMid"] = candidate->sdp_mid();
+    jmessage["sdpMLineIndex"] = candidate->sdp_mline_index();
+    std::string sdp;
+    if (!candidate->ToString(&sdp)) {
+      E_LOG("Failed to serialize candidate");
+      hi::PostMsg({ msgTo(MessageType::SEND_MSG_FAILED), nullptr });
+      return;
+    }
+    jmessage["candidate"] = sdp;
+
+    Json::StreamWriterBuilder factory;
+    std::string obj = (Json::writeString(factory, jmessage));
+    hi::PostMsg({ msgTo(MessageType::SEND_MSG_TO_PEER), obj });
   }
 
 
@@ -268,56 +290,118 @@ namespace alllink {
   // SignlingInteractionObserver implementation.
   //
 
-  void Controller::OnSignedIn() {
+  // 信令收到对端forward请求后进入此回调函数获取offer sdp并生成answer sdp
+  void Controller::OnMessageFromSignaling(const SignInfo& info) {
+    if (!peerConnection_.get()) {
+      meetId_ = info.from();
+      if (!InitializePeerConnection()) {
+        E_LOG("Failed to initialize our PeerConnection instance");
+        return;
+      }
+      D_LOG("init peerConnection finish");
+    }
+    else if (meetId_ != info.from()) {
+      W_LOG("Received a message from unknown peer while already in a "
+        "conversation with a different peer.");
+      return;
+    }
 
+    Json::CharReaderBuilder factory;
+    std::unique_ptr<Json::CharReader> reader =
+      absl::WrapUnique(factory.newCharReader());
+    Json::Value jmessage;
+    if (!reader->parse(info.sdp().data(), info.sdp().data() + info.sdp().length(), &jmessage, nullptr)) {
+      W_LOG("Received unknown message:{}", info.sdp());
+      return;
+    }
+    std::string type_str;
+    std::string json_object;
+
+    rtc::GetStringFromJsonObject(jmessage, "type", &type_str);
+
+    if (!type_str.empty()) { //type不为空代表收到sdp
+      if (type_str == "offer-loopback") {
+        // This is a loopback call.
+        // Recreate the peerconnection with DTLS disabled.
+        //if (!ReinitializePeerConnectionForLoopback()) {
+        //  E_LOG("Failed to initialize our PeerConnection instance");
+        //  DeletePeerConnection();
+        //  client_->SignOut();
+        //}
+        //D_LOG("on peer 6-2");
+        return;
+      }
+      std::optional<webrtc::SdpType> type_maybe = webrtc::SdpTypeFromString(type_str);
+      if (!type_maybe) {
+        E_LOG("Unknown SDP type: {}", type_str);
+        return;
+      }
+      webrtc::SdpType type = *type_maybe;
+      std::string sdp;
+      if (!rtc::GetStringFromJsonObject(jmessage, "sdp", &sdp)) {
+        W_LOG("Can't parse received session description message.");
+        return;
+      }
+      webrtc::SdpParseError error;
+      std::unique_ptr<webrtc::SessionDescriptionInterface> session_description =
+        webrtc::CreateSessionDescription(type, sdp, &error);
+      if (!session_description) {
+        W_LOG("Can't parse received session description message. "
+          "SdpParseError was: {}", error.description);
+        return;
+      }
+      D_LOG(" Received session description:{}", info.sdp());
+      peerConnection_->SetRemoteDescription(
+        DummySetSessionDescriptionObserver::Create().get(),
+        session_description.release());
+      if (type == webrtc::SdpType::kOffer) { //如果收到的是offer sdp则需要创建answer sdp，成功后回调OnSuccess
+        peerConnection_->CreateAnswer(this, webrtc::PeerConnectionInterface::RTCOfferAnswerOptions());
+      }
+    }
+    else {  //type为空代表收到ice candidate
+      std::string sdp_mid;
+      int sdp_mlineindex = 0;
+      std::string sdp;
+      if (!rtc::GetStringFromJsonObject(jmessage, "sdpMid",
+        &sdp_mid) ||
+        !rtc::GetIntFromJsonObject(jmessage, "sdpMLineIndex",
+          &sdp_mlineindex) ||
+        !rtc::GetStringFromJsonObject(jmessage, "candidate", &sdp)) {
+        W_LOG("Can't parse received message.");
+        return;
+      }
+      webrtc::SdpParseError error;
+      std::unique_ptr<webrtc::IceCandidateInterface> candidate(
+        webrtc::CreateIceCandidate(sdp_mid, sdp_mlineindex, sdp, &error));
+      if (!candidate.get()) {
+        W_LOG("Can't parse received candidate message. SdpParseError was: {}", error.description);
+        return;
+      }
+      // 添加并应用远端的ICE Candidate
+      if (!peerConnection_->AddIceCandidate(candidate.get())) {
+        W_LOG("Failed to apply the received candidate");
+        return;
+      }
+      I_LOG("Received candidate :{}", info.sdp());
+    }
   }
-
-
-  void Controller::OnDisconnected() {
-
-  }
-
-
-  void Controller::OnPeerConnected(int id, const std::string& name) {
-
-  }
-
-
-  void Controller::OnPeerDisconnected(int id) {
-
-  }
-
-
-  void Controller::OnMessageFromPeer(int peer_id, const std::string& message) {
-
-  }
-
-
-  void Controller::OnMessageSent(int err) {
-
-  }
-
-
-  void Controller::OnServerConnectionFailure() {
-
-  }
-
 
   //
   // VisionCnetralCallback implementation.
   //
 
-  bool Controller::StartLogin(const LinkInfo& link, const UserInfo& user) {
+  bool Controller::StartLogin(const ServerInfo& server, const UserInfo& user) {
     //调用信令接口实现登录
-    if (!client_->connectServer(link)) {
-      W_LOG("[Controller::StartLogin] link server {}:{} failed", link.serverIp_, link.serverPort_);
+    if (!client_->connectServer(server)) {
+      W_LOG("[Controller::StartLogin] link server {}:{} failed", server.serverIp_, server.serverPort_);
       return false;
     }
     if (!client_->login(user)) {
       W_LOG("[Controller::StartLogin] {} login failed", user.id_);
       return false;
     }
-    I_LOG("[Controller::StartLogin] login user:{} to {}:{} done", user.id_, link.serverIp_, link.serverPort_);
+    I_LOG("[Controller::StartLogin] login user:{} to {}:{} done", 
+      user.id_, server.serverIp_, server.serverPort_);
     return true;
   }
 
@@ -342,6 +426,7 @@ namespace alllink {
     // 生成offer后会通过OnSuccess回调函数传回offer
     // 在OnSuccess函数中触发信令流程
     peerConnection_->CreateOffer(this, webrtc::PeerConnectionInterface::RTCOfferAnswerOptions());
+    I_LOG("create offer done");
     return true;
   }
 
@@ -351,17 +436,51 @@ namespace alllink {
   }
 
 
-  void Controller::CustomMessageCallback(int msg_id, void* data) {
-
+  void Controller::CustomMessageCallback(const Message& msg) {
+    //通知信令交互系统处理 offer/answer sdp 或 ice candidate
+    if (!client_->sendToPeer(meetId_, std::any_cast<std::string>(msg.data))) {
+      hi::PostMsg({ msgTo(MessageType::SEND_MSG_FAILED), nullptr });
+    }
   }
 
+  // 
+  // CreateSessionDescriptionObserver implementation
+  //
 
-  // CreateSessionDescriptionObserver implementation.
   void Controller::OnSuccess(webrtc::SessionDescriptionInterface* desc) {
+    I_LOG("[debug] success create offer sdp");
+    peerConnection_->SetLocalDescription(
+      DummySetSessionDescriptionObserver::Create().get(), desc);
 
+    std::string sdp;
+    desc->ToString(&sdp);
+
+    // For loopback test. To save some connecting delay.
+    //if (loopback_) {
+    //  // Replace message type from "offer" to "answer"
+    //  std::unique_ptr<webrtc::SessionDescriptionInterface> session_description =
+    //    webrtc::CreateSessionDescription(webrtc::SdpType::kAnswer, sdp);
+    //  peer_connection_->SetRemoteDescription(
+    //    DummySetSessionDescriptionObserver::Create().get(),
+    //    session_description.release());
+    //  return;
+    //}
+
+    Json::Value jmessage;
+    jmessage["type"] =
+      webrtc::SdpTypeToString(desc->GetType());
+    jmessage["sdp"] = sdp;
+
+    Json::StreamWriterBuilder factory;
+    std::string obj = Json::writeString(factory, jmessage);
+    // 在peerConnection线程中无法直接执行信令
+    // 使用消息队列在主线程中处理
+    I_LOG("create offer success");
+    hi::PostMsg({ msgTo(MessageType::SEND_MSG_TO_PEER), obj });
   }
 
   void Controller::OnFailure(webrtc::RTCError error) {
-
+    E_LOG("Create Offer failed, {}:{}", ToString(error.type()), error.message());
+    hi::PostMsg({ msgTo(MessageType::SEND_MSG_FAILED), nullptr });
   }
 }

@@ -7,6 +7,20 @@
 
 #include "seeker/common.h"
 
+#include "api/video/video_sink_interface.h"
+#include "api/media_stream_interface.h"
+#include "api/video/video_frame.h"
+#include "media/base/media_channel.h"
+#include "media/base/video_common.h"
+#if defined(WEBRTC_WIN)
+#include "rtc_base/win32.h"
+#endif  // WEBRTC_WIN
+#include "api/async_dns_resolver.h"
+#include "api/task_queue/pending_task_safety_flag.h"
+#include "rtc_base/net_helpers.h"
+#include "rtc_base/physical_socket_server.h"
+#include "rtc_base/third_party/sigslot/sigslot.h"
+
 namespace alllink {
 
 	class CustomScreen : public BaseScreen {
@@ -64,10 +78,6 @@ namespace alllink {
 
 		~StartScreen();
 
-		std::shared_ptr<BaseScreen> Next() override;
-
-		std::shared_ptr<BaseScreen> Last() override;
-
 		bool OnEnter() override;
 
 		bool OnExit() override;
@@ -95,6 +105,7 @@ namespace alllink {
 		LoginType type_{ LoginType::OFFLINE };
 		sf::RectangleShape taskSide;
 		float wr, hr;
+		sf::Vector2i wndPosition;
 	};
 
 	/*
@@ -107,10 +118,6 @@ namespace alllink {
 			sf::Image icon, int style = CustomScreen::Style::All);
 
 		~LoginScreen();
-
-		std::shared_ptr<BaseScreen> Next() override;
-
-		std::shared_ptr<BaseScreen> Last() override;
 
 		bool OnEnter() override;
 
@@ -157,10 +164,6 @@ namespace alllink {
 
 		~EnterScreen();
 
-		std::shared_ptr<BaseScreen> Next() override;
-
-		std::shared_ptr<BaseScreen> Last() override;
-
 		bool OnEnter() override;
 
 		bool OnExit() override;
@@ -202,8 +205,122 @@ namespace alllink {
 	* 程序的会议界面，提供会议画面接收，开关摄像头/麦克风/屏幕共享功能，属于流式界面，
 	* 可以切换至上一个流式界面。
 	*/
-	class StreamScreen : public CustomScreen {
+	class StreamScreen : public BaseScreen {
 	public:
+		StreamScreen(sf::VideoMode mode, const sf::String& title,
+			sf::Image icon, sf::Uint32 style = sf::Style::Default);
 
+		~StreamScreen();
+
+		bool OnEnter() override;
+
+		bool OnExit() override;
+
+		int init() override;
+
+		void show() override;
+
+		void eventProcess() override;
+
+		void OnFailed() override {}
+
+		void startLocalRenderer(webrtc::VideoTrackInterface* local_video);
+
+		void stopLocalRenderer();
+
+		void startRemoteRenderer(webrtc::VideoTrackInterface* remote_video);
+
+		void stopRemoteRenderer();
+
+		struct ImageData {
+			BITMAPINFO bmi;
+			std::unique_ptr<uint8_t[]> image = nullptr;
+
+			ImageData() = default;
+
+			ImageData(const BITMAPINFO& bm, const uint8_t* data) : bmi(bm) {
+				image.reset(new uint8_t[bmi.bmiHeader.biSizeImage]);
+				memcpy(image.get(), data, bmi.bmiHeader.biSizeImage);
+			}
+
+			ImageData(const ImageData& other) : bmi(other.bmi) {
+				if (other.image) {
+					image.reset(new uint8_t[bmi.bmiHeader.biSizeImage]);
+					std::copy(other.image.get(), other.image.get() + bmi.bmiHeader.biSizeImage, image.get());
+				}
+			}
+
+			ImageData& operator=(const ImageData& other) {
+				if (this != &other) {
+					image.reset();
+					bmi = other.bmi;
+
+					if (other.image) {
+						image.reset(new uint8_t[bmi.bmiHeader.biSizeImage]);
+						std::copy(other.image.get(), other.image.get() + bmi.bmiHeader.biSizeImage, image.get());
+					}
+				}
+				return *this;
+			}
+		};
+
+		class VideoRenderer : public rtc::VideoSinkInterface<webrtc::VideoFrame> {
+		public:
+			VideoRenderer(std::function<void()> callback,
+				int width,
+				int height,
+				webrtc::VideoTrackInterface* track_to_render);
+			virtual ~VideoRenderer();
+
+			void Lock() { ::EnterCriticalSection(&buffer_lock_); }
+
+			void Unlock() { ::LeaveCriticalSection(&buffer_lock_); }
+
+			// VideoSinkInterface implementation
+			void OnFrame(const webrtc::VideoFrame& frame) override;
+
+			const BITMAPINFO& bmi() const { return bmi_; }
+			const uint8_t* image() const { return image_.get(); }
+
+		protected:
+			void SetSize(int width, int height);
+
+			enum {
+				SET_SIZE,
+				RENDER_FRAME,
+			};
+
+			std::function<void()> paint = nullptr;
+			BITMAPINFO bmi_;
+			std::unique_ptr<uint8_t[]> image_;
+			CRITICAL_SECTION buffer_lock_;
+			rtc::scoped_refptr<webrtc::VideoTrackInterface> rendered_track_;
+		};
+
+		template <typename T>
+		class AutoLock {
+		public:
+			explicit AutoLock(T* obj) : obj_(obj) { obj_->Lock(); }
+			~AutoLock() { obj_->Unlock(); }
+
+		protected:
+			T* obj_;
+		};
+
+	protected:
+		void OnPaint();
+
+	private:
+		std::unique_ptr<VideoRenderer> local_renderer_;
+		std::unique_ptr<VideoRenderer> remote_renderer_;
+		sf::Texture* localSrc = nullptr;
+		sf::Texture* remoteSrc = nullptr;
+		VideoModule localVideo{};
+		VideoModule remoteVideo{};
+		base::ThreadSafeQueue<ImageData> remoteImageList{};
+		base::ThreadSafeQueue<ImageData> localImageList{};
+		std::atomic<bool> isMirror{ false };
+		float wr, hr;
+		sf::Vector2i wndPosition;
 	};
 }

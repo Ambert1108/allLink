@@ -21,7 +21,7 @@ namespace alllink {
   class VisionCnetralCallback {
   public:
     /*通知控制器登录信令服务器*/
-    virtual bool StartLogin(const LinkInfo& link, const UserInfo& user) = 0;
+    virtual bool StartLogin(const ServerInfo& server, const UserInfo& user) = 0;
     /*通知控制器登出信令服务器*/
     virtual void DisconnectFromServer() = 0;
     /*通知控制器连接对端peer*/
@@ -29,7 +29,7 @@ namespace alllink {
     /*通知控制器与对端断开连接*/
     virtual void DisconnectFromCurrentPeer() = 0;
     /*控制器自定义消息处理函数*/
-    virtual void CustomMessageCallback(int msg_id, void* data) = 0;
+    virtual void CustomMessageCallback(const Message& msg) = 0;
     /*通知控制器关闭*/
     virtual void Close() = 0;
 
@@ -37,47 +37,11 @@ namespace alllink {
     virtual ~VisionCnetralCallback() {}
   };
 
-  struct ImageData {
-    BITMAPINFO bmi;
-    std::unique_ptr<uint8_t[]> image = nullptr;
-
-    ImageData() = default;
-
-    ImageData(const BITMAPINFO& bm, const uint8_t* data) : bmi(bm) {
-      image.reset(new uint8_t[bmi.bmiHeader.biSizeImage]);
-      memcpy(image.get(), data, bmi.bmiHeader.biSizeImage);
-    }
-
-    ImageData(const ImageData& other) : bmi(other.bmi) {
-      if (other.image) {
-        image.reset(new uint8_t[bmi.bmiHeader.biSizeImage]);
-        std::copy(other.image.get(), other.image.get() + bmi.bmiHeader.biSizeImage, image.get());
-      }
-    }
-
-    ImageData& operator=(const ImageData& other) {
-      if (this != &other) {
-        image.reset();
-        bmi = other.bmi;
-
-        if (other.image) {
-          image.reset(new uint8_t[bmi.bmiHeader.biSizeImage]);
-          std::copy(other.image.get(), other.image.get() + bmi.bmiHeader.biSizeImage, image.get());
-        }
-      }
-      return *this;
-    }
-  };
-
   class VisionCnetralBase {
   public:
     virtual ~VisionCnetralBase() {}
 
     virtual void registerObserver(VisionCnetralCallback* callback) = 0;
-
-    virtual void switchStreamScreen() = 0;
-
-    virtual void switchStartScreen() = 0;
 
     virtual void startLocalRenderer(webrtc::VideoTrackInterface* local_video) = 0;
     virtual void stopLocalRenderer() = 0;
@@ -98,10 +62,6 @@ namespace alllink {
     void registerObserver(VisionCnetralCallback* callback);
     void run();
 
-    void switchStreamScreen();
-
-    void switchStartScreen();
-
     void startLocalRenderer(webrtc::VideoTrackInterface* local_video);
     void stopLocalRenderer();
     void startRemoteRenderer(webrtc::VideoTrackInterface* remote_video);
@@ -114,6 +74,7 @@ namespace alllink {
 
   private:
     std::shared_ptr<BaseScreen> wnd = nullptr; //流式窗口
+    std::shared_ptr<BaseScreen> streamWnd = nullptr; //流式窗口
     std::shared_ptr<BaseScreen> loginWnd = nullptr;
     std::shared_ptr<BaseScreen> enterWnd = nullptr;
     VisionCnetralCallback* callback_;

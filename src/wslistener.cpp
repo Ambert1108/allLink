@@ -7,7 +7,7 @@ namespace alllink {
 
   void WSListener::onPing(const WebSocket& socket, const oatpp::String& message) {
     OATPP_LOGD(TAG, "onPing");
-    socket.sendPong(message);
+    //socket.sendPong(message);
   }
 
   void WSListener::onPong(const WebSocket& socket, const oatpp::String& message) {

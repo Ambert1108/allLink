@@ -17,14 +17,6 @@ namespace alllink {
 
 	EnterScreen::~EnterScreen() {}
 
-	std::shared_ptr<BaseScreen> EnterScreen::Next() {
-		return nullptr;
-	}
-
-	std::shared_ptr<BaseScreen> EnterScreen::Last() {
-		return nullptr;
-	}
-
 	bool EnterScreen::OnEnter() {
 		if (isActive) return false;
 		this->setVisible(true);
@@ -98,14 +90,27 @@ namespace alllink {
 		while (this->pollEvent(event)) {
 			this->checkStatus(event);
 			inputMeetingIdWidget->eventProcess(event, this);
-			if ((joinButton->onClick(event, getMousePosition(), this)
-				|| (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Enter))
-				&& joinButton->getActive()) {
-				std::vector<std::string> info{
-					inputMeetingIdWidget->getInput()};
-				hi::PostMsg({ msgTo(MessageType::IS_ENTER), info });
-				if (type_ == EnterType::CREATE) createButton->setActive(false);
-				else joinButton->setActive(false);
+			if (type_ == EnterType::CREATE) {
+				if ((createButton->onClick(event, getMousePosition(), this)
+					|| (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Enter))
+					&& createButton->getActive()) {
+					std::vector<std::string> info{
+						inputMeetingIdWidget->getInput() };
+					hi::PostMsg({ msgTo(MessageType::IS_ENTER), info });
+					if (type_ == EnterType::CREATE) createButton->setActive(false);
+					else createButton->setActive(false);
+				}
+			}
+			else{
+				if ((joinButton->onClick(event, getMousePosition(), this)
+					|| (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Enter))
+					&& joinButton->getActive()) {
+					std::vector<std::string> info{
+						inputMeetingIdWidget->getInput()};
+					hi::PostMsg({ msgTo(MessageType::IS_ENTER), info });
+					if (type_ == EnterType::CREATE) createButton->setActive(false);
+					else joinButton->setActive(false);
+				}
 			}
 			if (!inputMeetingIdWidget->empty()) {
 				if (type_ == EnterType::CREATE) createButton->setActive(true);

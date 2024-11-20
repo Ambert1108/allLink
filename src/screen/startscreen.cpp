@@ -6,6 +6,7 @@ namespace alllink {
 		: CustomScreen(mode, title, icon, style) {
 		wr = static_cast<float>(mode.width) / 640;
 		hr = static_cast<float>(mode.height) / 480;
+		wndPosition = this->getPosition();
 		this->icon_ = icon;
 		this->setFramerateLimit(60);
 		this->setVisible(false);
@@ -16,17 +17,11 @@ namespace alllink {
 
 	StartScreen::~StartScreen() { }
 
-	std::shared_ptr<BaseScreen> StartScreen::Next() {
-		//切换至会议界面，具体传参待开发
-		//return std::make_shared<StreamScreen>();
-	}
-
-	std::shared_ptr<BaseScreen> StartScreen::Last() { return nullptr; }
-
 
 	bool StartScreen::OnEnter() {
 		//TODO:设置界面可见
 		this->setVisible(true);
+		this->setPosition(wndPosition);
 		isActive = true;
 		return true;
 	}

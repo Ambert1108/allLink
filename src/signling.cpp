@@ -33,9 +33,9 @@ namespace alllink {
     callback_ = callback;
   }
 
-  bool SignlingInteractionSystem::connectServer(const LinkInfo& info) {
+  bool SignlingInteractionSystem::connectServer(const ServerInfo& info) {
     if (info.serverIp_.empty() || info.serverPort_ < 8888) return false;
-    if (linkInfo == info) {
+    if (serverInfo == info) {
       W_LOG("[SignlingInteractionSystem::connectServer] server addr {}:{} is same",
         info.serverIp_, info.serverPort_);
       return false;
@@ -45,12 +45,12 @@ namespace alllink {
       if (client) {
         logout();
         I_LOG("[SignlingInteractionSystem::connectServer] login out! old server is {}:{}, new server is {}:{}",
-          linkInfo.serverIp_, linkInfo.serverPort_, info.serverIp_, info.serverPort_);
+          serverInfo.serverIp_, serverInfo.serverPort_, info.serverIp_, info.serverPort_);
       }
 
-      linkInfo = info;
+      serverInfo = info;
       auto connectionProvider =
-        oatpp::network::tcp::client::ConnectionProvider::createShared({ linkInfo.serverIp_, linkInfo.serverPort_ });
+        oatpp::network::tcp::client::ConnectionProvider::createShared({ serverInfo.serverIp_, serverInfo.serverPort_ });
       auto connector = oatpp::websocket::Connector::createShared(connectionProvider);
       auto connection = connector->connect("/connectWS");
       client = oatpp::websocket::WebSocket::createShared(connection, true);
@@ -72,7 +72,16 @@ namespace alllink {
     msg.set_cseq(cseq_);
     msg.set_userid(info.id_);
     msg.set_password(info.pwd_);
-    return ToREGISTER(msg);
+    return ToSignaling(msg);
+  }
+
+  bool SignlingInteractionSystem::sendToPeer(const std::string& to, const std::string& message) {
+    SignInfo msg;
+    msg.set_meth("FORWARD");
+    msg.set_from(userInfo.id_);
+    msg.set_to(to);
+    msg.set_sdp(message);
+    return ToSignaling(msg);
   }
 
   void SignlingInteractionSystem::logout() {
@@ -83,7 +92,8 @@ namespace alllink {
   }
 
   void SignlingInteractionSystem::OnFORWARD(const SignInfo& info) {
-
+    // 收到对端的FORWARD信令
+    callback_->OnMessageFromSignaling(info);
   }
 
   void SignlingInteractionSystem::OnACK(const SignInfo& info) {
@@ -126,46 +136,8 @@ namespace alllink {
 
 
   //private
-  bool SignlingInteractionSystem::ToREGISTER(const SignInfo& info) {
+  bool SignlingInteractionSystem::ToSignaling(const SignInfo& info) {
     oatpp::String js = oatpp::String(info.js.dump());
     return client->sendOneFrame(true, oatpp::websocket::Frame::OPCODE_TEXT, js);
   }
-
-  bool SignlingInteractionSystem::ToFORWARD(const SignInfo& info) {
-
-  }
-
-  bool SignlingInteractionSystem::ToACK(const SignInfo& info) {
-
-  }
-
-  bool SignlingInteractionSystem::ToBYE(const SignInfo& info) {
-
-  }
-
-  bool SignlingInteractionSystem::ToCANCEL(const SignInfo& info) {
-
-  }
-
-  bool SignlingInteractionSystem::ToINFO(const SignInfo& info) {
-
-  }
-
-  bool SignlingInteractionSystem::ToHeartbeat(const SignInfo& info) {
-
-  }
-
-  bool SignlingInteractionSystem::ToOK(const SignInfo& info) {
-
-  }
-
-  bool SignlingInteractionSystem::ToTrying(const SignInfo& info) {
-
-  }
-
-  bool SignlingInteractionSystem::ToRinging(const SignInfo& info) {
-
-  }
-
-
 }

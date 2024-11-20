@@ -15,15 +15,7 @@ namespace alllink {
 		loginButton = nullptr;
 	}
 
-	LoginScreen::~LoginScreen() {  }
-
-	std::shared_ptr<BaseScreen> LoginScreen::Next() {
-		return nullptr;
-	}
-
-	std::shared_ptr<BaseScreen> LoginScreen::Last() {
-		return nullptr;
-	}
+	LoginScreen::~LoginScreen() {}
 
 	bool LoginScreen::OnEnter() {
 		if (isActive) return false;

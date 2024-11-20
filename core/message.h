@@ -41,13 +41,27 @@ namespace alllink {
 		SETTING,
 
 		/* 登录窗口消息 */
+
 		IS_LOGIN,
 
 		/* 加入会议窗口消息 */
+
 		IS_ENTER,
 
+		/* 会议窗口消息 */
+		
+		MEETING_END,
+
 		/* 信令消息 */
-		LOGIN_SUCCESS
+
+		LOGIN_SUCCESS,
+
+		/* 中控器消息 */
+
+		SEND_MSG_TO_PEER,      //发送offer/answer sdp或ice candidate给对端
+		SEND_MSG_FAILED,       //发送offer/answer sdp或ice candidate失败
+		ADD_TRACK,             //添加新轨道
+		REMOVE_TRACK           //移除轨道
 	};
 
 	static constexpr int msgTo(MessageType msg) { return static_cast<int>(msg); }

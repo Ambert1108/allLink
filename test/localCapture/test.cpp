@@ -146,7 +146,7 @@ protected:
   BITMAPINFO bmi_;
   std::unique_ptr<uint8_t[]> image_;
   CRITICAL_SECTION buffer_lock_;
-  //rtc::scoped_refptr<webrtc::VideoTrackInterface> rendered_track_;
+  rtc::scoped_refptr<webrtc::VideoTrackInterface> rendered_track_;
 };
 
 std::atomic<bool> isMirror{ false };

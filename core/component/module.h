@@ -561,4 +561,47 @@ namespace alllink {
 		sf::Color activeColor;
 		sf::Color inactiveColor;
 	};
+
+	class VideoModule : public sf::RectangleShape {
+	public:
+		VideoModule() {};
+
+		void init(int width, int height, int x, int y) {
+			this->setFillColor(sf::Color(50, 50, 50));
+			this->setSize(sf::Vector2f(width, height));
+			this->setPosition(sf::Vector2f(x, y));
+		}
+
+		int setVideo(const sf::Texture& texture_) {
+			sf::Vector2f beforeSize = source.getGlobalBounds().getSize();
+			source.setTexture(texture_, true);
+			sf::Vector2f afterSize = source.getGlobalBounds().getSize();
+			if (beforeSize != afterSize) {
+				sf::Vector2f backSize = this->getGlobalBounds().getSize() - sf::Vector2f(this->getOutlineThickness() * 2, this->getOutlineThickness() * 2);
+				float backRatio = backSize.x / backSize.y;
+				float afterRatio = afterSize.x / afterSize.y;
+				float scale = 1;
+				if (afterRatio > backRatio) {
+					scale = backSize.x / afterSize.x;
+				}
+				else {
+					scale = backSize.y / afterSize.y;
+				}
+				source.setScale(scale * source.getScale().x, scale * source.getScale().y);
+				sf::Vector2f newSize = source.getGlobalBounds().getSize();
+				sf::Vector2f newPos = this->getPosition();
+				newPos += (backSize - newSize) / 2.f;
+				source.setPosition(newPos);
+			}
+			return 0;
+		}
+		
+		void render(sf::RenderTarget* tar) {
+			tar->draw(*this);
+			tar->draw(source);
+		}
+		
+	protected:
+		sf::Sprite source;
+	};
 }

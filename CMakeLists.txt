@@ -183,9 +183,9 @@ add_definitions(
 
 # Add your source files here
 add_subdirectory(src)
-#add_subdirectory(test/localCapture)
-add_subdirectory(test/testWidget)
-add_subdirectory(test/customWindows)
+add_subdirectory(test/localCapture)
+#add_subdirectory(test/testWidget)
+#add_subdirectory(test/customWindows)
 #add_subdirectory(test/win32Test)
-add_subdirectory(test/outscreenRender)
-add_subdirectory(test/game1)
+#add_subdirectory(test/outscreenRender)
+#add_subdirectory(test/game1)

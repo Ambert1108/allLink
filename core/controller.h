@@ -58,25 +58,13 @@ namespace alllink {
     // SignlingInteractionObserver implementation.
     //
 
-    void OnSignedIn() override;
-
-    void OnDisconnected() override;
-
-    void OnPeerConnected(int id, const std::string& name) override;
-
-    void OnPeerDisconnected(int id) override;
-
-    void OnMessageFromPeer(int peer_id, const std::string& message) override;
-
-    void OnMessageSent(int err) override;
-
-    void OnServerConnectionFailure() override;
+    void OnMessageFromSignaling(const SignInfo& info) override;
 
     //
     // VisionCnetralCallback implementation.
     //
 
-    bool StartLogin(const LinkInfo& link, const UserInfo& user) override;
+    bool StartLogin(const ServerInfo& server, const UserInfo& user) override;
 
     void DisconnectFromServer() override;
 
@@ -84,14 +72,18 @@ namespace alllink {
 
     void DisconnectFromCurrentPeer() override;
 
-    void CustomMessageCallback(int msg_id, void* data) override;
+    void CustomMessageCallback(const Message& msg) override;
 
-    // CreateSessionDescriptionObserver implementation.
+    // 
+    // CreateSessionDescriptionObserver implementation
+    //
+
     void OnSuccess(webrtc::SessionDescriptionInterface* desc) override;
     void OnFailure(webrtc::RTCError error) override;
   private:
     SignlingInteractionSystem* client_;
     VisionCnetralBase* vision_;
+    std::unique_ptr<rtc::Thread> signaling_thread_;
     rtc::scoped_refptr<webrtc::PeerConnectionInterface> peerConnection_;
     rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface>
       peerConnectionFactory_;
