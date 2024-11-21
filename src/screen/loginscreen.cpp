@@ -77,10 +77,10 @@ namespace alllink {
 			this->cross.render(this);
 			break;
 		}
-		this->draw(screenDescriptionText);
 		inputSeverAddrWidget->render(this);
 		inputUserIdWidget->render(this);
 		inputUserPwdWidget->render(this);
+		this->draw(screenDescriptionText);
 		loginButton->render(this);
 		this->display();
 	}

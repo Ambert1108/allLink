@@ -73,6 +73,7 @@ namespace alllink {
 			this->cross.render(this);
 			break;
 		}
+		inputMeetingIdWidget->render(this);
 		if (type_ == EnterType::CREATE) {
 			this->draw(screenDescriptionText);
 			createButton->render(this);
@@ -81,7 +82,6 @@ namespace alllink {
 			this->draw(screenDescriptionText);
 			joinButton->render(this);
 		}
-		inputMeetingIdWidget->render(this);
 		this->display();
 	}
 
