@@ -177,13 +177,21 @@ namespace alllink {
         // 中控器收到创建轨道回调，通话建立成功
         
         // 连接成功，隐藏连接窗口及开始窗口，显示会议窗口
-        I_LOG("[test] add track, link success");
-        enterWnd->OnExit();
-        wnd->OnExit();
-        streamWnd->OnEnter();
-        std::shared_ptr<StreamScreen> point = std::dynamic_pointer_cast<StreamScreen>(streamWnd);
-        if (!point) return;
-        point->startRemoteRenderer(std::any_cast<webrtc::VideoTrackInterface*>(msg.data));
+        auto* track = std::any_cast<webrtc::MediaStreamTrackInterface*>(msg.data);
+        if (track->kind() == webrtc::MediaStreamTrackInterface::kVideoKind) {
+          I_LOG("add video track");
+          enterWnd->OnExit();
+          wnd->OnExit();
+          streamWnd->OnEnter();
+          std::shared_ptr<StreamScreen> point = std::dynamic_pointer_cast<StreamScreen>(streamWnd);
+          if (!point) return;
+          auto* video_track = static_cast<webrtc::VideoTrackInterface*>(track);
+          point->startRemoteRenderer(video_track);
+          I_LOG("[test] add track, link success");
+        }
+        else I_LOG("add audio track");
+        track->Release();
+        
         break;
       }
       case msgTo(MessageType::REMOVE_TRACK): {

@@ -35,6 +35,8 @@ namespace alllink {
 	}
 
 	int StreamScreen::init() {
+    remoteSrc = new sf::Texture();
+    localSrc = new sf::Texture();
     remoteVideo.init(1920, 1080, 0, 0);
     localVideo.init(640, 480, 1180, 590);
     this->setSize(sf::Vector2u(1280, 720));
@@ -45,22 +47,24 @@ namespace alllink {
 		if (!isActive) return;
 		this->clear(sf::Color(242, 242, 242));
     ImageData remoteData, localData;
+    I_LOG("start get image");
     if (remoteImageList.WaitPopFlex(remoteData)) {
       int remoteHeight = abs(remoteData.bmi.bmiHeader.biHeight);
       int remoteWidth = remoteData.bmi.bmiHeader.biWidth;
       bool reset = false;
       if (remoteSrc->getSize().x != remoteWidth
         || remoteSrc->getSize().y != remoteHeight) {
-        D_LOG("remote size is {}:{}, raw size is {}:{}", remoteSrc->getSize().x, remoteSrc->getSize().y,
+        I_LOG("remote size is {}:{}, raw size is {}:{}", remoteSrc->getSize().x, remoteSrc->getSize().y,
           remoteWidth, remoteHeight);
         remoteSrc->create(remoteWidth, remoteHeight);
         int remoteX = (this->getSize().x - remoteWidth) / 2;
         int remoteY = (this->getSize().y - remoteHeight) / 2;
-        remoteVideo.setPosition(sf::Vector2f(remoteX, remoteY));
+        //remoteVideo.setPosition(sf::Vector2f(remoteX, remoteY));
         reset = true;
       }
       remoteSrc->update(remoteData.image.get());
       remoteVideo.setVideo(*remoteSrc);
+      I_LOG("set remote image");
       remoteVideo.render(this);
     }
     if (localImageList.TryPopFlex(localData)) {
@@ -71,17 +75,18 @@ namespace alllink {
 
       bool reset = false;
       if (localSrc->getSize().x != rawWidth || localSrc->getSize().y != rawHeight) {
-        D_LOG("local size is {}:{}, raw size is {}:{}", localSrc->getSize().x, localSrc->getSize().y,
+        I_LOG("local size is {}:{}, raw size is {}:{}", localSrc->getSize().x, localSrc->getSize().y,
           rawWidth, rawHeight);
         localSrc->create(rawWidth, rawHeight);
         int lcoalX = this->getSize().x - localWidth - 10;
         int lcoalY = this->getSize().y - localHeight - 10;
-        localVideo.setPosition(sf::Vector2f(lcoalX, lcoalY));
+        //localVideo.setPosition(sf::Vector2f(lcoalX, lcoalY));
         reset = true;
       }
       localSrc->update(localData.image.get());
       localVideo.setVideo(*localSrc);
       localVideo.setScale(0.25f, 0.25f);
+      I_LOG("set local image");
       localVideo.render(this);
     }
 
@@ -106,6 +111,7 @@ namespace alllink {
 
   void StreamScreen::startLocalRenderer(webrtc::VideoTrackInterface* local_video) {
     local_renderer_.reset(new VideoRenderer(std::bind(&StreamScreen::OnPaint, this), 1, 1, local_video));
+    I_LOG("local render reset");
   }
 
   void StreamScreen::stopLocalRenderer() {
@@ -114,6 +120,7 @@ namespace alllink {
 
   void StreamScreen::startRemoteRenderer(webrtc::VideoTrackInterface* remote_video) {
     remote_renderer_.reset(new VideoRenderer(std::bind(&StreamScreen::OnPaint, this), 1, 1, remote_video));
+    I_LOG("remote render reset");
   }
 
   void StreamScreen::stopRemoteRenderer() {
@@ -125,7 +132,7 @@ namespace alllink {
     //获取本地和远端的视频画面
     VideoRenderer* local_renderer = local_renderer_.get();
     VideoRenderer* remote_renderer = remote_renderer_.get();
-    if (remote_renderer && local_renderer) {
+    if (isActive && remote_renderer && local_renderer) {
       AutoLock<VideoRenderer> local_lock(local_renderer);
       AutoLock<VideoRenderer> remote_lock(remote_renderer);
       const BITMAPINFO& bmi = remote_renderer->bmi();
@@ -133,19 +140,36 @@ namespace alllink {
 
       if (image != NULL) {
         remoteImageList.Push(ImageData(bmi, image));
+        I_LOG("remote image push");
         if (this->getSize().x > 200 && this->getSize().y > 200) {
+          I_LOG("1");
           const BITMAPINFO& lbmi = local_renderer->bmi();
           const uint8_t* limage = local_renderer->image();
+          if (limage == nullptr) {
+            I_LOG("local image is nullptr");
+            return;
+          }
+          else if (lbmi.bmiHeader.biSizeImage <= 0) {
+            I_LOG("error, image size is {}", lbmi.bmiHeader.biSizeImage);
+            return;
+          }
+          I_LOG("2");
           if (isMirror.load()) {
             ImageData data;
             data.bmi = lbmi;
             data.image.reset(new uint8_t[lbmi.bmiHeader.biSizeImage]);
+            I_LOG("3-1");
             libyuv::ARGBMirror(limage, lbmi.bmiHeader.biWidth * lbmi.bmiHeader.biBitCount / 8,
               data.image.get(), lbmi.bmiHeader.biWidth * lbmi.bmiHeader.biBitCount / 8,
               lbmi.bmiHeader.biWidth, std::abs(lbmi.bmiHeader.biHeight));
+            I_LOG("3-1-2");
             localImageList.Push(data);
           }
-          else localImageList.Push(ImageData(lbmi, limage));
+          else {
+            I_LOG("3-2");
+            localImageList.Push(ImageData(lbmi, limage));
+          }
+          I_LOG("local image push");
         }
       }
       else {
