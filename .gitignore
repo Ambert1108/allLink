@@ -65,7 +65,6 @@ _deps
 *.svclog
 *.scc
 *.pos
-*.pdf
 *.pptx
 
 # Chutzpah Test files

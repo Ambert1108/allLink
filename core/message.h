@@ -27,8 +27,6 @@ namespace alllink {
     static base::ThreadSafeQueue<Message> messageQueue;
   };
 
-
-
 	enum class MessageType : int {
 		/*全局消息载体*/
 
@@ -58,7 +56,8 @@ namespace alllink {
 
 		/* 中控器消息 */
 
-		SEND_MSG_TO_PEER,      //发送offer/answer sdp或ice candidate给对端
+		SEND_SDP_TO_PEER,      //发送offer/answer sdp给对端
+		SEND_ICE_TO_PEER,      //发送ice candidate给对端
 		SEND_MSG_FAILED,       //发送offer/answer sdp或ice candidate失败
 		ADD_TRACK,             //添加新轨道
 		REMOVE_TRACK           //移除轨道

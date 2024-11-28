@@ -162,7 +162,7 @@ namespace alllink {
         // 调用DisconnectFromCurrentPeer方法通知中控器断开连接
         break;
       }
-      case msgTo(MessageType::SEND_MSG_TO_PEER): {
+      case msgTo(MessageType::SEND_SDP_TO_PEER) : case msgTo(MessageType::SEND_ICE_TO_PEER): {
         // 中控器需要发送sdp/ice消息
         I_LOG("[test] send to peer");
         // 通知中控器处理消息数据

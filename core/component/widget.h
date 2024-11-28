@@ -62,7 +62,7 @@ namespace alllink {
 		}
 
 		void render(sf::RenderTarget* tar) {
-			this->clear(sf::Color(126, 216, 136, 0));
+			this->clear(sf::Color(242, 242, 242, 0));
 			this->draw(description);
 			inputBox.render(this);
 			this->display();

@@ -10,7 +10,6 @@
 
 namespace alllink {
   SignlingInteractionSystem::SignlingInteractionSystem() {
-    oatpp::base::Environment::init();
     listener = std::make_shared<WSListener>();
     listener->registerObserver(this);
     listenBody = aom::InvokeTimer::CreateTimer(std::chrono::milliseconds(1), true, [&] {
@@ -22,7 +21,6 @@ namespace alllink {
   SignlingInteractionSystem::~SignlingInteractionSystem() {
     if(client) logout();
     if(listenBody) listenBody->Cancel();
-    oatpp::base::Environment::destroy();
   }
 
   bool SignlingInteractionSystem::isConnected() const {

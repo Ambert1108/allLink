@@ -25,9 +25,15 @@ int main(int argc, char* argv[]) {
   int level = 1;
   seeker::Logger::init(logFilename, false, true, true, logPattern, level);
   using namespace alllink;
-  VisionCentralContoller vcc;
-  SignlingInteractionSystem client;
-  auto controller = rtc::make_ref_counted<Controller>(&client, &vcc);
-  vcc.run();
+  seeker::IniConfig::init("./resources/config.ini");
+  oatpp::base::Environment::init();
+  {
+    VisionCentralContoller vcc;
+    SignlingInteractionSystem client;
+    JanusInteractionSystem janus;
+    auto controller = rtc::make_ref_counted<Controller>(&client, &vcc, &janus);
+    vcc.run();
+  }
+  oatpp::base::Environment::destroy();
   return 0;
 }

@@ -23,7 +23,7 @@ namespace alllink {
 
     if (size == 0) { // message transfer finished
 
-      auto wholeMessage = messageBuffer.toString();
+      auto wholeMessage = messageBuffer.toString(); 
       messageBuffer.setCurrentPosition(0);
       //TODO:根据消息类型调用回调
       I_LOG("on message received {}", *wholeMessage.get());

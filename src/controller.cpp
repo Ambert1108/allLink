@@ -126,10 +126,11 @@ namespace alllink {
 }  // namespace
 
 namespace alllink {
-  Controller::Controller(SignlingInteractionSystem* client, VisionCnetralBase* vcb)
-  : client_(client), vision_(vcb) {
+  Controller::Controller(SignlingInteractionSystem* client, VisionCnetralBase* vcb, JanusInteractionSystem* janus)
+  : client_(client), vision_(vcb), janus_(janus) {
     client_->registerObserver(this);
     vision_->registerObserver(this);
+    janus_->registerObserver(this);
   }
 
   void Controller::Close() {
@@ -260,6 +261,11 @@ namespace alllink {
     hi::PostMsg({ msgTo(MessageType::REMOVE_TRACK), receiver->track().release() });
   }
 
+  // ICE候选收集完成后触发此回调函数
+  void Controller::OnIceGatheringChange(webrtc::PeerConnectionInterface::IceGatheringState new_state) {
+
+  }
+
   // 生成offer/answer后PeerConnectionObserver会通过此函数上传生成的candidate
   void Controller::OnIceCandidate(const webrtc::IceCandidateInterface* candidate) {
     //if (loopback_) {
@@ -282,7 +288,7 @@ namespace alllink {
 
     Json::StreamWriterBuilder factory;
     std::string obj = (Json::writeString(factory, jmessage));
-    hi::PostMsg({ msgTo(MessageType::SEND_MSG_TO_PEER), obj });
+    hi::PostMsg({ msgTo(MessageType::SEND_ICE_TO_PEER), obj });
   }
 
 
@@ -387,6 +393,20 @@ namespace alllink {
   }
 
   //
+  // JanusInteractionObserver implementation.
+  //
+
+  // Janus回复generate请求后需要告知信令并透传给对端
+  void Controller::OnGenerated(const std::string& sdp, const std::string& type) {
+
+  }
+
+  // Janus回复process请求后需要设置为远端会话描述以获取Janus的ICE候选
+  void Controller::OnProcessed(const std::string& sdp, const std::string& type) {
+     
+  }
+
+  //
   // VisionCnetralCallback implementation.
   //
 
@@ -402,6 +422,8 @@ namespace alllink {
     }
     I_LOG("[Controller::StartLogin] login user:{} to {}:{} done", 
       user.id_, server.serverIp_, server.serverPort_);
+    ServerInfo janusServerInfo(seeker::IniConfig::Get("this", "janus", "10.1.29.246:8188"));
+    janus_->connectServer(janusServerInfo);
     return true;
   }
 
@@ -437,9 +459,28 @@ namespace alllink {
 
 
   void Controller::CustomMessageCallback(const Message& msg) {
-    //通知信令交互系统处理 offer/answer sdp 或 ice candidate
-    if (!client_->sendToPeer(meetId_, std::any_cast<std::string>(msg.data))) {
-      hi::PostMsg({ msgTo(MessageType::SEND_MSG_FAILED), nullptr });
+    int callType = seeker::IniConfig::GetInteger("this", "call_type", 0);
+    if (callType == 0) {
+      // p2p流程，通知信令交互系统处理 offer/answer sdp 或 ice candidate
+      if (!client_->sendToPeer(meetId_, std::any_cast<std::string>(msg.data))) {
+        hi::PostMsg({ msgTo(MessageType::SEND_MSG_FAILED), nullptr });
+      }
+    }
+    else if (callType == 1) {
+      // nosip流程
+      switch (msg.id) {
+      case msgTo(MessageType::SEND_SDP_TO_PEER): {
+        break;
+      }
+      case msgTo(MessageType::SEND_ICE_TO_PEER): {
+        break;
+      }
+      default:
+        break;
+      }
+    }
+    else {
+      W_LOG("[Controller::CustomMessageCallback] undefine call type:{}", callType);
     }
   }
 
@@ -454,6 +495,7 @@ namespace alllink {
 
     std::string sdp;
     desc->ToString(&sdp);
+    I_LOG("LOG SDP\n{}", sdp);
 
     // For loopback test. To save some connecting delay.
     //if (loopback_) {
@@ -476,7 +518,7 @@ namespace alllink {
     // 在peerConnection线程中无法直接执行信令
     // 使用消息队列在主线程中处理
     I_LOG("create offer success");
-    hi::PostMsg({ msgTo(MessageType::SEND_MSG_TO_PEER), obj });
+    hi::PostMsg({ msgTo(MessageType::SEND_SDP_TO_PEER), obj });
   }
 
   void Controller::OnFailure(webrtc::RTCError error) {

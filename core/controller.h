@@ -6,21 +6,24 @@
 #include <string>
 #include <vector>
 
-
 #include "api/media_stream_interface.h"
 #include "api/peer_connection_interface.h"
+#include "rtc_base/thread.h"
+
+#include "seeker/iniConfig.hpp"
 #include "vision.h"
 #include "signling.h"
-#include "rtc_base/thread.h"
+#include "janus.h"
 
 namespace alllink {
   class Controller : public webrtc::PeerConnectionObserver,
     public webrtc::CreateSessionDescriptionObserver,
     public SignlingInteractionObserver,
+    public JanusInteractionObserver,
     public VisionCnetralCallback {
 
   public:
-    Controller(SignlingInteractionSystem* client, VisionCnetralBase* vcb);
+    Controller(SignlingInteractionSystem* client, VisionCnetralBase* vcb, JanusInteractionSystem* janus);
 
     void Close() override;
 
@@ -50,7 +53,7 @@ namespace alllink {
     void OnIceConnectionChange(
       webrtc::PeerConnectionInterface::IceConnectionState new_state) override {}
     void OnIceGatheringChange(
-      webrtc::PeerConnectionInterface::IceGatheringState new_state) override {}
+      webrtc::PeerConnectionInterface::IceGatheringState new_state) override;
     void OnIceCandidate(const webrtc::IceCandidateInterface* candidate) override;
     void OnIceConnectionReceivingChange(bool receiving) override {}
 
@@ -59,6 +62,14 @@ namespace alllink {
     //
 
     void OnMessageFromSignaling(const SignInfo& info) override;
+
+    //
+    // JanusInteractionObserver implementation.
+    //
+
+    void OnGenerated(const std::string& sdp, const std::string& type) override;
+
+    void OnProcessed(const std::string& sdp, const std::string& type) override;
 
     //
     // VisionCnetralCallback implementation.
@@ -82,6 +93,7 @@ namespace alllink {
     void OnFailure(webrtc::RTCError error) override;
   private:
     SignlingInteractionSystem* client_;
+    JanusInteractionSystem* janus_;
     VisionCnetralBase* vision_;
     std::unique_ptr<rtc::Thread> signaling_thread_;
     rtc::scoped_refptr<webrtc::PeerConnectionInterface> peerConnection_;
