@@ -851,3 +851,61 @@ a=candidate:1 1 udp 2015363327 10.1.29.246 35424 typ host
 a=end-of-candidates
 ```
 
+```json
+v=0
+o=mozilla...THIS_IS_SDPARTA-99.0 4993334097194025049 0 IN IP4 1.1.1.1
+s=-
+t=0 0
+m=audio 20220 RTP/AVP 109 9 0 8 101
+c=IN IP4 10.1.29.246
+a=sendrecv
+a=extmap:1 urn:ietf:params:rtp-hdrext:ssrc-audio-level
+a=extmap:3 urn:ietf:params:rtp-hdrext:sdes:mid
+a=fmtp:109 maxplaybackrate=48000;stereo=1;useinbandfec=1
+a=fmtp:101 0-15
+a=mid:0
+a=msid:{9eafb6c0-d70a-4493-baef-d012f2d43cc2} {70992bd8-37ef-410f-896c-4dd4b7dec9a0}
+a=rtpmap:109 opus/48000/2
+a=rtpmap:9 G722/8000/1
+a=rtpmap:0 PCMU/8000
+a=rtpmap:8 PCMA/8000
+a=rtpmap:101 telephone-event/8000/1
+m=video 20222 RTP/AVP 120 121 126 97
+c=IN IP4 10.1.29.246
+a=sendrecv
+a=extmap:3 urn:ietf:params:rtp-hdrext:sdes:mid
+a=extmap:4 http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time
+a=extmap:5 urn:ietf:params:rtp-hdrext:toffset
+a=extmap:7 http://www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-extensions-01
+a=fmtp:126 profile-level-id=42e01f;level-asymmetry-allowed=1;packetization-mode=1
+a=fmtp:97 profile-level-id=42e01f;level-asymmetry-allowed=1
+a=fmtp:120 max-fs=12288;max-fr=60
+a=fmtp:121 max-fs=12288;max-fr=60
+a=mid:1
+a=msid:{9eafb6c0-d70a-4493-baef-d012f2d43cc2} {02cf988e-26f2-403f-bb90-3b6453cb63d4}
+a=rtcp-fb:120 nack
+a=rtcp-fb:120 nack pli
+a=rtcp-fb:120 ccm fir
+a=rtcp-fb:120 goog-remb
+a=rtcp-fb:120 transport-cc
+a=rtcp-fb:121 nack
+a=rtcp-fb:121 nack pli
+a=rtcp-fb:121 ccm fir
+a=rtcp-fb:121 goog-remb
+a=rtcp-fb:121 transport-cc
+a=rtcp-fb:126 nack
+a=rtcp-fb:126 nack pli
+a=rtcp-fb:126 ccm fir
+a=rtcp-fb:126 goog-remb
+a=rtcp-fb:126 transport-cc
+a=rtcp-fb:97 nack
+a=rtcp-fb:97 nack pli
+a=rtcp-fb:97 ccm fir
+a=rtcp-fb:97 goog-remb
+a=rtcp-fb:97 transport-cc
+a=rtpmap:120 VP8/90000
+a=rtpmap:121 VP9/90000
+a=rtpmap:126 H264/90000
+a=rtpmap:97 H264/90000
+```
+
