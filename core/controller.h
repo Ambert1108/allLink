@@ -61,15 +61,17 @@ namespace alllink {
     // SignlingInteractionObserver implementation.
     //
 
-    void OnMessageFromSignaling(const SignInfo& info) override;
+    void OnMessageFromSignling(const SignInfo& info) override;
+
+    void OnCSMessageFromSignling(const SignInfo& info) override;
 
     //
     // JanusInteractionObserver implementation.
     //
 
-    void OnGenerated(const std::string& sdp, const std::string& type) override;
+    void OnGenerated(const Jsep& tranditional) override;
 
-    void OnProcessed(const std::string& sdp, const std::string& type) override;
+    void OnProcessed(const Jsep& jsep) override;
 
     //
     // VisionCnetralCallback implementation.

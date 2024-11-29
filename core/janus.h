@@ -36,9 +36,9 @@ namespace alllink {
 
   struct JanusInteractionObserver {
     /*通知 中控器 接收到信令转发的其他客户端发送过来的信息*/
-    virtual void OnGenerated(const std::string& sdp, const std::string& type) = 0;
+    virtual void OnGenerated(const Jsep& tranditional) = 0;
 
-    virtual void OnProcessed(const std::string& sdp, const std::string& type) = 0;
+    virtual void OnProcessed(const Jsep& jesp) = 0;
 
   protected:
     virtual ~JanusInteractionObserver() {}
@@ -78,7 +78,7 @@ namespace alllink {
 
     bool sendTrckileCompleteToJanus();
 
-    bool sendGenerateToJanus(const std::string& jsepSdp, const std::string& type);
+    bool sendGenerateToJanus(const std::string& sdp);
 
     bool sendProcessToJanus(const std::string& sdp, const std::string& type);
 
@@ -93,7 +93,7 @@ namespace alllink {
 
   private:
     JanusInteractionObserver* callback_;
-    static constexpr const char* TAG = "JanusClient";
+    mutable std::mutex Locker{};
     std::shared_ptr<oatpp::websocket::WebSocket> client;
     std::shared_ptr<JanusListener> listener;
     aom::InvokeTimerPtr listenBody;

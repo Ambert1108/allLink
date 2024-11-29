@@ -56,11 +56,15 @@ namespace alllink {
 
 		/* 中控器消息 */
 
-		SEND_SDP_TO_PEER,      //发送offer/answer sdp给对端
-		SEND_ICE_TO_PEER,      //发送ice candidate给对端
-		SEND_MSG_FAILED,       //发送offer/answer sdp或ice candidate失败
-		ADD_TRACK,             //添加新轨道
-		REMOVE_TRACK           //移除轨道
+		SET_REMOTE_DESC,                //通知中控器设置远端sdp
+		SEND_JSEP_SDP_TO_PEER,          //发送jsep offer/answer sdp给对端
+		SEND_PROCESS_TO_JANUS,          //发送process请求给Janus服务器
+		SEND_SDP_TO_PEER,               //发送offer/answer sdp给对端
+		SEND_ICE_TO_PEER,               //发送ice candidate给对端
+		SEND_ICE_COMPLETE_TO_PEER,      //发送ice candidate收集完毕消息给对端
+		SEND_MSG_FAILED,                //发送offer/answer sdp或ice candidate失败
+		ADD_TRACK,                      //添加新轨道
+		REMOVE_TRACK                    //移除轨道
 	};
 
 	static constexpr int msgTo(MessageType msg) { return static_cast<int>(msg); }

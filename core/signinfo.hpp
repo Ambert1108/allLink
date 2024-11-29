@@ -214,11 +214,11 @@ namespace alllink {
 
 	struct GenerateBody {
 		std::string request{ "generate" };
-		std::string info;
-		std::string srtp;
-		std::string srtp_profile;
+		//std::string info;
+		//std::string srtp;
+		//std::string srtp_profile;
 	};
-	NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(GenerateBody, request, info, srtp, srtp_profile);
+	NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(GenerateBody, request);
 
 	struct Jsep {
 		std::string sdp;
@@ -240,11 +240,11 @@ namespace alllink {
 		std::string request{ "process" };
 		std::string type;
 		std::string sdp;
-		std::string info;
-		std::string srtp;
-		std::string srtp_profile;
+		//std::string info;
+		//std::string srtp;
+		//std::string srtp_profile;
 	};
-	NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ProcessBody, request, type, sdp, info, srtp, srtp_profile);
+	NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ProcessBody, request, type, sdp);
 
 	struct JanusProcess {
 		std::string janus{ "message" };

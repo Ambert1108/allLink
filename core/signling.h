@@ -13,6 +13,7 @@
 
 #include "seeker/logger.h"
 #include "seeker/loggerApi.h"
+#include "seeker/iniConfig.hpp"
 
 #include "wslistener.h"
 #include "message.h"
@@ -75,7 +76,9 @@ namespace alllink {
 
   struct SignlingInteractionObserver {
     /*通知 中控器 接收到信令转发的其他客户端发送过来的信息*/
-    virtual void OnMessageFromSignaling(const SignInfo& info) = 0;
+    virtual void OnMessageFromSignling(const SignInfo& info) = 0;
+
+    virtual void OnCSMessageFromSignling(const SignInfo& info) = 0;
 
   protected:
     virtual ~SignlingInteractionObserver() {}

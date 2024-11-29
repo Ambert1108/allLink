@@ -162,13 +162,17 @@ namespace alllink {
         // 调用DisconnectFromCurrentPeer方法通知中控器断开连接
         break;
       }
-      case msgTo(MessageType::SEND_SDP_TO_PEER) : case msgTo(MessageType::SEND_ICE_TO_PEER): {
+      case msgTo(MessageType::SET_REMOTE_DESC):
+      case msgTo(MessageType::SEND_PROCESS_TO_JANUS):
+      case msgTo(MessageType::SEND_JSEP_SDP_TO_PEER):
+      case msgTo(MessageType::SEND_SDP_TO_PEER): 
+      case msgTo(MessageType::SEND_ICE_COMPLETE_TO_PEER):
+      case msgTo(MessageType::SEND_ICE_TO_PEER):
         // 中控器需要发送sdp/ice消息
-        I_LOG("[test] send to peer");
+        I_LOG("[test] send {} to peer", msg.id);
         // 通知中控器处理消息数据
         callback_->CustomMessageCallback(msg);
         break;
-      }
       case msgTo(MessageType::SEND_MSG_FAILED): {
         // 中控器提示offer sdp创建失败
         break;

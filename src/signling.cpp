@@ -90,8 +90,12 @@ namespace alllink {
   }
 
   void SignlingInteractionSystem::OnFORWARD(const SignInfo& info) {
-    // 收到对端的FORWARD信令
-    callback_->OnMessageFromSignaling(info);
+    int callType = seeker::IniConfig::GetInteger("this", "call_type", 0);
+    // p2p流程收到对端的FORWARD信令，交给中控器设置远端会话描述或添加ICE候选
+    if (callType == 0) callback_->OnMessageFromSignling(info);
+
+    // c/s流程收到对端的FORWARD信令，交给中控器
+    else callback_->OnCSMessageFromSignling(info);
   }
 
   void SignlingInteractionSystem::OnACK(const SignInfo& info) {
@@ -136,6 +140,7 @@ namespace alllink {
   //private
   bool SignlingInteractionSystem::ToSignaling(const SignInfo& info) {
     oatpp::String js = oatpp::String(info.js.dump());
+    I_LOG("signling message send:{}", info.js.dump(4));
     return client->sendOneFrame(true, oatpp::websocket::Frame::OPCODE_TEXT, js);
   }
 }

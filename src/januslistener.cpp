@@ -17,7 +17,7 @@ namespace alllink {
 
   void JanusListener::onClose(const WebSocket& socket, v_uint16 code, const oatpp::String& message) {
     OATPP_LOGD(TAG, "onClose code=%d", code);
-    socket.sendClose();
+    //socket.sendClose();
   }
 
   void JanusListener::readMessage(const WebSocket& socket, v_uint8 opcode, p_char8 data, oatpp::v_io_size size) {
@@ -27,7 +27,7 @@ namespace alllink {
       auto wholeMessage = messageBuffer.toString();
       messageBuffer.setCurrentPosition(0);
       //TODO:根据消息类型调用回调
-      I_LOG("on message received {}", *wholeMessage.get());
+      I_LOG("janus on message received {}", *wholeMessage.get());
       JanusReponse resp;
       seeker::json::fromJsonString(resp, wholeMessage->c_str());
       if (resp.janus == "success") callback_->OnSuccess(resp);

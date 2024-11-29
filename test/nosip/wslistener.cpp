@@ -27,17 +27,6 @@ namespace alllink {
       messageBuffer.setCurrentPosition(0);
       //TODO:根据消息类型调用回调
       I_LOG("on message received {}", *wholeMessage.get());
-      SignInfo info(json::parse(wholeMessage->c_str()));
-      if (info.meth() == "FORWARD") callback_->OnFORWARD(info);
-      else if (info.meth() == "ACK") callback_->OnACK(info);
-      else if (info.meth() == "BYE") callback_->OnBYE(info);
-      else if (info.meth() == "CANCEL") callback_->OnCANCEL(info);
-      else if (info.meth() == "Heartbeat") callback_->OnHeartbeat(info);
-      else if (info.meth() == "OK") callback_->OnOK(info);
-      else if (info.meth() == "Trying") callback_->OnTrying(info);
-      else if (info.meth() == "Ringing") callback_->OnRinging(info);
-      else if (info.meth() == "Unauthorized") callback_->OnUnauthorized(info);
-      else W_LOG("[WSListener::readMessage] get unknown message, meth={}", info.meth());
     }
     else if (size > 0) { // message frame received
       messageBuffer.writeSimple(data, size);

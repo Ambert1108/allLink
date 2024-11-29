@@ -13,9 +13,13 @@ namespace alllink {
         JanusKeepAlive keep;
         keep.session_id = sessionInfo.seeionId_;
         keep.transaction = std::to_string(cseq_++);
+        I_LOG("message send:{}", seeker::json::toJsonString(keep, 4));
         oatpp::String js = oatpp::String(seeker::json::toJsonString(keep));
         //TODO:测试多线程下wsclient发消息是否需要上锁
-        client->sendOneFrame(true, oatpp::websocket::Frame::OPCODE_TEXT, js);
+        {
+          std::lock_guard<std::mutex> lck(Locker);
+          client->sendOneFrame(true, oatpp::websocket::Frame::OPCODE_TEXT, js);
+        }
       }
       });
     listenBody->Start();
@@ -68,8 +72,12 @@ namespace alllink {
       create.transaction = std::to_string(cseq_++);
       oatpp::String js = oatpp::String(seeker::json::toJsonString(create));
       //TODO:测试多线程下wsclient发消息是否需要上锁
-      if (!client->sendOneFrame(true, oatpp::websocket::Frame::OPCODE_TEXT, js)) {
-        E_LOG("[JanusInteractionSystem::connectServer] create session failed");
+      I_LOG("message send:{}", seeker::json::toJsonString(create, 4));
+      {
+        std::lock_guard<std::mutex> lck(Locker);
+        if (!client->sendOneFrame(true, oatpp::websocket::Frame::OPCODE_TEXT, js)) {
+          E_LOG("[JanusInteractionSystem::connectServer] create session failed");
+        }
       }
     }
     catch (std::exception& ex) {
@@ -80,48 +88,89 @@ namespace alllink {
   }
 
   bool JanusInteractionSystem::sendTrckileToJanus(const std::string& ice) {
-    Trickle trickle;
-    trickle.session_id = sessionInfo.seeionId_;
-    trickle.handle_id = sessionInfo.handleId_;
-    trickle.transaction = std::to_string(cseq_++);
-    seeker::json::fromJsonString(trickle.candidate, ice);
-    oatpp::String js = oatpp::String(seeker::json::toJsonString(trickle));
-    //TODO:测试多线程下wsclient发消息是否需要上锁
-    return client->sendOneFrame(true, oatpp::websocket::Frame::OPCODE_TEXT, js);
+    try {
+      Trickle trickle;
+      trickle.session_id = sessionInfo.seeionId_;
+      trickle.handle_id = sessionInfo.handleId_;
+      trickle.transaction = std::to_string(cseq_++);
+      seeker::json::fromJsonString(trickle.candidate, ice);
+      oatpp::String js = oatpp::String(seeker::json::toJsonString(trickle));
+      //TODO:测试多线程下wsclient发消息是否需要上锁
+      I_LOG("message send:{}", seeker::json::toJsonString(trickle, 4));
+      {
+        std::lock_guard<std::mutex> lck(Locker);
+        return client->sendOneFrame(true, oatpp::websocket::Frame::OPCODE_TEXT, js);
+      }
+    }
+    catch (std::exception& ex) {
+      E_LOG("catch exception:{}", ex.what());
+      return false;
+    }
   }
 
   bool JanusInteractionSystem::sendTrckileCompleteToJanus() {
-    TrickleComplete trickle;
-    trickle.session_id = sessionInfo.seeionId_;
-    trickle.handle_id = sessionInfo.handleId_;
-    trickle.transaction = std::to_string(cseq_++);
-    oatpp::String js = oatpp::String(seeker::json::toJsonString(trickle));
-    //TODO:测试多线程下wsclient发消息是否需要上锁
-    return client->sendOneFrame(true, oatpp::websocket::Frame::OPCODE_TEXT, js);
+    try {
+      TrickleComplete trickle;
+      trickle.session_id = sessionInfo.seeionId_;
+      trickle.handle_id = sessionInfo.handleId_;
+      trickle.transaction = std::to_string(cseq_++);
+      oatpp::String js = oatpp::String(seeker::json::toJsonString(trickle));
+      //TODO:测试多线程下wsclient发消息是否需要上锁
+      I_LOG("message send:{}", seeker::json::toJsonString(trickle, 4));
+      {
+        std::lock_guard<std::mutex> lck(Locker);
+        return client->sendOneFrame(true, oatpp::websocket::Frame::OPCODE_TEXT, js);
+      }
+    }
+    catch (std::exception& ex) {
+      E_LOG("catch exception:{}", ex.what());
+      return false;
+    }
   }
 
-  bool JanusInteractionSystem::sendGenerateToJanus(const std::string& jsepSdp, const std::string& type) {
-    JanusGenerate generate;
-    generate.session_id = sessionInfo.seeionId_;
-    generate.handle_id = sessionInfo.handleId_;
-    generate.transaction = std::to_string(cseq_++);
-    generate.jsep.sdp = jsepSdp;
-    generate.jsep.type = type;
-    oatpp::String js = oatpp::String(seeker::json::toJsonString(generate));
-    //TODO:测试多线程下wsclient发消息是否需要上锁
-    return client->sendOneFrame(true, oatpp::websocket::Frame::OPCODE_TEXT, js);
+  bool JanusInteractionSystem::sendGenerateToJanus(const std::string& sdp) {
+    try {
+      JanusGenerate generate;
+      generate.session_id = sessionInfo.seeionId_;
+      generate.handle_id = sessionInfo.handleId_;
+      generate.transaction = std::to_string(cseq_++);
+      seeker::json::fromJsonString(generate.jsep, sdp);
+      oatpp::String js = oatpp::String(seeker::json::toJsonString(generate));
+      //TODO:测试多线程下wsclient发消息是否需要上锁
+      I_LOG("message send:{}", seeker::json::toJsonString(generate, 4));
+      //{
+      //  std::lock_guard<std::mutex> lck(Locker);
+      //  return client->sendOneFrame(true, oatpp::websocket::Frame::OPCODE_TEXT, js);
+      //}
+      return true;
+    }
+    catch (std::exception& ex) {
+      E_LOG("catch exception:{}", ex.what());
+      return false;
+    }
   }
 
   bool JanusInteractionSystem::sendProcessToJanus(const std::string& sdp, const std::string& type) {
-    JanusProcess process;
-    process.session_id = sessionInfo.seeionId_;
-    process.handle_id = sessionInfo.handleId_;
-    process.transaction = std::to_string(cseq_++);
-    process.body.sdp = sdp;
-    process.body.type = type;
-    oatpp::String js = oatpp::String(seeker::json::toJsonString(process));
-    //TODO:测试多线程下wsclient发消息是否需要上锁
-    return client->sendOneFrame(true, oatpp::websocket::Frame::OPCODE_TEXT, js);
+    try {
+      JanusProcess process;
+      process.session_id = sessionInfo.seeionId_;
+      process.handle_id = sessionInfo.handleId_;
+      process.transaction = std::to_string(cseq_++);
+      process.body.sdp = sdp;
+      process.body.type = type;
+      oatpp::String js = oatpp::String(seeker::json::toJsonString(process));
+      //TODO:测试多线程下wsclient发消息是否需要上锁
+      I_LOG("message send:{}", seeker::json::toJsonString(process, 4));
+      {
+        std::lock_guard<std::mutex> lck(Locker);
+        //return true;
+        return client->sendOneFrame(true, oatpp::websocket::Frame::OPCODE_TEXT, js);
+      }
+    }
+    catch (std::exception& ex) {
+      E_LOG("catch exception:{}", ex.what());
+      return false;
+    }
   }
 
   void JanusInteractionSystem::OnSuccess(const JanusReponse& resp) {
@@ -131,12 +180,15 @@ namespace alllink {
       attach.plugin = "janus.plugin.nosip";
       attach.session_id = sessionInfo.seeionId_;
       attach.transaction = std::to_string(cseq_++);
-      I_LOG("send message:{}", seeker::json::toJsonString(attach));
       oatpp::String js = oatpp::String(seeker::json::toJsonString(attach));
+      I_LOG("message send:{}", seeker::json::toJsonString(attach, 4));
       //TODO:测试多线程下wsclient发消息是否需要上锁
-      if (!client->sendOneFrame(true, oatpp::websocket::Frame::OPCODE_TEXT, js)) {
-        E_LOG("[JanusInteractionSystem::OnSuccess] create nosip failed");
-        return;
+      {
+        std::lock_guard<std::mutex> lck(Locker);
+        if (!client->sendOneFrame(true, oatpp::websocket::Frame::OPCODE_TEXT, js)) {
+          E_LOG("[JanusInteractionSystem::OnSuccess] create nosip failed");
+          return;
+        }
       }
       state = State::ATTACHING;
     }
@@ -151,6 +203,16 @@ namespace alllink {
   }
 
   void JanusInteractionSystem::OnEvent(const JanusReponse& resp) {
+    // 如果收到的event回复是generated响应，取出sdp交给信令透传给对端
+    if (resp.plugindata.data.result.event == "generated") {
+      W_LOG("receive event(generated) resp");
+      callback_->OnGenerated({ resp.plugindata.data.result.sdp, resp.plugindata.data.result.type });
+    }
 
+    // 如果收到的event回复是processed响应，告知中控器取出回复的jsep sdp并设置远端会话描述
+    else if (resp.plugindata.data.result.event == "processed") {
+      W_LOG("receive event(processed) resp");
+      //callback_->OnProcessed(resp.jsep);
+    }
   }
 }
