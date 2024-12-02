@@ -9,6 +9,8 @@
 #include "seeker/logger.h"
 #include "seeker/loggerApi.h"
 
+#include <queue>
+
 namespace alllink {
   class WSListenObserver {
   public:
@@ -56,9 +58,13 @@ namespace alllink {
      */
     void readMessage(const WebSocket& socket, v_uint8 opcode, p_char8 data, oatpp::v_io_size size) override;
 
+    int getMsg(oatpp::String&);
+
   private:
     static constexpr const char* TAG = "Client_WSListener";
     oatpp::data::stream::BufferOutputStream messageBuffer;
     WSListenObserver* callback_;
+    std::mutex Locker{};
+    std::queue<oatpp::String> msgList{};
   };
 }

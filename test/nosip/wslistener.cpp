@@ -27,10 +27,20 @@ namespace alllink {
       messageBuffer.setCurrentPosition(0);
       //TODO:根据消息类型调用回调
       I_LOG("on message received {}", *wholeMessage.get());
+      std::lock_guard<std::mutex> lck(Locker);
+      msgList.push(wholeMessage);
     }
     else if (size > 0) { // message frame received
       messageBuffer.writeSimple(data, size);
     }
 
+  }
+
+  int WSListener::getMsg(oatpp::String& msg) {
+    std::lock_guard<std::mutex> lck(Locker);
+    if (msgList.empty()) return -1;
+    msg = msgList.front();
+    msgList.pop();
+    return 0;
   }
 }
