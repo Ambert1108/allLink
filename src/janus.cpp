@@ -138,10 +138,10 @@ namespace alllink {
       oatpp::String js = oatpp::String(seeker::json::toJsonString(generate));
       //TODO:测试多线程下wsclient发消息是否需要上锁
       I_LOG("message send:{}", seeker::json::toJsonString(generate, 4));
-      //{
-      //  std::lock_guard<std::mutex> lck(Locker);
-      //  return client->sendOneFrame(true, oatpp::websocket::Frame::OPCODE_TEXT, js);
-      //}
+      {
+        std::lock_guard<std::mutex> lck(Locker);
+        return client->sendOneFrame(true, oatpp::websocket::Frame::OPCODE_TEXT, js);
+      }
       return true;
     }
     catch (std::exception& ex) {
@@ -163,7 +163,6 @@ namespace alllink {
       I_LOG("message send:{}", seeker::json::toJsonString(process, 4));
       {
         std::lock_guard<std::mutex> lck(Locker);
-        //return true;
         return client->sendOneFrame(true, oatpp::websocket::Frame::OPCODE_TEXT, js);
       }
     }
@@ -212,7 +211,7 @@ namespace alllink {
     // 如果收到的event回复是processed响应，告知中控器取出回复的jsep sdp并设置远端会话描述
     else if (resp.plugindata.data.result.event == "processed") {
       W_LOG("receive event(processed) resp");
-      //callback_->OnProcessed(resp.jsep);
+      callback_->OnProcessed(resp.jsep);
     }
   }
 }

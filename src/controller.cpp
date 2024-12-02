@@ -555,7 +555,7 @@ namespace alllink {
       case msgTo(MessageType::SET_REMOTE_DESC): {
         SignInfo info = std::any_cast<SignInfo>(msg.data);
         I_LOG("假设此处开始构造被叫peerConnection");
-        //OnMessageFromSignling(info);
+        OnMessageFromSignling(info);
         break;
       }
       default:
