@@ -20,20 +20,29 @@ namespace alllink {
   }
 
   void WSListener::readMessage(const WebSocket& socket, v_uint8 opcode, p_char8 data, oatpp::v_io_size size) {
+    try {
+      //if (opcode == oatpp::websocket::Frame::OPCODE_CONTINUATION) {
+      //  I_LOG("1");
+      //}
+      if (size == 0) { // message transfer finished
+        I_LOG("current opcode={} OPCODE_CONTINUATION={}, OPCODE_TEXT={}, OPCODE_BINARY={}", 
+          opcode, oatpp::websocket::Frame::OPCODE_CONTINUATION, oatpp::websocket::Frame::OPCODE_TEXT,
+          oatpp::websocket::Frame::OPCODE_BINARY);
 
-    if (size == 0) { // message transfer finished
-
-      auto wholeMessage = messageBuffer.toString();
-      messageBuffer.setCurrentPosition(0);
-      //TODO:根据消息类型调用回调
-      I_LOG("on message received {}", *wholeMessage.get());
-      std::lock_guard<std::mutex> lck(Locker);
-      msgList.push(wholeMessage);
+        auto wholeMessage = messageBuffer.toString();
+        messageBuffer.setCurrentPosition(0);
+        //TODO:根据消息类型调用回调
+        I_LOG("on message received {}", *wholeMessage.get());
+        std::lock_guard<std::mutex> lck(Locker);
+        msgList.push(wholeMessage);
+      }
+      else if (size > 0) { // message frame received
+        messageBuffer.writeSimple(data, size);
+      }
     }
-    else if (size > 0) { // message frame received
-      messageBuffer.writeSimple(data, size);
-    }
+    catch (std::exception& ex) {
 
+    }
   }
 
   int WSListener::getMsg(oatpp::String& msg) {
