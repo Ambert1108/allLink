@@ -6,7 +6,10 @@ namespace alllink {
     listener = std::make_shared<JanusListener>();
     listener->registerObserver(this);
     listenBody = aom::InvokeTimer::CreateTimer(std::chrono::milliseconds(1), true, [&] {
-      if (client) client->listen();
+      if (client) {
+        client->listen();
+        I_LOG("janus listen finish");
+      }
       });
     keepBody = aom::InvokeTimer::CreateTimer(std::chrono::seconds(10), true, [&] {
       if (client && state >= WAIT) {

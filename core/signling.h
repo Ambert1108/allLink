@@ -75,10 +75,14 @@ namespace alllink {
   };
 
   struct SignlingInteractionObserver {
-    /*通知 中控器 接收到信令转发的其他客户端发送过来的信息*/
+    /*通知 中控器 接收到信令转发的其他客户端(p2p流程)发送过来的信息*/
     virtual void OnMessageFromSignling(const SignInfo& info) = 0;
 
+    /* 通知 中控器 接收到信令转发的其他客户端(c/s流程)发送过来的信息 */
     virtual void OnCSMessageFromSignling(const SignInfo& info) = 0;
+
+    /* 通知 中控器 其他客户端挂断通话 */
+    virtual void OnPeerDisconnected(const std::string& id) = 0;
 
   protected:
     virtual ~SignlingInteractionObserver() {}
@@ -132,6 +136,8 @@ namespace alllink {
     bool login(const UserInfo& info);
 
     bool sendToPeer(const std::string& to, const std::string& message);
+
+    bool sendBye(const std::string& to);
 
   protected:
     void logout();

@@ -61,6 +61,8 @@ namespace alllink {
     // SignlingInteractionObserver implementation.
     //
 
+    void OnPeerDisconnected(const std::string& id) override;
+
     void OnMessageFromSignling(const SignInfo& info) override;
 
     void OnCSMessageFromSignling(const SignInfo& info) override;

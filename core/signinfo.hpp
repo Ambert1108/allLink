@@ -4,6 +4,8 @@
 
 #include "seeker/common.h"
 #include "seeker/json.hpp"
+#include "seeker/logger.h"
+#include "seeker/loggerApi.h"
 
 #include <string>
 
@@ -19,7 +21,12 @@ namespace alllink {
 		//callid
 		std::string call_id() const {
 			if (js["Call_ID"].is_null()) {
-				return "";
+				E_LOG("Call_ID is null");
+				return {};
+			}
+			if (!js["Call_ID"].is_string()) {
+				E_LOG("Call_ID is not string");
+				return {};
 			}
 			return js["Call_ID"];
 		}
@@ -29,7 +36,12 @@ namespace alllink {
 		//userid
 		std::string userid() const {
 			if (js["userId"].is_null()) {
-				return "";
+				E_LOG("userId is null");
+				return {};
+			}
+			if (!js["userId"].is_string()) {
+				E_LOG("userId is not string");
+				return {};
 			}
 			return js["userId"];
 		}
@@ -39,16 +51,26 @@ namespace alllink {
 		//password
 		std::string password() const {
 			if (js["password"].is_null()) {
-				return "";
+				E_LOG("password is null");
+				return {};
+			}
+			if (!js["password"].is_string()) {
+				E_LOG("password is not string");
+				return {};
 			}
 			return js["password"];
 		}
-		void set_password(std::string input) {
+			void set_password(std::string input) {
 			js["password"] = input;
 		}
 		//cseq
 		int cseq() const {
 			if (js["Cseq"].is_null()) {
+				E_LOG("Cseq is null");
+				return -1;
+			}
+			if (!js["Cseq"].is_number()) {
+				E_LOG("Cseq is not number");
 				return -1;
 			}
 			return js["Cseq"];
@@ -59,7 +81,12 @@ namespace alllink {
 		//sdp
 		std::string sdp() const {
 			if (js["SDP"].is_null()) {
-				return "";
+				E_LOG("SDP is null");
+				return {};
+			}
+			if (!js["SDP"].is_string()) {
+				E_LOG("SDP is not string");
+				return {};
 			}
 			return js["SDP"];
 		}
@@ -69,7 +96,12 @@ namespace alllink {
 		//meth
 		std::string meth() const {
 			if (js["meth"].is_null()) {
-				return "";
+				E_LOG("meth is null");
+				return {};
+			}
+			if (!js["meth"].is_string()) {
+				E_LOG("meth is not string");
+				return {};
 			}
 			return js["meth"];
 		}
@@ -78,7 +110,12 @@ namespace alllink {
 		}
 		//isresponse
 		bool isresponse() const {
-			if (js["isResponse"].is_null()) {
+			if (js["isresponse"].is_null()) {
+				E_LOG("isresponse is null");
+				return false;
+			}
+			if (!js["isresponse"].is_boolean()) {
+				E_LOG("isresponse is not bool");
 				return false;
 			}
 			return js["isResponse"];
@@ -89,7 +126,12 @@ namespace alllink {
 		//from
 		std::string from() const {
 			if (js["from"].is_null()) {
-				return "";
+				E_LOG("from is null");
+				return {};
+			}
+			if (!js["from"].is_string()) {
+				E_LOG("from is not string");
+				return {};
 			}
 			return js["from"];
 		}
@@ -99,7 +141,12 @@ namespace alllink {
 		//to
 		std::string to() const {
 			if (js["to"].is_null()) {
-				return "";
+				E_LOG("to is null");
+				return {};
+			}
+			if (!js["to"].is_string()) {
+				E_LOG("to is not string");
+				return {};
 			}
 			return js["to"];
 		}
@@ -109,7 +156,12 @@ namespace alllink {
 		//signal
 		std::string signal() const {
 			if (js["signal"].is_null()) {
-				return "";
+				E_LOG("signal is null");
+				return {};
+			}
+			if (!js["signal"].is_string()) {
+				E_LOG("signal is not string");
+				return {};
 			}
 			return js["signal"];
 		}
@@ -119,7 +171,12 @@ namespace alllink {
 		//reason
 		std::string reason() const {
 			if (js["reason"].is_null()) {
-				return "";
+				E_LOG("reason is null");
+				return {};
+			}
+			if (!js["reason"].is_string()) {
+				E_LOG("reason is not string");
+				return {};
 			}
 			return js["reason"];
 		}
@@ -129,7 +186,12 @@ namespace alllink {
 		//cmeth
 		std::string cmeth() const {
 			if (js["Cmeth"].is_null()) {
-				return "";
+				E_LOG("Cmeth is null");
+				return {};
+			}
+			if (!js["Cmeth"].is_string()) {
+				E_LOG("Cmeth is not string");
+				return {};
 			}
 			return js["Cmeth"];
 		}
@@ -138,7 +200,12 @@ namespace alllink {
 		}
 		//statuscode
 		int statuscode() const {
-			if (js["statusCode"].is_null()) {
+			if (js["statuscode"].is_null()) {
+				E_LOG("statuscode is null");
+				return -1;
+			}
+			if (!js["statuscode"].is_number()) {
+				E_LOG("statuscode is not number");
 				return -1;
 			}
 			return js["statusCode"];
@@ -318,7 +385,7 @@ namespace alllink {
 		friend void from_json(const nlohmann::json& j, JanusReponse& obj) {
 			try {
 				obj.janus = j.at("janus");
-				obj.transaction = j.at("transaction");
+				if(j.contains("transaction")) obj.transaction = j.at("transaction");
 				if (j.contains("session_id")) obj.session_id = j.at("session_id");
 				if (j.contains("sender")) obj.sender = j.at("sender");
 				if (j.contains("data")) obj.data = j.at("data");

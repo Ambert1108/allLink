@@ -204,6 +204,7 @@ namespace alllink {
     peerConnection_ = nullptr;
     peerConnectionFactory_ = nullptr;
     meetId_.clear();
+
   }
 
   void Controller::EnsureStreamingUI() {
@@ -300,6 +301,14 @@ namespace alllink {
   //
   // SignlingInteractionObserver implementation.
   //
+
+  void Controller::OnPeerDisconnected(const std::string& id) {
+    if (meetId_ != id) {
+      W_LOG("[Controller::OnPeerDisconnected] link id {} does not match request id {}", meetId_, id);
+      return;
+    }
+    hi::PostMsg({ msgTo(MessageType::DISCONNECT_PEER), nullptr });
+  }
 
   // 信令收到对端forward请求后进入此回调函数获取offer sdp并生成answer sdp
   void Controller::OnMessageFromSignling(const SignInfo& info) {
@@ -410,15 +419,16 @@ namespace alllink {
 
   void Controller::OnCSMessageFromSignling(const SignInfo& info) {
     if (!peerConnection_.get()) {
+      I_LOG("callee on message");
       meetId_ = info.from();
       // 如果没有peerConnection代表终端作为被叫
-      
       Jsep sdp;
       sdp.sdp = info.sdp();
       sdp.type = "offer";
       hi::PostMsg({ msgTo(MessageType::SEND_PROCESS_TO_JANUS), sdp });
     }
     else {
+      I_LOG("caller on message");
       if (meetId_ != info.from()) {
         // 判断主叫保存的呼叫id和信令发来的fromId是否一致
         E_LOG("[Controller::OnCSMessageFromSignling] meet id {} and from not match",
@@ -505,16 +515,27 @@ namespace alllink {
 
 
   void Controller::DisconnectFromCurrentPeer() {
-
+    if (peerConnection_.get()) {
+      client_->sendBye(meetId_);
+      DeletePeerConnection();
+      I_LOG("delete peer connection");
+    }
   }
 
 
   void Controller::CustomMessageCallback(const Message& msg) {
     int callType = seeker::IniConfig::GetInteger("this", "call_type", 0);
     if (callType == 0) {
-      // p2p流程，通知信令交互系统处理 offer/answer sdp 或 ice candidate
-      if (!client_->sendToPeer(meetId_, std::any_cast<std::string>(msg.data))) {
-        hi::PostMsg({ msgTo(MessageType::SEND_MSG_FAILED), nullptr });
+      switch (msg.id) {
+      case msgTo(MessageType::SEND_SDP_TO_PEER): {
+        // p2p流程，通知信令交互系统处理 offer/answer sdp 或 ice candidate
+        if (!client_->sendToPeer(meetId_, std::any_cast<std::string>(msg.data))) {
+          hi::PostMsg({ msgTo(MessageType::SEND_MSG_FAILED), nullptr });
+        }
+        break;
+      }
+      default:
+        break;
       }
     }
     else if (callType == 1) {
@@ -554,7 +575,6 @@ namespace alllink {
       }
       case msgTo(MessageType::SET_REMOTE_DESC): {
         SignInfo info = std::any_cast<SignInfo>(msg.data);
-        I_LOG("假设此处开始构造被叫peerConnection");
         OnMessageFromSignling(info);
         break;
       }

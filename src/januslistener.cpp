@@ -24,16 +24,26 @@ namespace alllink {
 
     if (size == 0) { // message transfer finished
 
-      auto wholeMessage = messageBuffer.toString();
-      messageBuffer.setCurrentPosition(0);
-      //TODO:根据消息类型调用回调
-      I_LOG("janus on message received {}", *wholeMessage.get());
-      JanusReponse resp;
-      seeker::json::fromJsonString(resp, wholeMessage->c_str());
-      if (resp.janus == "success") callback_->OnSuccess(resp);
-      else if (resp.janus == "ack") callback_->OnAck(resp);
-      else if (resp.janus == "event") callback_->OnEvent(resp);
-      else W_LOG("[JanusListener::readMessage] get unknown message, type={}", resp.janus);
+      try {
+        auto wholeMessage = messageBuffer.toString();
+        messageBuffer.setCurrentPosition(0);
+        // 根据消息类型调用回调
+        JanusReponse resp;
+        seeker::json::fromJsonString(resp, wholeMessage->c_str());
+        I_LOG("janus on message received {}", *wholeMessage.get());
+        if (resp.janus == "success") callback_->OnSuccess(resp);
+        else if (resp.janus == "ack") callback_->OnAck(resp);
+        else if (resp.janus == "event") callback_->OnEvent(resp);
+        else W_LOG("[JanusListener::readMessage] get unknown message, type={}", resp.janus);
+      }
+      catch (std::exception& ex) {
+        E_LOG("janus listener catch exception:{}", ex.what());
+        return;
+      }
+      catch (...) {
+        E_LOG("janus listener catch unknown exception");
+        return;
+      }
     }
     else if (size > 0) { // message frame received
       messageBuffer.writeSimple(data, size);

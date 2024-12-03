@@ -47,7 +47,6 @@ namespace alllink {
 		if (!isActive) return;
 		this->clear(sf::Color(242, 242, 242));
     ImageData remoteData, localData;
-    I_LOG("start get image");
     if (remoteImageList.WaitPopFlex(remoteData)) {
       int remoteHeight = abs(remoteData.bmi.bmiHeader.biHeight);
       int remoteWidth = remoteData.bmi.bmiHeader.biWidth;
@@ -64,7 +63,6 @@ namespace alllink {
       }
       remoteSrc->update(remoteData.image.get());
       remoteVideo.setVideo(*remoteSrc);
-      I_LOG("set remote image");
       remoteVideo.render(this);
     }
     if (localImageList.TryPopFlex(localData)) {
@@ -86,7 +84,6 @@ namespace alllink {
       localSrc->update(localData.image.get());
       localVideo.setVideo(*localSrc);
       localVideo.setScale(0.25f, 0.25f);
-      I_LOG("set local image");
       localVideo.render(this);
     }
 
@@ -140,9 +137,7 @@ namespace alllink {
 
       if (image != NULL) {
         remoteImageList.Push(ImageData(bmi, image));
-        I_LOG("remote image push");
         if (this->getSize().x > 200 && this->getSize().y > 200) {
-          I_LOG("1");
           const BITMAPINFO& lbmi = local_renderer->bmi();
           const uint8_t* limage = local_renderer->image();
           if (limage == nullptr) {
@@ -153,23 +148,18 @@ namespace alllink {
             I_LOG("error, image size is {}", lbmi.bmiHeader.biSizeImage);
             return;
           }
-          I_LOG("2");
           if (isMirror.load()) {
             ImageData data;
             data.bmi = lbmi;
             data.image.reset(new uint8_t[lbmi.bmiHeader.biSizeImage]);
-            I_LOG("3-1");
             libyuv::ARGBMirror(limage, lbmi.bmiHeader.biWidth * lbmi.bmiHeader.biBitCount / 8,
               data.image.get(), lbmi.bmiHeader.biWidth * lbmi.bmiHeader.biBitCount / 8,
               lbmi.bmiHeader.biWidth, std::abs(lbmi.bmiHeader.biHeight));
-            I_LOG("3-1-2");
             localImageList.Push(data);
           }
           else {
-            I_LOG("3-2");
             localImageList.Push(ImageData(lbmi, limage));
           }
-          I_LOG("local image push");
         }
       }
       else {

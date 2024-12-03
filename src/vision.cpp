@@ -79,6 +79,7 @@ namespace alllink {
   void VisionCentralContoller::update() {
     /* 读取并处理自定义消息事件 */
     if (!hi::GetMsg(msg)) return;
+    try {
     switch (msg.id) {
       case msgTo(MessageType::CREATE_MEETING): {
         if (type_ == VisionType::LOGOUT) break;
@@ -154,14 +155,24 @@ namespace alllink {
       }
       case msgTo(MessageType::MEETING_END): {
         // 收到会议窗口被关闭
-
+        I_LOG("actively hand up, close stream screen");
         // 隐藏会议窗口
         streamWnd->OnExit();
         // 显示开始窗口
         wnd->OnEnter();
         // 调用DisconnectFromCurrentPeer方法通知中控器断开连接
+        callback_->DisconnectFromCurrentPeer();
         break;
       }
+      case msgTo(MessageType::DISCONNECT_PEER):
+        I_LOG("passive hand up, close stream screen");
+        // 隐藏会议窗口
+        streamWnd->OnExit();
+        // 显示开始窗口
+        wnd->OnEnter();
+        // 调用DisconnectFromCurrentPeer方法通知中控器断开连接
+        callback_->DisconnectFromCurrentPeer();
+        break;
       case msgTo(MessageType::SET_REMOTE_DESC):
       case msgTo(MessageType::SEND_PROCESS_TO_JANUS):
       case msgTo(MessageType::SEND_JSEP_SDP_TO_PEER):
@@ -200,10 +211,16 @@ namespace alllink {
       }
       case msgTo(MessageType::REMOVE_TRACK): {
         // 中控器收到移除轨道回调，通话结束
+        webrtc::MediaStreamTrackInterface* track = std::any_cast<webrtc::MediaStreamTrackInterface*>(msg.data);
+        track->Release();
         break;
       }
       default:
         break;
+    }
+    }
+    catch (std::exception& ex) {
+      E_LOG("[VisionCentralContoller::update] catch exception:{}", ex.what());
     }
   }
 

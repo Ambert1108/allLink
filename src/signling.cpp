@@ -13,7 +13,10 @@ namespace alllink {
     listener = std::make_shared<WSListener>();
     listener->registerObserver(this);
     listenBody = aom::InvokeTimer::CreateTimer(std::chrono::milliseconds(1), true, [&] {
-      if (signalState > 1 && client) client->listen();
+      if (signalState > 1 && client) {
+        client->listen();
+        I_LOG("signling listen finish");
+      }
     });
     listenBody->Start();
   }
@@ -82,6 +85,15 @@ namespace alllink {
     return ToSignaling(msg);
   }
 
+  bool SignlingInteractionSystem::sendBye(const std::string& to) {
+    SignInfo msg;
+    msg.set_meth("FORWARD");
+    msg.set_from(userInfo.id_);
+    msg.set_to(to);
+    msg.set_signal("bye");
+    return ToSignaling(msg);
+  }
+
   void SignlingInteractionSystem::logout() {
     client->sendClose();
     client->stopListening();
@@ -90,12 +102,22 @@ namespace alllink {
   }
 
   void SignlingInteractionSystem::OnFORWARD(const SignInfo& info) {
-    int callType = seeker::IniConfig::GetInteger("this", "call_type", 0);
-    // p2p流程收到对端的FORWARD信令，交给中控器设置远端会话描述或添加ICE候选
-    if (callType == 0) callback_->OnMessageFromSignling(info);
+    I_LOG("On FORWARD");
+    if (!info.signal().empty()) {
+      I_LOG("on peer disconnect");
+      // 收到对端发来bye请求，关闭peerConnection
+      callback_->OnPeerDisconnected(info.from());
+    }
+    else {
+      I_LOG("on message from signling");
+      int callType = seeker::IniConfig::GetInteger("this", "call_type", 0);
+      // p2p流程收到对端的FORWARD信令，交给中控器设置远端会话描述或添加ICE候选
+      if (callType == 0) callback_->OnMessageFromSignling(info);
 
-    // c/s流程收到对端的FORWARD信令，交给中控器
-    else callback_->OnCSMessageFromSignling(info);
+      // c/s流程收到对端的FORWARD信令，交给中控器
+      else callback_->OnCSMessageFromSignling(info);
+    }
+    I_LOG("On FORWARD finish");
   }
 
   void SignlingInteractionSystem::OnACK(const SignInfo& info) {

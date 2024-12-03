@@ -64,7 +64,8 @@ namespace alllink {
 		SEND_ICE_COMPLETE_TO_PEER,      //发送ice candidate收集完毕消息给对端
 		SEND_MSG_FAILED,                //发送offer/answer sdp或ice candidate失败
 		ADD_TRACK,                      //添加新轨道
-		REMOVE_TRACK                    //移除轨道
+		REMOVE_TRACK,                   //移除轨道
+		DISCONNECT_PEER                 //通知中控器断开连接
 	};
 
 	static constexpr int msgTo(MessageType msg) { return static_cast<int>(msg); }
