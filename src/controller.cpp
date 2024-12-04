@@ -385,7 +385,7 @@ namespace alllink {
       I_LOG("10");
       if (type == webrtc::SdpType::kOffer) { //如果收到的是offer sdp则需要创建answer sdp，成功后回调OnSuccess
         peerConnection_->CreateAnswer(this, webrtc::PeerConnectionInterface::RTCOfferAnswerOptions());
-        I_LOG("10-2");
+        I_LOG("create answer done");
       }
       I_LOG("11");
     }
@@ -518,7 +518,7 @@ namespace alllink {
     if (peerConnection_.get()) {
       client_->sendBye(meetId_);
       DeletePeerConnection();
-      I_LOG("delete peer connection");
+      I_LOG("delete caller peer connection");
     }
   }
 
@@ -527,10 +527,18 @@ namespace alllink {
     int callType = seeker::IniConfig::GetInteger("this", "call_type", 0);
     if (callType == 0) {
       switch (msg.id) {
-      case msgTo(MessageType::SEND_SDP_TO_PEER): {
+      case msgTo(MessageType::SEND_ICE_TO_PEER):
+      case msgTo(MessageType::SEND_JSEP_SDP_TO_PEER): {
         // p2p流程，通知信令交互系统处理 offer/answer sdp 或 ice candidate
         if (!client_->sendToPeer(meetId_, std::any_cast<std::string>(msg.data))) {
           hi::PostMsg({ msgTo(MessageType::SEND_MSG_FAILED), nullptr });
+        }
+        break;
+      }
+      case msgTo(MessageType::DISCONNECT_PEER): {
+        if (peerConnection_.get()) {
+          DeletePeerConnection();
+          I_LOG("delete callee peer connection");
         }
         break;
       }
@@ -578,6 +586,14 @@ namespace alllink {
         OnMessageFromSignling(info);
         break;
       }
+      case msgTo(MessageType::DISCONNECT_PEER): {
+        if (peerConnection_.get()) {
+          DeletePeerConnection();
+          I_LOG("delete callee peer connection");
+        }
+        break;
+      }
+
       default:
         break;
       }

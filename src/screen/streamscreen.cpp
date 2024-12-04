@@ -113,6 +113,7 @@ namespace alllink {
 
   void StreamScreen::stopLocalRenderer() {
     local_renderer_.reset();
+    I_LOG("local render stop");
   }
 
   void StreamScreen::startRemoteRenderer(webrtc::VideoTrackInterface* remote_video) {
@@ -122,6 +123,7 @@ namespace alllink {
 
   void StreamScreen::stopRemoteRenderer() {
     remote_renderer_.reset();
+    I_LOG("remote render stop");
   }
 
   // ??远端流收到视频帧和本地捕捉到视频帧都会调用此函数
