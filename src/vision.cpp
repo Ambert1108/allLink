@@ -173,6 +173,9 @@ namespace alllink {
           // 调用DisconnectFromCurrentPeer方法通知中控器断开连接
           callback_->CustomMessageCallback(msg);
           break;
+        case msgTo(MessageType::SWITCH_AUDIO_INPUT):
+        case msgTo(MessageType::SET_MIC_PHONE):
+        case msgTo(MessageType::SET_CAMERA):
         case msgTo(MessageType::SET_REMOTE_DESC):
         case msgTo(MessageType::SEND_PROCESS_TO_JANUS):
         case msgTo(MessageType::SEND_JSEP_SDP_TO_PEER):
@@ -181,6 +184,7 @@ namespace alllink {
         case msgTo(MessageType::SEND_ICE_TO_PEER):
           // 中控器需要发送sdp/ice消息
           I_LOG("[test] send {} to peer", msg.id);
+          I_LOG("[Controller::CustomMessageCallback] msg {} to peer", enumToString(MessageType(msg.id)));
           // 通知中控器处理消息数据
           callback_->CustomMessageCallback(msg);
           break;

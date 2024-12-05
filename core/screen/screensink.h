@@ -322,5 +322,7 @@ namespace alllink {
 		std::atomic<bool> isMirror{ false };
 		float wr, hr;
 		sf::Vector2i wndPosition;
+		bool micState = true;
+		bool camState = true;
 	};
 }

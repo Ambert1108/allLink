@@ -1,8 +1,9 @@
 cmake_minimum_required(VERSION 3.11)
-project(AllLink VERSION 0.0.6)
+project(AllLink VERSION 0.0.7)
 set(ObjType console CACHE STRING "build object type")
 set(PROJECT_INCLUDE ${PROJECT_SOURCE_DIR}/inc)
 list(APPEND PROJECT_INCLUDE ${PROJECT_SOURCE_DIR}/core)
+list(APPEND PROJECT_INCLUDE ${PROJECT_SOURCE_DIR}/core/mod)
 set(PROJECT_LIBS)
 
 set(CMAKE_CXX_STANDARD 17)

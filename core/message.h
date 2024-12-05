@@ -1,6 +1,8 @@
 #pragma once
 #include "savequeue.h"
+
 #include <any>
+#include <unordered_map>
 
 namespace alllink {
 	struct Message {
@@ -48,7 +50,10 @@ namespace alllink {
 
 		/* 会议窗口消息 */
 		
-		MEETING_END,
+		MEETING_END,                    //通知中控器通话应该结束
+		SWITCH_AUDIO_INPUT,             //通知中控器切换音频输入设备
+		SET_MIC_PHONE,                  //通知中控器设置麦克风状态
+		SET_CAMERA,                     //通知中控器设置摄像头状态
 
 		/* 信令消息 */
 
@@ -69,4 +74,21 @@ namespace alllink {
 	};
 
 	static constexpr int msgTo(MessageType msg) { return static_cast<int>(msg); }
+
+	static std::string enumToString(MessageType e) {
+		static const std::unordered_map<MessageType, std::string> enumMap = {
+				{MessageType::SWITCH_AUDIO_INPUT, "SWITCH_AUDIO_INPUT"},
+				{MessageType::SET_REMOTE_DESC, "SET_REMOTE_DESC"},
+				{MessageType::SEND_JSEP_SDP_TO_PEER, "SEND_JSEP_SDP_TO_PEER"},
+				{MessageType::SEND_PROCESS_TO_JANUS, "SEND_PROCESS_TO_JANUS"},
+				{MessageType::SEND_SDP_TO_PEER, "SEND_SDP_TO_PEER"},
+				{MessageType::SEND_ICE_TO_PEER, "SEND_ICE_TO_PEER"},
+				{MessageType::SEND_ICE_COMPLETE_TO_PEER, "SEND_ICE_COMPLETE_TO_PEER"}
+		};
+		auto it = enumMap.find(e);
+		if (it != enumMap.end()) {
+			return it->second;
+		}
+		return "Unknown";
+	}
 }

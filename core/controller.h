@@ -11,15 +11,20 @@
 #include "rtc_base/thread.h"
 
 #include "seeker/iniConfig.hpp"
+#include "rtcAudioEngine.h"
+#include "videoEngine.h"
+#include "janitor.h"
 #include "vision.h"
 #include "signling.h"
 #include "janus.h"
+
 
 namespace alllink {
   class Controller : public webrtc::PeerConnectionObserver,
     public webrtc::CreateSessionDescriptionObserver,
     public SignlingInteractionObserver,
-    public JanusInteractionObserver,
+    public JanitorObserver,
+    //public JanusInteractionObserver,
     public VisionCnetralCallback {
 
   public:
@@ -71,9 +76,17 @@ namespace alllink {
     // JanusInteractionObserver implementation.
     //
 
-    void OnGenerated(const Jsep& tranditional) override;
+    //void OnGenerated(const Jsep& tranditional) override;
 
-    void OnProcessed(const Jsep& jsep) override;
+    //void OnProcessed(const Jsep& jsep) override;
+
+    //
+    // JanitorObserver implementation.
+    //
+
+    void OnGenerated(const std::string& sdp, const std::string& type) override;
+      
+    void OnProcessed(const std::string& sdp, const std::string& type) override;
 
     //
     // VisionCnetralCallback implementation.
@@ -103,6 +116,10 @@ namespace alllink {
     rtc::scoped_refptr<webrtc::PeerConnectionInterface> peerConnection_;
     rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface>
       peerConnectionFactory_;
+    rtcengine::rtcAudioEngine audioEngine;
+    std::map<int16_t, std::string> audioInputDevMap;
+    VideoEngine videoEngine;
+    std::shared_ptr<Janitor> janusEngine;
     std::string meetId_;
   };
 }

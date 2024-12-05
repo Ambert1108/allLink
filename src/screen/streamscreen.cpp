@@ -95,8 +95,22 @@ namespace alllink {
     while (this->pollEvent(event)) {
       switch (event.type) {
       case sf::Event::KeyPressed:
-        if (event.key.code == sf::Keyboard::M) {
+        if (event.key.code == sf::Keyboard::F) {
           isMirror.store(!isMirror);
+        }
+        else if (event.key.code == sf::Keyboard::M) {
+          micState = !micState;
+          hi::PostMsg({ msgTo(MessageType::SET_MIC_PHONE), micState });
+        }
+        else if (event.key.code == sf::Keyboard::V) {
+          camState = !camState;
+          hi::PostMsg({ msgTo(MessageType::SET_CAMERA), camState });
+        }
+        else if (event.key.code >= sf::Keyboard::Num0 && event.key.code <= sf::Keyboard::Num9) {
+          int num = event.key.code - sf::Keyboard::Num0;
+          if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)) {
+            hi::PostMsg({ msgTo(MessageType::SWITCH_AUDIO_INPUT), num });
+          }
         }
         break;
       case sf::Event::Closed:

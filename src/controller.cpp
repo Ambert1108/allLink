@@ -127,10 +127,17 @@ namespace alllink {
 
 namespace alllink {
   Controller::Controller(SignlingInteractionSystem* client, VisionCnetralBase* vcb, JanusInteractionSystem* janus)
-  : client_(client), vision_(vcb), janus_(janus) {
+  : client_(client), vision_(vcb), janus_(janus), janusEngine(nullptr) {
     client_->registerObserver(this);
     vision_->registerObserver(this);
-    janus_->registerObserver(this);
+    //janus_->registerObserver(this);
+    // 使用连接引擎
+    int callType = seeker::IniConfig::GetInteger("this", "call_type", 0);
+    if (callType == 1) {
+      ServerInfo janusServerInfo(seeker::IniConfig::Get("this", "janus", "10.1.29.246:8188"));
+      janusEngine = std::make_shared<Janitor>(janusServerInfo.serverIp_, janusServerInfo.serverPort_);
+      janusEngine->registerObserver(this);
+    }
   }
 
   void Controller::Close() {
@@ -146,9 +153,11 @@ namespace alllink {
       signaling_thread_ = rtc::Thread::CreateWithSocketServer();
       signaling_thread_->Start();
     }
+    
     peerConnectionFactory_ = webrtc::CreatePeerConnectionFactory(
       nullptr /* network_thread */, nullptr /* worker_thread */,
-      signaling_thread_.get() /* signal thread */, nullptr /* default_adm */,
+      signaling_thread_.get() /* signal thread */, audioEngine.InitAdm() /* rtc_audio_engine_adm */,
+      //signaling_thread_.get() /* signal thread */, nullptr /* rtc_audio_engine_adm */,
       webrtc::CreateBuiltinAudioEncoderFactory(),
       webrtc::CreateBuiltinAudioDecoderFactory(),
       std::make_unique<webrtc::VideoEncoderFactoryTemplate<
@@ -176,6 +185,8 @@ namespace alllink {
     }
     D_LOG("init PeerConnection");
     AddTracks();
+    I_LOG("Current audio input device:");
+    audioEngine.GetRecordingDevices(audioInputDevMap);
     D_LOG("init finish");
 
     return true;
@@ -201,6 +212,8 @@ namespace alllink {
   void Controller::DeletePeerConnection() {
     vision_->stopLocalRenderer();
     vision_->stopRemoteRenderer();
+    videoEngine.close();
+    audioEngine.close();
     peerConnection_ = nullptr;
     peerConnectionFactory_ = nullptr;
     meetId_.clear();
@@ -217,36 +230,41 @@ namespace alllink {
     }
 
     // 创建音频轨道
-    rtc::scoped_refptr<webrtc::AudioTrackInterface> audio_track(
-      peerConnectionFactory_->CreateAudioTrack(
-        "audio_label",
-        peerConnectionFactory_->CreateAudioSource(cricket::AudioOptions())
-        .get()));
-    // 添加音频轨道到peerConnection
-    auto result_or_error = peerConnection_->AddTrack(audio_track, { "stream_id" });
-    if (!result_or_error.ok()) {
-      E_LOG("Failed to add audio track to PeerConnection:{}", result_or_error.error().message());
-    }
+    //rtc::scoped_refptr<webrtc::AudioTrackInterface> audio_track(
+    //  peerConnectionFactory_->CreateAudioTrack(
+    //    "audio_label",
+    //    peerConnectionFactory_->CreateAudioSource(cricket::AudioOptions())
+    //    .get()));
+    //// 添加音频轨道到peerConnection
+    //auto result_or_error = peerConnection_->AddTrack(audio_track, { "stream_id" });
+    //if (!result_or_error.ok()) {
+    //  E_LOG("Failed to add audio track to PeerConnection:{}", result_or_error.error().message());
+    //}
+    audioEngine.AddAudioTracks(peerConnectionFactory_, peerConnection_);
 
     // 寻找本地采集设备
-    rtc::scoped_refptr<CapturerTrackSource> video_device = CapturerTrackSource::Create();
-    if (video_device) {
-      // 创建视频轨道
-      rtc::scoped_refptr<webrtc::VideoTrackInterface> video_track_(
-        peerConnectionFactory_->CreateVideoTrack(video_device, "video_label"));
-
-      // 向视觉控制器添加本地渲染器
-      vision_->startLocalRenderer(video_track_.get());
-
-      // 添加视频轨道到peerConnection
-      result_or_error = peerConnection_->AddTrack(video_track_, { "stream_id" });
-      if (!result_or_error.ok()) {
-        E_LOG("Failed to add video track to PeerConnection: {}", result_or_error.error().message());
-      }
-    }
-    else {
-      E_LOG("OpenVideoCaptureDevice failed");
-    }
+    //rtc::scoped_refptr<CapturerTrackSource> video_device = CapturerTrackSource::Create();
+    //if (video_device) {
+    //  // 创建视频轨道
+    //  rtc::scoped_refptr<webrtc::VideoTrackInterface> video_track_(
+    //    peerConnectionFactory_->CreateVideoTrack(video_device, "video_label"));
+    //
+    //  // 向视觉控制器添加本地渲染器
+    //  vision_->startLocalRenderer(video_track_.get());
+    //
+    //  // 添加视频轨道到peerConnection
+    //  auto result_or_error = peerConnection_->AddTrack(video_track_, { "stream_id" });
+    //  if (!result_or_error.ok()) {
+    //    E_LOG("Failed to add video track to PeerConnection: {}", result_or_error.error().message());
+    //  }
+    //}
+    //else {
+    //  E_LOG("OpenVideoCaptureDevice failed");
+    //}
+    rtc::scoped_refptr<webrtc::VideoTrackInterface> video_track_;
+    videoEngine.addVideoTrack(peerConnectionFactory_, peerConnection_, video_track_);
+    // 向视觉控制器添加本地渲染器
+    vision_->startLocalRenderer(video_track_.get());
   }
 
 
@@ -448,19 +466,44 @@ namespace alllink {
   //
 
   // Janus回复generate请求后需要告知信令并透传给对端
-  void Controller::OnGenerated(const Jsep& tranditional) {
+  /*void Controller::OnGenerated(const Jsep& tranditional) {
+    hi::PostMsg({ msgTo(MessageType::SEND_SDP_TO_PEER), tranditional });
+  }*/
+
+  // Janus回复process请求后需要设置为远端会话描述以获取Janus的ICE候选
+  //void Controller::OnProcessed(const Jsep& jsep) {
+  //  std::string msg = seeker::json::toJsonString(jsep);
+  //  SignInfo info;
+  //  info.set_sdp(msg);
+  //  // 此处设置，若程序作为主叫触发OnProcessed，meetId的值来源于ConnectToPeer函数中用户输入
+  //  // 若程序作为被叫触发OnProcessed，meetId的值来源于OnCSMessageFromSignling函数中信令透传offer时的from值
+  //  info.set_from(meetId_);
+  //  //OnMessageFromSignling(info);
+  //  hi::PostMsg({ msgTo(MessageType::SET_REMOTE_DESC), info });
+  //}
+
+  //
+  // JanitorObserver implementation.
+  //
+
+  void Controller::OnGenerated(const std::string& sdp, const std::string& type) {
+    I_LOG("on generated");
+    Jsep tranditional;
+    tranditional.sdp = sdp;
+    tranditional.type = type;
     hi::PostMsg({ msgTo(MessageType::SEND_SDP_TO_PEER), tranditional });
   }
 
-  // Janus回复process请求后需要设置为远端会话描述以获取Janus的ICE候选
-  void Controller::OnProcessed(const Jsep& jsep) {
+  void Controller::OnProcessed(const std::string& sdp, const std::string& type) {
+    Jsep jsep;
+    jsep.sdp = sdp;
+    jsep.type = type;
     std::string msg = seeker::json::toJsonString(jsep);
     SignInfo info;
     info.set_sdp(msg);
     // 此处设置，若程序作为主叫触发OnProcessed，meetId的值来源于ConnectToPeer函数中用户输入
     // 若程序作为被叫触发OnProcessed，meetId的值来源于OnCSMessageFromSignling函数中信令透传offer时的from值
     info.set_from(meetId_);
-    //OnMessageFromSignling(info);
     hi::PostMsg({ msgTo(MessageType::SET_REMOTE_DESC), info });
   }
 
@@ -482,8 +525,9 @@ namespace alllink {
       user.id_, server.serverIp_, server.serverPort_);
     int callType = seeker::IniConfig::GetInteger("this", "call_type", 0);
     if (callType == 1) {
-      ServerInfo janusServerInfo(seeker::IniConfig::Get("this", "janus", "10.1.29.246:8188"));
-      janus_->connectServer(janusServerInfo);
+      //ServerInfo janusServerInfo(seeker::IniConfig::Get("this", "janus", "10.1.29.246:8188"));
+      //janus_->connectServer(janusServerInfo);
+      janusEngine->init();
     }
     return true;
   }
@@ -557,33 +601,58 @@ namespace alllink {
         break;
       }
       case msgTo(MessageType::SEND_JSEP_SDP_TO_PEER): {
-        if (!janus_->sendGenerateToJanus(std::any_cast<std::string>(msg.data))) {
-          hi::PostMsg({ msgTo(MessageType::SEND_MSG_FAILED), nullptr });
-        }
+        //if (!janus_->sendGenerateToJanus(std::any_cast<std::string>(msg.data))) {
+        //  hi::PostMsg({ msgTo(MessageType::SEND_MSG_FAILED), nullptr });
+        //}
+        Jsep jsep;
+        seeker::json::fromJsonString(jsep, std::any_cast<std::string>(msg.data));
+        janusEngine->generateSDP(jsep.sdp, jsep.type);
         break;
       }
       case msgTo(MessageType::SEND_PROCESS_TO_JANUS): {
         Jsep jsep = std::any_cast<Jsep>(msg.data);
-        if (!janus_->sendProcessToJanus(jsep.sdp, jsep.type)) {
-          hi::PostMsg({ msgTo(MessageType::SEND_MSG_FAILED), nullptr });
-        }
+        //if (!janus_->sendProcessToJanus(jsep.sdp, jsep.type)) {
+        //  hi::PostMsg({ msgTo(MessageType::SEND_MSG_FAILED), nullptr });
+        //}
+        janusEngine->processSDP(jsep.sdp, jsep.type);
         break;
       }
       case msgTo(MessageType::SEND_ICE_TO_PEER): {
-        if (!janus_->sendTrckileToJanus(std::any_cast<std::string>(msg.data))) {
-          hi::PostMsg({ msgTo(MessageType::SEND_MSG_FAILED), nullptr });
-        }
+        //if (!janus_->sendTrckileToJanus(std::any_cast<std::string>(msg.data))) {
+        //  hi::PostMsg({ msgTo(MessageType::SEND_MSG_FAILED), nullptr });
+        //}
+        janusEngine->sendTrckileToJanus(std::any_cast<std::string>(msg.data));
         break;
       }
       case msgTo(MessageType::SEND_ICE_COMPLETE_TO_PEER): {
-        if (!janus_->sendTrckileCompleteToJanus()) {
-          hi::PostMsg({ msgTo(MessageType::SEND_MSG_FAILED), nullptr });
-        }
+        //if (!janus_->sendTrckileCompleteToJanus()) {
+        //  hi::PostMsg({ msgTo(MessageType::SEND_MSG_FAILED), nullptr });
+        //}
+        janusEngine->sendTrckileCompleteToJanus();
         break;
       }
       case msgTo(MessageType::SET_REMOTE_DESC): {
         SignInfo info = std::any_cast<SignInfo>(msg.data);
         OnMessageFromSignling(info);
+        break;
+      }
+      case msgTo(MessageType::SWITCH_AUDIO_INPUT): {
+        int device = std::any_cast<int>(msg.data);
+        auto it = audioInputDevMap.find(device);
+        if (it != audioInputDevMap.end()) I_LOG("pick mic input device:{}", it->second);
+        audioEngine.ReplaceRecordingDevices(device);
+        break;
+      }
+      case msgTo(MessageType::SET_MIC_PHONE): {
+        bool state = std::any_cast<bool>(msg.data);
+        I_LOG("set mic phone state {}", state);
+        audioEngine.setMicrophone(state);
+        break;
+      }
+      case msgTo(MessageType::SET_CAMERA): {
+        bool state = std::any_cast<bool>(msg.data);
+        I_LOG("set camera phone state {}", state);
+        videoEngine.switchCamera(state);
         break;
       }
       case msgTo(MessageType::DISCONNECT_PEER): {
