@@ -6,6 +6,9 @@ void Janitor::socketTask(const std::shared_ptr<oatpp::websocket::WebSocket>& web
 }
 
 Janitor::Janitor(std::string ip, v_uint16 port) {
+
+    I_LOG("sessionID init is: {}", sessionID);
+    I_LOG("handle_id init is: {}", handleID);
     this->ip = ip;
     this->port = port;    
     std::mutex socketWriteMutex;
@@ -14,15 +17,14 @@ Janitor::Janitor(std::string ip, v_uint16 port) {
     I_LOG("creat listener");
     //创建连接提供者：
     auto connectionProvider = oatpp::network::tcp::client::ConnectionProvider::createShared({ ip, port });
-    auto connector = oatpp::websocket::Connector::createShared(connectionProvider); //创建WebSocket连接器
+    auto connector = oatpp::websocket::Connector::createShared(connectionProvider);
     oatpp::websocket::Connector::Headers header;
     header.put("Sec-WebSocket-Protocol", "janus-protocol");
-    auto connection = connector->connect("/", header);      //建立连接
+    auto connection = connector->connect("/", header);
     I_LOG("Connected");
 
-
-    socket = oatpp::websocket::WebSocket::createShared(connection, true);    //创建WebSocket对象：true表示客户端
-    socket->setListener(listener);		//设置WebSocket监听器
+    socket = oatpp::websocket::WebSocket::createShared(connection, true);  
+    socket->setListener(listener);
     std::thread loop1{ &Janitor::socketTask,this, socket };
     listenThread = std::move(loop1);
 }
@@ -53,12 +55,37 @@ void Janitor::init() {
     socket->sendOneFrame(true, oatpp::websocket::Frame::OPCODE_TEXT, js);
     engineState.store(SESSIONING);
 
-    //do{
-    //    std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    //} while ();
-
     std::thread loop2{ &Janitor::keepAlive, this };
     aliveThread = std::move(loop2);
+}
+
+void Janitor::addNoSIP() {
+    if (handleID > 0) {
+        json j;
+        j = {
+            {"janus", "detach"},
+            {"transaction", std::to_string(transaction++)},
+            {"session_id", sessionID},
+            {"handle_id", handleID}
+        };
+        std::string jsonString = j.dump(4);
+        I_LOG("send message: {}", jsonString);
+        oatpp::String js = oatpp::String(jsonString);
+        socket->sendOneFrame(true, oatpp::websocket::Frame::OPCODE_TEXT, js);
+    }
+
+    json j;
+    j = {
+        {"janus", "attach"},
+        {"transaction", std::to_string(transaction++)},
+        {"session_id", sessionID},
+        {"plugin", "janus.plugin.nosip"}
+    };
+    std::string jsonString = j.dump(4);
+    I_LOG("send message: {}", jsonString);
+    oatpp::String js = oatpp::String(jsonString);
+    socket->sendOneFrame(true, oatpp::websocket::Frame::OPCODE_TEXT, js);
+    engineState.store(HANDLEING);
 }
 
 void Janitor::generateSDP(std::string jsepSdp, std::string type) {
@@ -100,7 +127,7 @@ void Janitor::processSDP(std::string normalSdp, std::string type) {
     engineState.store(PROCESSING);
 }
 
-void Janitor::sendTrckileToJanus(const std::string& ice) {
+void Janitor::sendTrickleToJanus(const std::string& ice) {
    
     json icedata = json::parse(ice);
     json j;
@@ -120,7 +147,7 @@ void Janitor::sendTrckileToJanus(const std::string& ice) {
     socket->sendOneFrame(true, oatpp::websocket::Frame::OPCODE_TEXT, js);
 }
 
-void Janitor::sendTrckileCompleteToJanus() {
+void Janitor::sendTrickleCompleteToJanus() {
 
     json j;
     j = {
@@ -136,14 +163,6 @@ void Janitor::sendTrckileCompleteToJanus() {
     I_LOG("send message: {}", jsonString);
     oatpp::String js = oatpp::String(jsonString);
     socket->sendOneFrame(true, oatpp::websocket::Frame::OPCODE_TEXT, js);
-}
-
-int64_t Janitor::getSessionId() const {
-    return sessionID;
-}
-
-int64_t Janitor::getHandleId() const {
-    return handleID;
 }
 
 void Janitor::keepAlive() {
@@ -166,24 +185,6 @@ void Janitor::keepAlive() {
     I_LOG("keep alive thread stop");
 }
 
-void Janitor::addNoSIP() {
-
-    json j;
-    j = {
-        {"janus", "attach"},
-        {"transaction", std::to_string(transaction++)},
-        {"session_id", sessionID},
-        {"plugin", "janus.plugin.nosip"}
-    };
-    std::string jsonString = j.dump(4);
-    I_LOG("send message: {}", jsonString);
-    oatpp::String js = oatpp::String(jsonString);
-    socket->sendOneFrame(true, oatpp::websocket::Frame::OPCODE_TEXT, js);
-    engineState.store(HANDLEING);
-
-}
-
-
 
 void Janitor::registerObserver(JanitorObserver* callback) {
     this->callback_ = callback;
@@ -199,9 +200,11 @@ void Janitor::OnSuccess(const Message& message) {
         addNoSIP();
     }
     else if (engineState.load() == HANDLEING) {
-        handleID = Resp.data_id();
-        I_LOG("handle id is [{}]", handleID);
-        engineState.store(WAIT);
+        if (Resp.js.contains("data") && Resp.js["data"].contains("id")) {
+            handleID = Resp.data_id();
+            I_LOG("handle id is [{}]", handleID);
+            engineState.store(WAIT);
+        }
     }
 
 }

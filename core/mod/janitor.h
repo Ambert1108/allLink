@@ -19,18 +19,15 @@ public:
 
     void init();
 
+    void addNoSIP();
+
     void generateSDP(std::string jsepSdp, std::string type);
 
     void processSDP(std::string normalSdp, std::string type);
 
-    void sendTrckileToJanus(const std::string& ice);
+    void sendTrickleToJanus(const std::string& ice);
 
-    void sendTrckileCompleteToJanus();
-
-    int64_t getSessionId() const;
-
-    int64_t getHandleId() const;
-
+    void sendTrickleCompleteToJanus();
 
     void registerObserver(JanitorObserver* callback);
 	
@@ -56,8 +53,8 @@ private:
 
     //message
     std::atomic <State> engineState{ONLINE};
-    long long sessionID;
-    long long handleID;
+    long long sessionID = 0;
+    long long handleID = 0;
     int64_t transaction = 0;
     std::atomic<bool> destory = false;
 
@@ -67,8 +64,6 @@ private:
 
     void keepAlive();
     void socketTask(const std::shared_ptr<oatpp::websocket::WebSocket>& websocket);
-
-    void addNoSIP();
 
 
     JanitorObserver* callback_;

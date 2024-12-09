@@ -217,7 +217,8 @@ namespace alllink {
     peerConnection_ = nullptr;
     peerConnectionFactory_ = nullptr;
     meetId_.clear();
-
+    // 重新注册nosip插件
+    janusEngine->addNoSIP();
   }
 
   void Controller::EnsureStreamingUI() {
@@ -610,6 +611,7 @@ namespace alllink {
         break;
       }
       case msgTo(MessageType::SEND_PROCESS_TO_JANUS): {
+        
         Jsep jsep = std::any_cast<Jsep>(msg.data);
         //if (!janus_->sendProcessToJanus(jsep.sdp, jsep.type)) {
         //  hi::PostMsg({ msgTo(MessageType::SEND_MSG_FAILED), nullptr });
@@ -621,14 +623,14 @@ namespace alllink {
         //if (!janus_->sendTrckileToJanus(std::any_cast<std::string>(msg.data))) {
         //  hi::PostMsg({ msgTo(MessageType::SEND_MSG_FAILED), nullptr });
         //}
-        janusEngine->sendTrckileToJanus(std::any_cast<std::string>(msg.data));
+        janusEngine->sendTrickleToJanus(std::any_cast<std::string>(msg.data));
         break;
       }
       case msgTo(MessageType::SEND_ICE_COMPLETE_TO_PEER): {
         //if (!janus_->sendTrckileCompleteToJanus()) {
         //  hi::PostMsg({ msgTo(MessageType::SEND_MSG_FAILED), nullptr });
         //}
-        janusEngine->sendTrckileCompleteToJanus();
+        janusEngine->sendTrickleCompleteToJanus();
         break;
       }
       case msgTo(MessageType::SET_REMOTE_DESC): {
@@ -682,7 +684,7 @@ namespace alllink {
 
     std::string sdp;
     desc->ToString(&sdp);
-    D_LOG("LOG SDP\n{}", sdp);
+    I_LOG("LOG SDP\n{}", sdp);
 
     // For loopback test. To save some connecting delay.
     //if (loopback_) {

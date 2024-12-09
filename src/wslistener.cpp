@@ -6,16 +6,16 @@ namespace alllink {
   void WSListener::registerObserver(WSListenObserver* callback) { callback_ = callback; }
 
   void WSListener::onPing(const WebSocket& socket, const oatpp::String& message) {
-    OATPP_LOGD(TAG, "onPing");
+     W_LOG("onPing");
     //socket.sendPong(message);
   }
 
   void WSListener::onPong(const WebSocket& socket, const oatpp::String& message) {
-    OATPP_LOGD(TAG, "onPong");
+    W_LOG("onPong");
   }
 
   void WSListener::onClose(const WebSocket& socket, v_uint16 code, const oatpp::String& message) {
-    OATPP_LOGD(TAG, "onClose code=%d", code);
+    W_LOG("onClose code={}", code);
     socket.sendClose();
   }
 
