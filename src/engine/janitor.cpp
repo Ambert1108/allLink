@@ -31,14 +31,15 @@ Janitor::Janitor(std::string ip, v_uint16 port) {
 
 Janitor::~Janitor() {
     I_LOG("well close!");
+    destory.store(true);
+    if(aliveThread.joinable()) aliveThread.join();
     if (socket) {
       socket->sendClose();
       socket->stopListening();
       socket = nullptr;
     }
-    destory.store(true);
-    if(aliveThread.joinable()) aliveThread.join();
     if (listenThread.joinable()) listenThread.join();
+
     I_LOG("janitor close success");
 }
 
@@ -166,7 +167,7 @@ void Janitor::sendTrickleCompleteToJanus() {
 }
 
 void Janitor::keepAlive() {
-  I_LOG("keep alive thread start");
+    I_LOG("keep alive thread start");
     do {
       if (engineState.load() >= WAIT) {
         std::this_thread::sleep_for(std::chrono::seconds(5));

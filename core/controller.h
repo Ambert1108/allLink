@@ -12,7 +12,7 @@
 
 #include "seeker/iniConfig.hpp"
 #include "rtcAudioEngine.h"
-#include "videoEngine.h"
+#include "rtcVideoEngine.h"
 #include "janitor.h"
 #include "vision.h"
 #include "signling.h"
@@ -118,7 +118,8 @@ namespace alllink {
       peerConnectionFactory_;
     rtcengine::rtcAudioEngine audioEngine;
     std::map<int16_t, std::string> audioInputDevMap;
-    VideoEngine videoEngine;
+    rtcengine::RTCVideoEngine videoEngine;
+    //VideoEngine videoEngine;
     std::shared_ptr<Janitor> janusEngine;
     std::string meetId_;
   };

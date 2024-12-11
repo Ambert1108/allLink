@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.11)
-project(AllLink VERSION 0.0.7)
+project(AllLink VERSION 0.0.8)
 set(ObjType console CACHE STRING "build object type")
 set(PROJECT_INCLUDE ${PROJECT_SOURCE_DIR}/inc)
 list(APPEND PROJECT_INCLUDE ${PROJECT_SOURCE_DIR}/core)
@@ -67,14 +67,14 @@ message(STATUS "opencv lib:${OpenCV_LIBS}")
 #find WebRTC include and library file
 if(CMAKE_BUILD_TYPE AND (CMAKE_BUILD_TYPE STREQUAL "Release"))
 	message("====== FIND WEBRTC LIBRARY AND INCLUDE ======")
-	set(LIBWEBRTC_PATH "D:/tools/webrtc2/src")
+	set(LIBWEBRTC_PATH "D:/tools/webrtc/libwebrtc/src")
 	list(APPEND WEBRTC_INCLUDE ${LIBWEBRTC_PATH})
 	list(APPEND WEBRTC_INCLUDE "${LIBWEBRTC_PATH}/third_party/abseil-cpp")
 	list(APPEND WEBRTC_INCLUDE "${LIBWEBRTC_PATH}/third_party/jsoncpp/source/include")
 	list(APPEND WEBRTC_INCLUDE "${LIBWEBRTC_PATH}/third_party/libyuv/include")
 
 	file(GLOB_RECURSE WEBRTC_LIB "${LIBWEBRTC_PATH}/out/release_h264/obj/*.lib")
-	file(GLOB_RECURSE WEBRTC_OBJ "D:/tools/webrtc2/webrtc/lib/*.obj")
+	file(GLOB_RECURSE WEBRTC_OBJ "D:/tools/webrtc/lib/*.obj")
 
 	message(STATUS "webrtc include:${WEBRTC_INCLUDE}")
 	message(STATUS "webrtc lib:${WEBRTC_LIB}")

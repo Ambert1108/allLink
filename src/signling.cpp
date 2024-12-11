@@ -13,15 +13,27 @@ namespace alllink {
     listener = std::make_shared<WSListener>();
     listener->registerObserver(this);
     listenBody = aom::InvokeTimer::CreateTimer(std::chrono::milliseconds(1), true, [&] {
-      if (signalState > 1 && client) {
+      if (signalState > 0 && client) {
         client->listen();
         I_LOG("signling listen finish");
       }
     });
     listenBody->Start();
+    keepBody = aom::InvokeTimer::CreateTimer(std::chrono::seconds(5), true, [&] {
+      if (signalState > 1 && client) {
+        SignInfo msg;
+        msg.set_meth("Heartbeat");
+        msg.set_from(userInfo.id_);
+        msg.set_to("system");
+        oatpp::String js = oatpp::String(msg.js.dump());
+        client->sendOneFrame(true, oatpp::websocket::Frame::OPCODE_TEXT, js);
+      }
+    });
+    keepBody->Start();
   }
 
   SignlingInteractionSystem::~SignlingInteractionSystem() {
+    if(keepBody) keepBody->Cancel();
     if(client) logout();
     if(listenBody) listenBody->Cancel();
   }
@@ -56,7 +68,7 @@ namespace alllink {
       auto connection = connector->connect("/connectWS");
       client = oatpp::websocket::WebSocket::createShared(connection, true);
       client->setListener(listener);
-      signalState = State::LOGIN_ON;
+      signalState = State::CONNECT_ON;
     }
     catch (std::exception& ex) {
       E_LOG("[SignlingInteractionSystem::connectServer] connect sever failed:{}", ex.what());
@@ -78,10 +90,22 @@ namespace alllink {
 
   bool SignlingInteractionSystem::sendToPeer(const std::string& to, const std::string& message) {
     SignInfo msg;
-    msg.set_meth("FORWARD");
-    msg.set_from(userInfo.id_);
-    msg.set_to(to);
-    msg.set_sdp(message);
+    std::regex pattern("^\\d{3}-\\d{3}$");
+    if (std::regex_match(to, pattern)) {
+      // 用户进入会议流程
+      msg.set_meth("INVITE");
+      msg.set_from(userInfo.id_);
+      msg.set_to(to);
+      msg.set_sdp(message);
+      signalState = State::CALLING;
+    }
+    else{
+      // 用户进入1v1通话流程
+      msg.set_meth("FORWARD");
+      msg.set_from(userInfo.id_);
+      msg.set_to(to);
+      msg.set_sdp(message);
+    }
     return ToSignaling(msg);
   }
 
@@ -98,7 +122,7 @@ namespace alllink {
     client->sendClose();
     client->stopListening();
     client = nullptr;
-    signalState = State::LOGIN_OUT;
+    signalState = State::CONNECT_ON;
   }
 
   void SignlingInteractionSystem::OnFORWARD(const SignInfo& info) {
@@ -141,17 +165,22 @@ namespace alllink {
       //收到信令转发主叫呼叫请求
     }
     else if (info.cmeth() == "REGISTER") {
+      signalState = State::LOGIN_ON;
       //收到信令回复登录请求
       hi::PostMsg({ msgTo(MessageType::LOGIN_SUCCESS), info.to() });
+    }
+    else if (info.cmeth() == "INVITE") {
+      callback_->OnCSMessageFromSignling(info);
+      signalState = State::CALLER;
     }
   }
 
   void SignlingInteractionSystem::OnTrying(const SignInfo& info) {
-
+    signalState = State::TRYING;
   }
 
   void SignlingInteractionSystem::OnRinging(const SignInfo& info) {
-
+    signalState = State::RINGING;
   }
 
   void SignlingInteractionSystem::OnUnauthorized(const SignInfo& info) {

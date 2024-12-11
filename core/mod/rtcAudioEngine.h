@@ -65,6 +65,18 @@ namespace rtcengine {
 		//设置麦克风，失败返回false，成功返回true
 		bool setMicrophone(bool new_state);
 		
+		//设置扬声器音量大小。失败返回false，成功返回true
+		bool setPlayoutVolume(const uint32_t volume);
+
+		//设置麦克风音量大小。失败返回false，成功返回true
+		bool setMicrophoneVolume(const uint32_t volume);
+
+		//获取扬声器音量大小
+		uint32_t PlayoutVolume();
+
+		//获取麦克风音量大小
+		uint32_t MicrophoneVolume();
+
 		//清除adm、audio_track;
 		void close();
 	private:

@@ -50,7 +50,7 @@ namespace rtcengine {
 			char name[256];
 			char guid[256];
 			if (adm->RecordingDeviceName(i, name, guid) == 0) {
-				// ��ӡ�豸���ƺ�GUID
+				// 打印设备名称和GUID
 				I_LOG("RecordingDevice i [{}] name [{}] guid [{}]", i, name, guid);
 				recordingDevice[i] = name;
 			}
@@ -141,6 +141,47 @@ namespace rtcengine {
 		E_LOG("audio_track no create");
 		return false;
 	}
+
+	//设置扬声器音量大小。失败返回false，成功返回true
+	bool rtcAudioEngine::setPlayoutVolume(const uint32_t volume) {
+		if (!adm) {
+			E_LOG("adm no create");
+			return false;
+		}
+		return adm->SetSpeakerVolume(volume);
+	}
+
+	//设置麦克风音量大小。失败返回false，成功返回true
+	bool rtcAudioEngine::setMicrophoneVolume(const uint32_t volume) {
+		if (!adm) {
+			E_LOG("adm no create");
+			return false;
+		}
+		return adm->SetMicrophoneVolume(volume);
+	}
+
+	//获取扬声器音量大小
+	uint32_t rtcAudioEngine::PlayoutVolume() {
+		if (!adm) {
+			E_LOG("adm no create");
+			return -1;
+		}
+		uint32_t v;
+		adm->SpeakerVolume(&v);
+		return v;
+	}
+
+	//获取麦克风音量大小
+	uint32_t rtcAudioEngine::MicrophoneVolume() {
+		if (!adm) {
+			E_LOG("adm no create");
+			return -1;
+		}
+		uint32_t v;
+		adm->MicrophoneVolume(&v);
+		return v;
+	}
+
 
 	void rtcAudioEngine::close()
 	{

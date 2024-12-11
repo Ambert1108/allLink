@@ -93,10 +93,10 @@ namespace alllink {
     enum State {
       NONE,
 
-      // 未登录
-      LOGIN_OUT = 1,
+      // ws已连接
+      CONNECT_ON = 1,
 
-      // 已登录
+      // 已登录信令服务器
       LOGIN_ON,
 
       // 作为主叫生成Offer SDP并发送FORWARD后，等待接收Trying
@@ -164,9 +164,10 @@ namespace alllink {
     std::shared_ptr<oatpp::websocket::WebSocket> client;
     std::shared_ptr<WSListener> listener;
     aom::InvokeTimerPtr listenBody;
+    aom::InvokeTimerPtr keepBody;
     ServerInfo serverInfo;
     UserInfo userInfo;
-    State signalState{ LOGIN_OUT };
+    State signalState{ NONE };
     int64_t lastBeatPoint = 0;
     int64_t HeartbeatInterval = 1000; //心跳间隔
     int64_t cseq_ = 0;

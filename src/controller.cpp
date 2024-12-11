@@ -331,7 +331,6 @@ namespace alllink {
 
   // 信令收到对端forward请求后进入此回调函数获取offer sdp并生成answer sdp
   void Controller::OnMessageFromSignling(const SignInfo& info) {
-    I_LOG("1");
     if (!peerConnection_.get()) {
       meetId_ = info.from();
       if (!InitializePeerConnection()) {
@@ -345,23 +344,19 @@ namespace alllink {
         "conversation with a different peer.");
       return;
     }
-    I_LOG("2");
     Json::CharReaderBuilder factory;
     std::unique_ptr<Json::CharReader> reader =
       absl::WrapUnique(factory.newCharReader());
-    I_LOG("3");
     Json::Value jmessage;
     if (!reader->parse(info.sdp().data(), info.sdp().data() + info.sdp().length(), &jmessage, nullptr)) {
       W_LOG("Received unknown message:{}", info.sdp());
       return;
     }
-    I_LOG("4");
     std::string type_str;
     std::string json_object;
 
     rtc::GetStringFromJsonObject(jmessage, "type", &type_str);
 
-    I_LOG("5");
     if (!type_str.empty()) { //type不为空代表收到sdp
       if (type_str == "offer-loopback") {
         // This is a loopback call.
@@ -375,23 +370,19 @@ namespace alllink {
         return;
       }
       std::optional<webrtc::SdpType> type_maybe = webrtc::SdpTypeFromString(type_str);
-      I_LOG("6");
       if (!type_maybe) {
         E_LOG("Unknown SDP type: {}", type_str);
         return;
       }
-      I_LOG("7");
       webrtc::SdpType type = *type_maybe;
       std::string sdp;
       if (!rtc::GetStringFromJsonObject(jmessage, "sdp", &sdp)) {
         W_LOG("Can't parse received session description message.");
         return;
       }
-      I_LOG("8");
       webrtc::SdpParseError error;
       std::unique_ptr<webrtc::SessionDescriptionInterface> session_description =
         webrtc::CreateSessionDescription(type, sdp, &error);
-      I_LOG("9");
       if (!session_description) {
         W_LOG("Can't parse received session description message. "
           "SdpParseError was: {}", error.description);
@@ -401,12 +392,10 @@ namespace alllink {
       peerConnection_->SetRemoteDescription(
         DummySetSessionDescriptionObserver::Create().get(),
         session_description.release());
-      I_LOG("10");
       if (type == webrtc::SdpType::kOffer) { //如果收到的是offer sdp则需要创建answer sdp，成功后回调OnSuccess
         peerConnection_->CreateAnswer(this, webrtc::PeerConnectionInterface::RTCOfferAnswerOptions());
         I_LOG("create answer done");
       }
-      I_LOG("11");
     }
     else {  //type为空代表收到ice candidate
       std::string sdp_mid;
@@ -448,9 +437,10 @@ namespace alllink {
     }
     else {
       I_LOG("caller on message");
-      if (meetId_ != info.from()) {
-        // 判断主叫保存的呼叫id和信令发来的fromId是否一致
-        E_LOG("[Controller::OnCSMessageFromSignling] meet id {} and from not match",
+      if (info.from() != meetId_ && info.from() != "system") {
+        // 在1v1流程中，判断主叫保存的呼叫id和信令发来的from是否一致
+        // 如果是会议流程，信令发来的from应该是from
+        E_LOG("[Controller::OnCSMessageFromSignling] meet id {} and from {} not match",
           meetId_, info.from());
         hi::PostMsg({ msgTo(MessageType::SEND_MSG_FAILED), nullptr });
         return;
