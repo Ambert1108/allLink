@@ -232,6 +232,8 @@ namespace alllink {
 
 		void stopRemoteRenderer();
 
+		void setSessionMode(int mode);
+
 		struct ImageData {
 			BITMAPINFO bmi;
 			std::unique_ptr<uint8_t[]> image = nullptr;
@@ -322,7 +324,9 @@ namespace alllink {
 		std::atomic<bool> isMirror{ false };
 		float wr, hr;
 		sf::Vector2i wndPosition;
-		bool micState = true;
-		bool camState = true;
+		bool micState = false;
+		bool camState = false;
+		int micVolume = 50;
+		int mode = 0; //1v1通话:0, 会议流程:1
 	};
 }

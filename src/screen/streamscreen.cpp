@@ -112,6 +112,18 @@ namespace alllink {
             hi::PostMsg({ msgTo(MessageType::SWITCH_AUDIO_INPUT), num });
           }
         }
+        else if (event.key.code == sf::Keyboard::Up) {
+          if (sf::Keyboard::isKeyPressed(sf::Keyboard::A) && micVolume < 100) {
+            micVolume += 10;
+            hi::PostMsg({ msgTo(MessageType::SWITCH_MIC_VOLUME), micVolume });
+          }
+        }
+        else if (event.key.code == sf::Keyboard::Down) {
+          if (sf::Keyboard::isKeyPressed(sf::Keyboard::A) && micVolume > 0) {
+            micVolume -= 10;
+            hi::PostMsg({ msgTo(MessageType::SWITCH_MIC_VOLUME), micVolume });
+          }
+        }
         break;
       case sf::Event::Closed:
         // 通知视觉控制器会议画面被关闭
@@ -140,6 +152,10 @@ namespace alllink {
     I_LOG("remote render stop");
   }
 
+  void StreamScreen::setSessionMode(int mode) {
+    this->mode = mode;
+  }
+
   // ??远端流收到视频帧和本地捕捉到视频帧都会调用此函数
   void StreamScreen::OnPaint() {
     //获取本地和远端的视频画面
@@ -153,7 +169,7 @@ namespace alllink {
 
       if (image != NULL) {
         remoteImageList.Push(ImageData(bmi, image));
-        if (this->getSize().x > 200 && this->getSize().y > 200) {
+        if (this->getSize().x > 200 && this->getSize().y > 200 && mode == 0) {
           const BITMAPINFO& lbmi = local_renderer->bmi();
           const uint8_t* limage = local_renderer->image();
           if (limage == nullptr) {

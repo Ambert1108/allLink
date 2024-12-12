@@ -137,6 +137,10 @@ namespace alllink {
 
     bool sendToPeer(const std::string& to, const std::string& message);
 
+    bool sendAck(const std::string& to);
+
+    bool sendInfo(const std::string& to, int info);
+
     bool sendBye(const std::string& to);
 
   protected:
@@ -171,5 +175,7 @@ namespace alllink {
     int64_t lastBeatPoint = 0;
     int64_t HeartbeatInterval = 1000; //心跳间隔
     int64_t cseq_ = 0;
+    std::string callId;
+    int mode = 0; //1v1通话:0, 会议流程:1
   };
 }

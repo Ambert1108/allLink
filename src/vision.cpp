@@ -173,7 +173,16 @@ namespace alllink {
           // 调用DisconnectFromCurrentPeer方法通知中控器断开连接
           callback_->CustomMessageCallback(msg);
           break;
+        case msgTo(MessageType::CALL_MODE): {
+          std::shared_ptr<StreamScreen> point = std::dynamic_pointer_cast<StreamScreen>(streamWnd);
+          if (!point) return;
+          int mode = std::any_cast<int>(msg.data);
+          point->setSessionMode(mode);
+          break;
+        }
+        case msgTo(MessageType::MEETING_OK):
         case msgTo(MessageType::SWITCH_AUDIO_INPUT):
+        case msgTo(MessageType::SWITCH_MIC_VOLUME):
         case msgTo(MessageType::SET_MIC_PHONE):
         case msgTo(MessageType::SET_CAMERA):
         case msgTo(MessageType::SET_REMOTE_DESC):

@@ -89,32 +89,73 @@ namespace alllink {
   }
 
   bool SignlingInteractionSystem::sendToPeer(const std::string& to, const std::string& message) {
+    I_LOG("1");
     SignInfo msg;
     std::regex pattern("^\\d{3}-\\d{3}$");
     if (std::regex_match(to, pattern)) {
       // 用户进入会议流程
+      mode = 1;
+      I_LOG("use meeting");
       msg.set_meth("INVITE");
       msg.set_from(userInfo.id_);
       msg.set_to(to);
       msg.set_sdp(message);
+      msg.set_cseq(cseq_);
+      callId = userInfo.id_ + to + std::to_string(cseq_++);
+      msg.set_call_id(callId);
       signalState = State::CALLING;
     }
     else{
+      mode = 0;
+      I_LOG("use 1v1 calling");
       // 用户进入1v1通话流程
       msg.set_meth("FORWARD");
       msg.set_from(userInfo.id_);
       msg.set_to(to);
       msg.set_sdp(message);
     }
+    hi::PostMsg({ msgTo(MessageType::CALL_MODE), mode });
+    return ToSignaling(msg);
+  }
+
+  bool SignlingInteractionSystem::sendAck(const std::string& to) {
+    SignInfo msg;
+    msg.set_meth("ACK");
+    msg.set_from(userInfo.id_);
+    msg.set_to(to);
+    msg.set_cseq(cseq_++);
+    msg.set_call_id(callId);
+    return ToSignaling(msg);
+  }
+
+  bool SignlingInteractionSystem::sendInfo(const std::string& to, int info) {
+    SignInfo msg;
+    msg.set_meth("INFO");
+    msg.set_from(userInfo.id_);
+    msg.set_to(to);
+    msg.set_cseq(cseq_++);
+    msg.set_call_id(callId);
+    msg.set_signal(std::to_string(info));
     return ToSignaling(msg);
   }
 
   bool SignlingInteractionSystem::sendBye(const std::string& to) {
     SignInfo msg;
-    msg.set_meth("FORWARD");
-    msg.set_from(userInfo.id_);
-    msg.set_to(to);
-    msg.set_signal("bye");
+    if (mode == 1) {
+      msg.set_meth("BYE");
+      msg.set_from(userInfo.id_);
+      msg.set_to(to);
+      msg.set_cseq(cseq_++);
+      msg.set_call_id(callId);
+    }
+    else {
+      msg.set_meth("FORWARD");
+      msg.set_from(userInfo.id_);
+      msg.set_to(to);
+      msg.set_signal("bye");
+      msg.set_cseq(cseq_++);
+      msg.set_call_id(callId);
+    }
     return ToSignaling(msg);
   }
 
@@ -170,6 +211,8 @@ namespace alllink {
       hi::PostMsg({ msgTo(MessageType::LOGIN_SUCCESS), info.to() });
     }
     else if (info.cmeth() == "INVITE") {
+      
+      hi::PostMsg({ msgTo(MessageType::MEETING_OK), nullptr });
       callback_->OnCSMessageFromSignling(info);
       signalState = State::CALLER;
     }

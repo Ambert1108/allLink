@@ -122,5 +122,6 @@ namespace alllink {
     //VideoEngine videoEngine;
     std::shared_ptr<Janitor> janusEngine;
     std::string meetId_;
+    std::unique_ptr<webrtc::SessionDescriptionInterface> localDesc;
   };
 }

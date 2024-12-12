@@ -161,15 +161,9 @@ namespace alllink {
       webrtc::CreateBuiltinAudioEncoderFactory(),
       webrtc::CreateBuiltinAudioDecoderFactory(),
       std::make_unique<webrtc::VideoEncoderFactoryTemplate<
-      webrtc::LibvpxVp8EncoderTemplateAdapter,
-      webrtc::LibvpxVp9EncoderTemplateAdapter,
-      webrtc::OpenH264EncoderTemplateAdapter,
-      webrtc::LibaomAv1EncoderTemplateAdapter>>(),
+      webrtc::OpenH264EncoderTemplateAdapter>>(),
       std::make_unique<webrtc::VideoDecoderFactoryTemplate<
-      webrtc::LibvpxVp8DecoderTemplateAdapter,
-      webrtc::LibvpxVp9DecoderTemplateAdapter,
-      webrtc::OpenH264DecoderTemplateAdapter,
-      webrtc::Dav1dDecoderTemplateAdapter>>(),
+      webrtc::OpenH264DecoderTemplateAdapter>>(),
       nullptr /* audio_mixer */, nullptr /* audio_processing */);
 
     if (!peerConnectionFactory_) {
@@ -187,6 +181,8 @@ namespace alllink {
     AddTracks();
     I_LOG("Current audio input device:");
     audioEngine.GetRecordingDevices(audioInputDevMap);
+    audioEngine.setMicrophoneVolume(50);
+    audioEngine.setMicrophone(false);
     D_LOG("init finish");
 
     return true;
@@ -584,6 +580,10 @@ namespace alllink {
     else if (callType == 1) {
       // nosip流程
       switch (msg.id) {
+      case msgTo(MessageType::MEETING_OK): {
+        client_->sendAck(meetId_);
+        break;
+      }
       case msgTo(MessageType::SEND_SDP_TO_PEER): {
         Jsep jsep = std::any_cast<Jsep>(msg.data);
         if (!client_->sendToPeer(meetId_, jsep.sdp)) {
@@ -635,10 +635,18 @@ namespace alllink {
         audioEngine.ReplaceRecordingDevices(device);
         break;
       }
+      case msgTo(MessageType::SWITCH_MIC_VOLUME): {
+        int volume = std::any_cast<int>(msg.data);
+        I_LOG("current mic volume={}", volume);
+        audioEngine.setMicrophoneVolume(volume);
+        break;
+      }
       case msgTo(MessageType::SET_MIC_PHONE): {
         bool state = std::any_cast<bool>(msg.data);
         I_LOG("set mic phone state {}", state);
         audioEngine.setMicrophone(state);
+        if (state) client_->sendInfo(meetId_, 21);
+        else client_->sendInfo(meetId_, 20);
         break;
       }
       case msgTo(MessageType::SET_CAMERA): {
@@ -669,13 +677,11 @@ namespace alllink {
   //
 
   void Controller::OnSuccess(webrtc::SessionDescriptionInterface* desc) {
-    peerConnection_->SetLocalDescription(
-      DummySetSessionDescriptionObserver::Create().get(), desc);
-
     std::string sdp;
     desc->ToString(&sdp);
-    I_LOG("LOG SDP\n{}", sdp);
+    std::string sdpTmp = audioEngine.modifySdp(sdp);
 
+    I_LOG("LOG SDP\n{}", sdpTmp);
     // For loopback test. To save some connecting delay.
     //if (loopback_) {
     //  // Replace message type from "offer" to "answer"
@@ -686,18 +692,24 @@ namespace alllink {
     //    session_description.release());
     //  return;
     //}
+    webrtc::SdpType type = desc->GetType();
+    webrtc::SdpParseError error;
+    std::unique_ptr<webrtc::SessionDescriptionInterface> tdesc 
+      = webrtc::CreateSessionDescription(type, sdpTmp, &error);
+
+    peerConnection_->SetLocalDescription(
+      DummySetSessionDescriptionObserver::Create().get(), tdesc.release());
 
     Json::Value jmessage;
-    jmessage["type"] =
-      webrtc::SdpTypeToString(desc->GetType());
-    jmessage["sdp"] = sdp;
+    jmessage["type"] = webrtc::SdpTypeToString(type);
+    jmessage["sdp"] = sdpTmp;
 
     Json::StreamWriterBuilder factory;
     std::string obj = Json::writeString(factory, jmessage);
     // 在peerConnection线程中无法直接执行信令
     // 使用消息队列在主线程中处理
-    I_LOG("create sdp success");
     hi::PostMsg({ msgTo(MessageType::SEND_JSEP_SDP_TO_PEER), obj });
+    I_LOG("create sdp success");
   }
 
   void Controller::OnFailure(webrtc::RTCError error) {

@@ -52,12 +52,15 @@ namespace alllink {
 		
 		MEETING_END,                    //通知中控器通话应该结束
 		SWITCH_AUDIO_INPUT,             //通知中控器切换音频输入设备
+		SWITCH_MIC_VOLUME,              //通知中控器修改麦克风输入音量
 		SET_MIC_PHONE,                  //通知中控器设置麦克风状态
 		SET_CAMERA,                     //通知中控器设置摄像头状态
 
 		/* 信令消息 */
 
 		LOGIN_SUCCESS,
+		MEETING_OK,
+		CALL_MODE,
 
 		/* 中控器消息 */
 

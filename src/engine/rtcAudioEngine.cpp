@@ -191,5 +191,123 @@ namespace rtcengine {
 		adm = nullptr;
 		task_queue_factory = nullptr;
 	}
+	std::string rtcAudioEngine::modifySdp(const std::string& sdp) {
+		bool audioflag = true; bool videoflag = false;
+		std::istringstream sdpStream(sdp);
+		std::ostringstream filteredSDP;
+		std::string line;
+		bool inAudio = false;
+		bool inVideo = false;
+		bool inrtpmat = false;
+		bool inpcma = false;
+		bool inH264 = false;
+		bool vf = false;
+		bool af = false;
+		bool sf = false;
+		// 逐行读取原始SDP内容
+		while (std::getline(sdpStream, line)) {
+			if (line.find("m=audio") != std::string::npos) {
+				inVideo = false;
+				inAudio = true;  // 进入音频部分
+				inH264 = false;
+				inpcma = false;
+				inrtpmat = false;
+				vf = false;
+				af = false;
+				filteredSDP << "m=audio 9 UDP/TLS/RTP/SAVPF 8" << std::endl;
+				//filteredSDP << line << std::endl;
+			}
+			else if (line.find("m=video") != std::string::npos) {
+				inAudio = false; // 离开音频部分
+				inVideo = true;  // 进入视频部分
+				inH264 = false;
+				inpcma = false;
+				inrtpmat = false;
+				vf = false;
+				af = false;
+				filteredSDP << line << std::endl;
+			}
+			else if (inAudio) {
+				if (audioflag) {
+					if (line.find("a=rtpmap") != std::string::npos) {
+						inrtpmat = true;
+						af = true;
+						sf = false;
+					}
+					else {
+						inrtpmat = false;
+						if (line.find("a=ssrc") != std::string::npos) {
+							sf = true;
+						}
+						else {
+							sf = false;
+						}
+					}
+					if (inrtpmat) {
+						if (shouldKeepCodec(line)) {
+							inpcma = true;
+							filteredSDP << line << std::endl;
+						}
+						else {
+							inpcma = false;
+						}
+					}
+					else {
+						if (inpcma) {
+							filteredSDP << line << std::endl;
+						}
+						else if (!af) {
+							filteredSDP << line << std::endl;
+						}
+						else if (sf) {
+							filteredSDP << line << std::endl;
+						}
+					}
+				}
+				else {
+					filteredSDP << line << std::endl;
+				}
+			}
+			else if (inVideo) {
+				if (videoflag) {
+					if (line.find("a=rtpmap") != std::string::npos) {
+						inrtpmat = true;
+						vf = true;
+					}
+					else {
+						inrtpmat = false;
+					}
+					if (inrtpmat) {
+						if (shouldKeepCodec(line)) {
+							inH264 = true;
+							filteredSDP << line << std::endl;
+						}
+						else {
+							inH264 = false;
+						}
+					}
+					else {
+						if (inH264) {
+							filteredSDP << line << std::endl;
+						}
+						else if (!vf) {
+							filteredSDP << line << std::endl;
+						}
+					}
+				}
+				else {
+					filteredSDP << line << std::endl;
+				}
+			}
+			else {
+				filteredSDP << line << std::endl;
+			}
+		}
 
+		return filteredSDP.str();
+	}
+	bool rtcAudioEngine::shouldKeepCodec(const std::string& line)
+	{
+		return line.find("PCMA") != std::string::npos;
+	}
 }
