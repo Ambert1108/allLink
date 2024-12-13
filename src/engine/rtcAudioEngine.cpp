@@ -31,6 +31,7 @@ namespace rtcengine {
 			E_LOG("AudioDeviceModule create failed");
 			return nullptr;
 		}
+		
 		int32_t init_result = adm->Init();
 		if (init_result != 0) {
 			E_LOG("AudioDeviceModule Init [{}] error", init_result);
@@ -143,21 +144,35 @@ namespace rtcengine {
 	}
 
 	//设置扬声器音量大小。失败返回false，成功返回true
-	bool rtcAudioEngine::setPlayoutVolume(const uint32_t volume) {
+	bool rtcAudioEngine::setPlayoutVolume(const int volume) {
 		if (!adm) {
 			E_LOG("adm no create");
 			return false;
 		}
-		return adm->SetSpeakerVolume(volume);
+		if (volume == 0) {
+			return adm->SetSpeakerMute(true);
+		}
+		else {
+			adm->SetSpeakerMute(false);
+			uint32_t v = static_cast<uint32_t>(2.55 * volume);
+			return adm->SetSpeakerVolume(v);
+		}
 	}
 
 	//设置麦克风音量大小。失败返回false，成功返回true
-	bool rtcAudioEngine::setMicrophoneVolume(const uint32_t volume) {
+	bool rtcAudioEngine::setMicrophoneVolume(const int volume) {
 		if (!adm) {
 			E_LOG("adm no create");
 			return false;
 		}
-		return adm->SetMicrophoneVolume(volume);
+		if (volume == 0) {
+			return adm->SetMicrophoneMute(true);
+		}
+		else {
+			adm->SetMicrophoneMute(false);
+			uint32_t v = static_cast<uint32_t>(2.55 * volume);
+			return adm->SetMicrophoneVolume(v);
+		}
 	}
 
 	//获取扬声器音量大小
@@ -192,7 +207,6 @@ namespace rtcengine {
 		task_queue_factory = nullptr;
 	}
 	std::string rtcAudioEngine::modifySdp(const std::string& sdp) {
-		bool audioflag = true; bool videoflag = false;
 		std::istringstream sdpStream(sdp);
 		std::ostringstream filteredSDP;
 		std::string line;
@@ -200,8 +214,6 @@ namespace rtcengine {
 		bool inVideo = false;
 		bool inrtpmat = false;
 		bool inpcma = false;
-		bool inH264 = false;
-		bool vf = false;
 		bool af = false;
 		bool sf = false;
 		// 逐行读取原始SDP内容
@@ -209,10 +221,8 @@ namespace rtcengine {
 			if (line.find("m=audio") != std::string::npos) {
 				inVideo = false;
 				inAudio = true;  // 进入音频部分
-				inH264 = false;
 				inpcma = false;
 				inrtpmat = false;
-				vf = false;
 				af = false;
 				filteredSDP << "m=audio 9 UDP/TLS/RTP/SAVPF 8" << std::endl;
 				//filteredSDP << line << std::endl;
@@ -220,84 +230,49 @@ namespace rtcengine {
 			else if (line.find("m=video") != std::string::npos) {
 				inAudio = false; // 离开音频部分
 				inVideo = true;  // 进入视频部分
-				inH264 = false;
 				inpcma = false;
 				inrtpmat = false;
-				vf = false;
 				af = false;
 				filteredSDP << line << std::endl;
 			}
 			else if (inAudio) {
-				if (audioflag) {
-					if (line.find("a=rtpmap") != std::string::npos) {
-						inrtpmat = true;
-						af = true;
+				if (line.find("a=rtpmap") != std::string::npos) {
+					inrtpmat = true;
+					af = true;
+					sf = false;
+				}
+				else {
+					inrtpmat = false;
+					if (line.find("a=ssrc") != std::string::npos) {
+						sf = true;
+					}
+					else {
 						sf = false;
 					}
-					else {
-						inrtpmat = false;
-						if (line.find("a=ssrc") != std::string::npos) {
-							sf = true;
-						}
-						else {
-							sf = false;
-						}
-					}
-					if (inrtpmat) {
-						if (shouldKeepCodec(line)) {
-							inpcma = true;
-							filteredSDP << line << std::endl;
-						}
-						else {
-							inpcma = false;
-						}
+				}
+				if (inrtpmat) {
+					if (shouldKeepCodec(line)) {
+						inpcma = true;
+						filteredSDP << line << std::endl;
 					}
 					else {
-						if (inpcma) {
-							filteredSDP << line << std::endl;
-						}
-						else if (!af) {
-							filteredSDP << line << std::endl;
-						}
-						else if (sf) {
-							filteredSDP << line << std::endl;
-						}
+						inpcma = false;
 					}
 				}
 				else {
-					filteredSDP << line << std::endl;
+					if (inpcma) {
+						filteredSDP << line << std::endl;
+					}
+					else if (!af) {
+						filteredSDP << line << std::endl;
+					}
+					else if (sf) {
+						filteredSDP << line << std::endl;
+					}
 				}
 			}
 			else if (inVideo) {
-				if (videoflag) {
-					if (line.find("a=rtpmap") != std::string::npos) {
-						inrtpmat = true;
-						vf = true;
-					}
-					else {
-						inrtpmat = false;
-					}
-					if (inrtpmat) {
-						if (shouldKeepCodec(line)) {
-							inH264 = true;
-							filteredSDP << line << std::endl;
-						}
-						else {
-							inH264 = false;
-						}
-					}
-					else {
-						if (inH264) {
-							filteredSDP << line << std::endl;
-						}
-						else if (!vf) {
-							filteredSDP << line << std::endl;
-						}
-					}
-				}
-				else {
-					filteredSDP << line << std::endl;
-				}
+				filteredSDP << line << std::endl;
 			}
 			else {
 				filteredSDP << line << std::endl;

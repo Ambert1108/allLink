@@ -29,6 +29,7 @@
 #include "test/vcm_capturer.h"
 #include "api/task_queue/default_task_queue_factory.h"
 #include "media/engine/webrtc_media_engine.h"
+#include "modules/audio_device/include/audio_device.h"
 namespace rtcengine {
 	const char kAudioLabel[] = "audio_label";
 	const char kStreamId[] = "audio_id";
@@ -66,10 +67,10 @@ namespace rtcengine {
 		bool setMicrophone(bool new_state);
 		
 		//设置扬声器音量大小。失败返回false，成功返回true
-		bool setPlayoutVolume(const uint32_t volume);
+		bool setPlayoutVolume(const int volume);
 
 		//设置麦克风音量大小。失败返回false，成功返回true
-		bool setMicrophoneVolume(const uint32_t volume);
+		bool setMicrophoneVolume(const int volume);
 
 		//获取扬声器音量大小
 		uint32_t PlayoutVolume();
