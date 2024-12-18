@@ -88,7 +88,7 @@ namespace alllink {
       
     void OnProcessed(const std::string& sdp, const std::string& type) override;
 
-    //void OnReconnect() override;
+    void OnReconnect() override;
 
     //
     // VisionCnetralCallback implementation.

@@ -26,8 +26,9 @@ namespace alllink {
         auto wholeMessage = messageBuffer.toString(); 
         messageBuffer.setCurrentPosition(0);
         //TODO:根据消息类型调用回调
-        I_LOG("signling on message received {}", *wholeMessage.get());
         SignInfo info(json::parse(wholeMessage->c_str()));
+        if (info.meth() != "Heartbeat")
+          I_LOG("signling on message received {}", *wholeMessage.get());
         if (info.meth() == "FORWARD") callback_->OnFORWARD(info);
         else if (info.meth() == "ACK") callback_->OnACK(info);
         else if (info.meth() == "BYE") callback_->OnBYE(info);

@@ -14,12 +14,13 @@ namespace alllink {
     listener->registerObserver(this);
     listenBody = aom::InvokeTimer::CreateTimer(std::chrono::milliseconds(1), true, [&] {
       if (signalState > 0 && client) {
+        I_LOG("signling listen start");
         client->listen();
         I_LOG("signling listen finish");
       }
     });
     listenBody->Start();
-    keepBody = aom::InvokeTimer::CreateTimer(std::chrono::seconds(5), true, [&] {
+    keepBody = aom::InvokeTimer::CreateTimer(std::chrono::milliseconds(1500), true, [&] {
       if (signalState > 1 && client) {
         SignInfo msg;
         msg.set_meth("Heartbeat");
@@ -27,6 +28,13 @@ namespace alllink {
         msg.set_to("system");
         oatpp::String js = oatpp::String(msg.js.dump());
         client->sendOneFrame(true, oatpp::websocket::Frame::OPCODE_TEXT, js);
+        if(lastBeatPoint == 0) lastBeatPoint = seeker::time::currentTime();
+        if (seeker::time::currentTime() - lastBeatPoint > 3000) {
+          W_LOG("[Signling::keepBody] heartbeat timeout 3s");
+          logout();
+          lastBeatPoint = 0;
+          signalState = State::NONE;
+        }
       }
     });
     keepBody->Start();
@@ -53,27 +61,8 @@ namespace alllink {
         info.serverIp_, info.serverPort_);
       return false;
     }
-
-    try {
-      if (client) {
-        logout();
-        I_LOG("[SignlingInteractionSystem::connectServer] login out! old server is {}:{}, new server is {}:{}",
-          serverInfo.serverIp_, serverInfo.serverPort_, info.serverIp_, info.serverPort_);
-      }
-
-      serverInfo = info;
-      auto connectionProvider =
-        oatpp::network::tcp::client::ConnectionProvider::createShared({ serverInfo.serverIp_, serverInfo.serverPort_ });
-      auto connector = oatpp::websocket::Connector::createShared(connectionProvider);
-      auto connection = connector->connect("/connectWS");
-      client = oatpp::websocket::WebSocket::createShared(connection, true);
-      client->setListener(listener);
-      signalState = State::CONNECT_ON;
-    }
-    catch (std::exception& ex) {
-      E_LOG("[SignlingInteractionSystem::connectServer] connect sever failed:{}", ex.what());
-      return false;
-    }
+    if (!connect(info)) return false;
+    serverInfo = info;
     return true;
   }
 
@@ -86,6 +75,11 @@ namespace alllink {
     msg.set_userid(info.id_);
     msg.set_password(info.pwd_);
     return ToSignaling(msg);
+  }
+
+  bool SignlingInteractionSystem::reLogin() {
+    if (!connect(serverInfo)) return false;
+    return login(userInfo);
   }
 
   bool SignlingInteractionSystem::sendToPeer(const std::string& to, const std::string& message) {
@@ -198,7 +192,7 @@ namespace alllink {
   }
 
   void SignlingInteractionSystem::OnHeartbeat(const SignInfo& info) {
-
+    lastBeatPoint = seeker::time::currentTime();
   }
 
   void SignlingInteractionSystem::OnOK(const SignInfo& info) {
@@ -227,20 +221,24 @@ namespace alllink {
   }
 
   void SignlingInteractionSystem::OnUnauthorized(const SignInfo& info) {
-
+    if (info.cmeth() == "REGISTER") {
+      W_LOG("login {}:{} -> {} failed", serverInfo.serverIp_, serverInfo.serverPort_, userInfo.id_);
+      serverInfo.serverIp_.clear();
+      serverInfo.serverPort_ = 0;
+    }
   }
 
 
   //private
-  bool SignlingInteractionSystem::connect() {
+  bool SignlingInteractionSystem::connect(const ServerInfo& info) {
     try {
       if (client) {
         logout();
         I_LOG("[SignlingInteractionSystem::connectServer] login out! new server is {}:{}",
-          serverInfo.serverIp_, serverInfo.serverPort_);
+          info.serverIp_, info.serverPort_);
       }
       auto connectionProvider =
-        oatpp::network::tcp::client::ConnectionProvider::createShared({ serverInfo.serverIp_, serverInfo.serverPort_ });
+        oatpp::network::tcp::client::ConnectionProvider::createShared({ info.serverIp_, info.serverPort_ });
       auto connector = oatpp::websocket::Connector::createShared(connectionProvider);
       auto connection = connector->connect("/connectWS");
       client = oatpp::websocket::WebSocket::createShared(connection, true);

@@ -135,6 +135,8 @@ namespace alllink {
 
     bool login(const UserInfo& info);
 
+    bool reLogin();
+
     bool sendToPeer(const std::string& to, const std::string& message);
 
     bool sendAck(const std::string& to);
@@ -161,7 +163,7 @@ namespace alllink {
     void OnUnauthorized(const SignInfo& info) override;
 
   private:
-    bool connect();
+    bool connect(const ServerInfo&);
     bool ToSignaling(const SignInfo& info);
 
     SignlingInteractionObserver* callback_;
@@ -174,7 +176,6 @@ namespace alllink {
     UserInfo userInfo;
     State signalState{ NONE };
     int64_t lastBeatPoint = 0;
-    int64_t HeartbeatInterval = 1000; //心跳间隔
     int64_t cseq_ = 0;
     std::string callId;
     int mode = 0; //1v1通话:0, 会议流程:1

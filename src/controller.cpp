@@ -495,10 +495,10 @@ namespace alllink {
     hi::PostMsg({ msgTo(MessageType::SET_REMOTE_DESC), info });
   }
 
-  //void Controller::OnReconnect() {
-  //  W_LOG("[Controller::OnReconnect] Network disconnection detected, start reconnect");
-  //  hi::PostMsg({ msgTo(MessageType::RECONNECT_PEER), nullptr });
-  //}
+  void Controller::OnReconnect() {
+    W_LOG("[Controller::OnReconnect] Network disconnection detected, start reconnect");
+    hi::PostMsg({ msgTo(MessageType::RECONNECT_PEER), nullptr });
+  }
 
   //
   // VisionCnetralCallback implementation.
@@ -514,14 +514,8 @@ namespace alllink {
       W_LOG("[Controller::StartLogin] {} login failed", user.id_);
       return false;
     }
-    I_LOG("[Controller::StartLogin] login user:{} to {}:{} done", 
+    I_LOG("[Controller::StartLogin] login user:{} to {}:{} done",
       user.id_, server.serverIp_, server.serverPort_);
-    int callType = seeker::IniConfig::GetInteger("this", "call_type", 0);
-    if (callType == 1) {
-      //ServerInfo janusServerInfo(seeker::IniConfig::Get("this", "janus", "10.1.29.246:8188"));
-      //janus_->connectServer(janusServerInfo);
-      janusEngine->init();
-    }
     return true;
   }
 
@@ -582,6 +576,16 @@ namespace alllink {
       case msgTo(MessageType::RECONNECT_PEER): {
         break;
       }
+      case msgTo(MessageType::LOGIN_SUCCESS): {
+        I_LOG("[Controller::CustomMessageCallback] login success");
+        int callType = seeker::IniConfig::GetInteger("this", "call_type", 0);
+        if (callType == 1) {
+          //ServerInfo janusServerInfo(seeker::IniConfig::Get("this", "janus", "10.1.29.246:8188"));
+          //janus_->connectServer(janusServerInfo);
+          janusEngine->init();
+        }
+        break;
+      }
       default:
         break;
       }
@@ -589,6 +593,14 @@ namespace alllink {
     else if (callType == 1) {
       // nosip流程
       switch (msg.id) {
+      case msgTo(MessageType::LOGIN_SUCCESS): {
+        I_LOG("[Controller::CustomMessageCallback] login success");
+        int callType = seeker::IniConfig::GetInteger("this", "call_type", 0);
+        if (callType == 1) {
+          janusEngine->init();
+        }
+        break;
+      }
       case msgTo(MessageType::MEETING_OK): {
         client_->sendAck(meetId_);
         break;
@@ -672,10 +684,10 @@ namespace alllink {
         break;
       }
       case msgTo(MessageType::RECONNECT_PEER): {
+        if (!client_->reLogin()) break;
         if (peerConnection_.get()) {
           DeletePeerConnection();
         }
-        ConnectToPeer(meetId_);
         break;
       }
       default:

@@ -151,6 +151,7 @@ namespace alllink {
           if (!point) break;
           std::string userId = std::any_cast<std::string>(msg.data);
           point->setUseId(userId);
+          callback_->CustomMessageCallback(msg);
           break;
         }
         case msgTo(MessageType::MEETING_END): {
@@ -180,7 +181,13 @@ namespace alllink {
           point->setSessionMode(mode);
           break;
         }
-        case msgTo(MessageType::RECONNECT_PEER):
+        case msgTo(MessageType::RECONNECT_PEER): {
+          I_LOG("network disconnection, close stream screen");
+          // 隐藏会议窗口
+          streamWnd->OnExit();
+          // 显示开始窗口
+          wnd->OnEnter();
+        }
         case msgTo(MessageType::MEETING_OK):
         case msgTo(MessageType::SWITCH_AUDIO_INPUT):
         case msgTo(MessageType::SWITCH_MIC_VOLUME):
