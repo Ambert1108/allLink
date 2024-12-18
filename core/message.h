@@ -73,7 +73,8 @@ namespace alllink {
 		SEND_MSG_FAILED,                //发送offer/answer sdp或ice candidate失败
 		ADD_TRACK,                      //添加新轨道
 		REMOVE_TRACK,                   //移除轨道
-		DISCONNECT_PEER                 //通知中控器断开连接
+		DISCONNECT_PEER,                //通知中控器断开连接
+		RECONNECT_PEER                  //通知中控器重新连接对端
 	};
 
 	static constexpr int msgTo(MessageType msg) { return static_cast<int>(msg); }

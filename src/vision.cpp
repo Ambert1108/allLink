@@ -180,6 +180,7 @@ namespace alllink {
           point->setSessionMode(mode);
           break;
         }
+        case msgTo(MessageType::RECONNECT_PEER):
         case msgTo(MessageType::MEETING_OK):
         case msgTo(MessageType::SWITCH_AUDIO_INPUT):
         case msgTo(MessageType::SWITCH_MIC_VOLUME):

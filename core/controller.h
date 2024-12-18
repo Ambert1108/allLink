@@ -23,7 +23,7 @@ namespace alllink {
   class Controller : public webrtc::PeerConnectionObserver,
     public webrtc::CreateSessionDescriptionObserver,
     public SignlingInteractionObserver,
-    public JanitorObserver,
+    public rtcengine::JanitorObserver,
     //public JanusInteractionObserver,
     public VisionCnetralCallback {
 
@@ -88,6 +88,8 @@ namespace alllink {
       
     void OnProcessed(const std::string& sdp, const std::string& type) override;
 
+    //void OnReconnect() override;
+
     //
     // VisionCnetralCallback implementation.
     //
@@ -120,7 +122,7 @@ namespace alllink {
     std::map<int16_t, std::string> audioInputDevMap;
     rtcengine::RTCVideoEngine videoEngine;
     //VideoEngine videoEngine;
-    std::shared_ptr<Janitor> janusEngine;
+    std::shared_ptr<rtcengine::Janitor> janusEngine;
     std::string meetId_;
     std::unique_ptr<webrtc::SessionDescriptionInterface> localDesc;
   };

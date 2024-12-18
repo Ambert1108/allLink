@@ -161,6 +161,7 @@ namespace alllink {
     void OnUnauthorized(const SignInfo& info) override;
 
   private:
+    bool connect();
     bool ToSignaling(const SignInfo& info);
 
     SignlingInteractionObserver* callback_;

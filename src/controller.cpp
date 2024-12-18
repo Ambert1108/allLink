@@ -135,7 +135,7 @@ namespace alllink {
     int callType = seeker::IniConfig::GetInteger("this", "call_type", 0);
     if (callType == 1) {
       ServerInfo janusServerInfo(seeker::IniConfig::Get("this", "janus", "10.1.29.246:8188"));
-      janusEngine = std::make_shared<Janitor>(janusServerInfo.serverIp_, janusServerInfo.serverPort_);
+      janusEngine = std::make_shared<rtcengine::Janitor>(janusServerInfo.serverIp_, janusServerInfo.serverPort_);
       janusEngine->registerObserver(this);
     }
   }
@@ -182,7 +182,8 @@ namespace alllink {
     I_LOG("Current audio input device:");
     audioEngine.GetRecordingDevices(audioInputDevMap);
     audioEngine.setMicrophoneVolume(50);
-    audioEngine.setMicrophone(false);
+    //audioEngine.setMicrophone(false);
+    videoEngine.switchCamera(false);
     D_LOG("init finish");
 
     return true;
@@ -494,6 +495,11 @@ namespace alllink {
     hi::PostMsg({ msgTo(MessageType::SET_REMOTE_DESC), info });
   }
 
+  //void Controller::OnReconnect() {
+  //  W_LOG("[Controller::OnReconnect] Network disconnection detected, start reconnect");
+  //  hi::PostMsg({ msgTo(MessageType::RECONNECT_PEER), nullptr });
+  //}
+
   //
   // VisionCnetralCallback implementation.
   //
@@ -573,6 +579,9 @@ namespace alllink {
         }
         break;
       }
+      case msgTo(MessageType::RECONNECT_PEER): {
+        break;
+      }
       default:
         break;
       }
@@ -644,7 +653,7 @@ namespace alllink {
       case msgTo(MessageType::SET_MIC_PHONE): {
         bool state = std::any_cast<bool>(msg.data);
         I_LOG("set mic phone state {}", state);
-        audioEngine.setMicrophone(state);
+        //audioEngine.setMicrophone(state);
         if (state) client_->sendInfo(meetId_, 21);
         else client_->sendInfo(meetId_, 20);
         break;
@@ -662,7 +671,13 @@ namespace alllink {
         }
         break;
       }
-
+      case msgTo(MessageType::RECONNECT_PEER): {
+        if (peerConnection_.get()) {
+          DeletePeerConnection();
+        }
+        ConnectToPeer(meetId_);
+        break;
+      }
       default:
         break;
       }

@@ -232,6 +232,28 @@ namespace alllink {
 
 
   //private
+  bool SignlingInteractionSystem::connect() {
+    try {
+      if (client) {
+        logout();
+        I_LOG("[SignlingInteractionSystem::connectServer] login out! new server is {}:{}",
+          serverInfo.serverIp_, serverInfo.serverPort_);
+      }
+      auto connectionProvider =
+        oatpp::network::tcp::client::ConnectionProvider::createShared({ serverInfo.serverIp_, serverInfo.serverPort_ });
+      auto connector = oatpp::websocket::Connector::createShared(connectionProvider);
+      auto connection = connector->connect("/connectWS");
+      client = oatpp::websocket::WebSocket::createShared(connection, true);
+      client->setListener(listener);
+      signalState = State::CONNECT_ON;
+    }
+    catch (std::exception& ex) {
+      E_LOG("[SignlingInteractionSystem::connectServer] connect sever failed:{}", ex.what());
+      return false;
+    }
+    return true;
+  }
+
   bool SignlingInteractionSystem::ToSignaling(const SignInfo& info) {
     oatpp::String js = oatpp::String(info.js.dump());
     I_LOG("signling message send:{}", info.js.dump(4));
