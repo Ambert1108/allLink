@@ -31,6 +31,8 @@ namespace alllink {
 		// 设置界面不可见
 		this->setVisible(false);
 		isActive = false;
+    camState = false;
+    micState = false;
 		return true;
 	}
 

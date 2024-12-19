@@ -53,6 +53,19 @@ namespace rtcengine {
 		peer_connection_factory_ = peer_connection_factory;
 		peer_connection_ = peer_connection;
 
+		rtc::scoped_refptr<webrtc::RtpSenderInterface> video_sender =
+			peer_connection->GetSenders().at(0);
+		
+		webrtc::RtpParameters param(video_sender->GetParameters());
+		if (param.codecs.empty()) {
+			I_LOG("param is empty");
+			webrtc::RtpCodecParameters codec_params;
+			codec_params.payload_type = 100;
+			param.codecs.push_back(codec_params);
+		}
+		else param.codecs.at(0).payload_type = 100;
+		video_sender->SetParameters(param);
+
 		rtc::scoped_refptr<TrackSource> video_device = TrackSource::Create();
 		video_track_ = peer_connection_factory_->CreateVideoTrack(video_device, "video_label");
 

@@ -2,7 +2,6 @@
 #include<seeker/common.h>
 #include<seeker/loggerApi.h>
 #include<seeker/logger.h>
-#include"utils/httplib.h"
 #include <string>
 #include <chrono>
 #include <condition_variable>
@@ -31,11 +30,24 @@
 #include "libyuv.h"
 //#include "api/video/video_de"
 #include "rtc_base/thread.h"
-#include "nlohmann/json.hpp"
-#include "nlohmann/fifomap.hpp"
-#include <SFML/Graphics.hpp>
-#include <SFML/Window.hpp>
 
+//#include "MyCapturer.h"
+#include "MyCapturer.h"
+
+class CapturerTrackSource : public webrtc::VideoTrackSource {
+public:
+  static rtc::scoped_refptr<CapturerTrackSource> Create(int i);
+
+protected:
+	explicit CapturerTrackSource(
+		std::unique_ptr<webrtc::test::VcmCapturer> capturer)
+		: VideoTrackSource(/*remote=*/false), capturer_(std::move(capturer)) {
+	}
+
+private:
+  rtc::VideoSourceInterface<webrtc::VideoFrame>* source() override;
+	std::unique_ptr<webrtc::test::VcmCapturer> capturer_;
+};
 
 class VideoEngine {
 public:
@@ -56,9 +68,20 @@ public:
 
   void close();
 
+  void removeTrack();
+  
+  void switchTrack(rtc::scoped_refptr<webrtc::VideoTrackInterface>& new_video_track);
+
+  void addScreenTrack(rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface>& peer_connection_factory,
+    rtc::scoped_refptr<webrtc::PeerConnectionInterface>& peer_connection,
+    rtc::scoped_refptr<webrtc::VideoTrackInterface>& video_track);
+
   rtc::scoped_refptr<webrtc::PeerConnectionInterface> peer_connection_;
   rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface>
     peer_connection_factory_;
   rtc::scoped_refptr<webrtc::VideoTrackInterface> video_track_;
+  rtc::scoped_refptr<webrtc::VideoTrackInterface> screen_track_;
+  rtc::scoped_refptr<webrtc::VideoTrackInterface> new_video_track_;
   bool cameraState = true;
+  rtc::scoped_refptr<CapturerTrackSource> video_device = nullptr;
 };

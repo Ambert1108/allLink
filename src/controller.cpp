@@ -182,9 +182,9 @@ namespace alllink {
     I_LOG("Current audio input device:");
     audioEngine.GetRecordingDevices(audioInputDevMap);
     audioEngine.setMicrophoneVolume(50);
-    //audioEngine.setMicrophone(false);
-    videoEngine.switchCamera(false);
-    D_LOG("init finish");
+    int videoType = seeker::IniConfig::GetInteger("this", "video_type", 0);
+    if(videoType == 0) videoEngine.switchCamera(false);
+    I_LOG("init finish");
 
     return true;
   }
@@ -260,7 +260,13 @@ namespace alllink {
     //  E_LOG("OpenVideoCaptureDevice failed");
     //}
     rtc::scoped_refptr<webrtc::VideoTrackInterface> video_track_;
-    videoEngine.addVideoTrack(peerConnectionFactory_, peerConnection_, video_track_);
+    I_LOG("1");
+    int videoType = seeker::IniConfig::GetInteger("this", "video_type", 0);
+    I_LOG("2");
+    if(videoType == 1) videoEngine.addScreenTrack(peerConnectionFactory_, peerConnection_, video_track_);
+    else videoEngine.addVideoTrack(peerConnectionFactory_, peerConnection_, video_track_);
+    //videoEngine.addVideoTrack(peerConnectionFactory_, peerConnection_, video_track_);
+    I_LOG("3");
     // 向视觉控制器添加本地渲染器
     vision_->startLocalRenderer(video_track_.get());
   }
@@ -664,7 +670,7 @@ namespace alllink {
       }
       case msgTo(MessageType::SET_MIC_PHONE): {
         bool state = std::any_cast<bool>(msg.data);
-        I_LOG("set mic phone state {}", state);
+        I_LOG("set micphone state {}", state);
         //audioEngine.setMicrophone(state);
         if (state) client_->sendInfo(meetId_, 21);
         else client_->sendInfo(meetId_, 20);
@@ -672,8 +678,11 @@ namespace alllink {
       }
       case msgTo(MessageType::SET_CAMERA): {
         bool state = std::any_cast<bool>(msg.data);
-        I_LOG("set camera phone state {}", state);
-        videoEngine.switchCamera(state);
+        int videoType = seeker::IniConfig::GetInteger("this", "video_type", 0);
+        if (videoType == 0) {
+          I_LOG("set camera state {}", state);
+          videoEngine.switchCamera(state);
+        }
         break;
       }
       case msgTo(MessageType::DISCONNECT_PEER): {
