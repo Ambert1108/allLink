@@ -260,13 +260,10 @@ namespace alllink {
     //  E_LOG("OpenVideoCaptureDevice failed");
     //}
     rtc::scoped_refptr<webrtc::VideoTrackInterface> video_track_;
-    I_LOG("1");
     int videoType = seeker::IniConfig::GetInteger("this", "video_type", 0);
-    I_LOG("2");
     if(videoType == 1) videoEngine.addScreenTrack(peerConnectionFactory_, peerConnection_, video_track_);
     else videoEngine.addVideoTrack(peerConnectionFactory_, peerConnection_, video_track_);
     //videoEngine.addVideoTrack(peerConnectionFactory_, peerConnection_, video_track_);
-    I_LOG("3");
     // 向视觉控制器添加本地渲染器
     vision_->startLocalRenderer(video_track_.get());
   }
