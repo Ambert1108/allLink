@@ -143,6 +143,7 @@ int VideoEngine::setCameraDevice(const int index) {
 }
 
 void VideoEngine::close() {
+	if(screen_device) screen_device->working = false;
 	peer_connection_factory_ = nullptr;
 	peer_connection_ = nullptr;
 	video_track_ = nullptr;
@@ -274,10 +275,11 @@ void VideoEngine::addScreenTrack(rtc::scoped_refptr<webrtc::PeerConnectionFactor
 	peer_connection_factory_ = peer_connection_factory;
 	peer_connection_ = peer_connection;
 
-	rtc::scoped_refptr<MyCapturer> video_device = rtc::make_ref_counted<MyCapturer>();
-	if (video_device) {
-		video_device->startCapturer();
-		screen_track_ = peer_connection_factory_->CreateVideoTrack(video_device, "video_label");
+	screen_device = rtc::make_ref_counted<MyCapturer>();
+	
+	if (screen_device) {
+		screen_device->startCapturer();
+		screen_track_ = peer_connection_factory_->CreateVideoTrack(screen_device, "video_label");
 		video_track = screen_track_;
 		auto result_or_error = peer_connection_->AddTrack(screen_track_, { "stream_id" });
 		I_LOG("[VideoEngine::init] add track done");

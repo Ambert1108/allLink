@@ -44,7 +44,7 @@ public:
 
   void captureThread();
 
-
+  bool working = false;
 
 private:
   std::unique_ptr<webrtc::DesktopCapturer> capturer_;

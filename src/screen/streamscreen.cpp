@@ -5,8 +5,12 @@
 #include "rtc_base/logging.h"
 #include "third_party/libyuv/include/libyuv/convert_argb.h"
 #include "libyuv.h"
+#include "libyuv/scale.h"
+#include "libyuv/scale_argb.h"
 
 namespace alllink {
+  float scaleRatio = 0.0f;
+
 	StreamScreen::StreamScreen(sf::VideoMode mode, const sf::String& title, sf::Image icon, sf::Uint32 style)
 		: BaseScreen(mode, title, icon, style, sf::ContextSettings()) {
 		wr = static_cast<float>(mode.width) / 1920;
@@ -15,6 +19,9 @@ namespace alllink {
 		this->icon_ = icon;
 		this->setFramerateLimit(60);
 		this->setVisible(false);
+    auto maxSize = sf::Texture::getMaximumSize();
+    scaleRatio = 2048.0 / maxSize;
+    I_LOG("device driver support maximum is {}x{}, ratio is {}", maxSize, maxSize, scaleRatio);
 	}
 
 	StreamScreen::~StreamScreen() {}
@@ -158,7 +165,7 @@ namespace alllink {
     this->mode = mode;
   }
 
-  // ??远端流收到视频帧和本地捕捉到视频帧都会调用此函数
+  // 远端流收到视频帧和本地捕捉到视频帧都会调用此函数
   void StreamScreen::OnPaint() {
     //获取本地和远端的视频画面
     VideoRenderer* local_renderer = local_renderer_.get();
@@ -261,23 +268,62 @@ namespace alllink {
         buffer = webrtc::I420Buffer::Rotate(*buffer, video_frame.rotation());
       }
 
-      SetSize(buffer->width(), buffer->height());
-
-      uint8_t* src = new uint8_t[bmi_.bmiHeader.biSizeImage];
-
       RTC_DCHECK(image_.get() != NULL);
-      /*将YUV420格式的图像，转成RGB格式的图像。*/
-      libyuv::I420ToABGR(buffer->DataY(), buffer->StrideY(), buffer->DataU(),
-        buffer->StrideU(), buffer->DataV(), buffer->StrideV(),
-        src,
-        bmi_.bmiHeader.biWidth * bmi_.bmiHeader.biBitCount / 8,
-        buffer->width(), buffer->height());
 
-      /*将图像镜像反转*/
-      libyuv::ARGBMirror(src, bmi_.bmiHeader.biWidth * bmi_.bmiHeader.biBitCount / 8,
-        image_.get(), bmi_.bmiHeader.biWidth * bmi_.bmiHeader.biBitCount / 8,
-        buffer->width(), buffer->height());
-      delete src;
+      if (scaleRatio > 1) {
+        SetSize(buffer->width() / scaleRatio, buffer->height() / scaleRatio);
+
+        uint8_t* src = new uint8_t[bmi_.bmiHeader.biSizeImage];
+        uint8_t* ydata = new uint8_t[bmi_.bmiHeader.biSizeImage];
+        uint8_t* udata = new uint8_t[bmi_.bmiHeader.biSizeImage];
+        uint8_t* vdata = new uint8_t[bmi_.bmiHeader.biSizeImage];
+
+        int stride_y = buffer->width() / scaleRatio;
+        int stride_u = (buffer->width() / 2.0 + 1) / scaleRatio;
+        int stride_v = (buffer->width() / 2.0 + 1) / scaleRatio;
+
+        //缩放
+        libyuv::Scale(buffer->DataY(), buffer->DataU(), buffer->DataV(),
+          buffer->StrideY(), buffer->StrideU(), buffer->StrideV(),
+          buffer->width(), buffer->height(),
+          ydata, udata, vdata, stride_y, stride_u, stride_v,
+          buffer->width() / scaleRatio, buffer->height() / scaleRatio, libyuv::kFilterBilinear);
+
+        /*将YUV420格式的图像，转成RGB格式的图像。*/
+        libyuv::I420ToABGR(ydata, stride_y, udata,
+          stride_u, vdata, stride_v,
+          src,
+          bmi_.bmiHeader.biWidth * bmi_.bmiHeader.biBitCount / 8,
+          buffer->width() / scaleRatio, buffer->height() / scaleRatio);
+
+        /*将图像镜像反转*/
+        libyuv::ARGBMirror(src, bmi_.bmiHeader.biWidth * bmi_.bmiHeader.biBitCount / 8,
+          image_.get(), bmi_.bmiHeader.biWidth * bmi_.bmiHeader.biBitCount / 8,
+          buffer->width() / scaleRatio, buffer->height() / scaleRatio);
+
+        delete ydata;
+        delete udata;
+        delete vdata;
+        delete src;
+      }
+      else {
+        SetSize(buffer->width(), buffer->height());
+
+        uint8_t* src = new uint8_t[bmi_.bmiHeader.biSizeImage];
+        /*将YUV420格式的图像，转成RGB格式的图像。*/
+        libyuv::I420ToABGR(buffer->DataY(), buffer->StrideY(), buffer->DataU(),
+          buffer->StrideU(), buffer->DataV(), buffer->StrideV(),
+          src,
+          bmi_.bmiHeader.biWidth * bmi_.bmiHeader.biBitCount / 8,
+          buffer->width(), buffer->height());
+
+        /*将图像镜像反转*/
+        libyuv::ARGBMirror(src, bmi_.bmiHeader.biWidth * bmi_.bmiHeader.biBitCount / 8,
+          image_.get(), bmi_.bmiHeader.biWidth * bmi_.bmiHeader.biBitCount / 8,
+          buffer->width(), buffer->height());
+
+        delete src;
+      }
     }
 
     /*触发渲染*/

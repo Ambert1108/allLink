@@ -11,8 +11,9 @@ void MyCapturer::startCapturer() {
   capturer_->Start(this);
   I_LOG("startCapturer");
   //CaptureFrame();
-  std::thread closeTh(&MyCapturer::captureThread, this);
-  closeTh.detach();
+  working = true;
+  std::thread captureTh(&MyCapturer::captureThread, this);
+  captureTh.detach();
   //captureThread();
 }
 
@@ -74,7 +75,7 @@ void MyCapturer::CaptureFrame() {
 }
 
 void MyCapturer::captureThread() {
-  while (1) {
+  while (working) {
     if (!isOnResult)
       CaptureFrame();
     Sleep(5);

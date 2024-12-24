@@ -84,4 +84,5 @@ public:
   rtc::scoped_refptr<webrtc::VideoTrackInterface> new_video_track_;
   bool cameraState = true;
   rtc::scoped_refptr<CapturerTrackSource> video_device = nullptr;
+  rtc::scoped_refptr<MyCapturer> screen_device = nullptr;
 };
