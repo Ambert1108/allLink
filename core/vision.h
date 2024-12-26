@@ -53,7 +53,8 @@ namespace alllink {
   public:
     enum class VisionType {
       LOGIN = 0,
-      LOGOUT
+      LOGOUT,
+      RECONNECT
     };
 
     VisionCentralContoller();

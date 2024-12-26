@@ -206,14 +206,14 @@ namespace alllink {
     return peerConnection_ != nullptr;
   }
 
-  void Controller::DeletePeerConnection() {
+  void Controller::DeletePeerConnection(bool clear) {
     vision_->stopLocalRenderer();
     vision_->stopRemoteRenderer();
     videoEngine.close();
     audioEngine.close();
     peerConnection_ = nullptr;
     peerConnectionFactory_ = nullptr;
-    meetId_.clear();
+    if(clear) meetId_.clear();
     // 重新注册nosip插件
     janusEngine->addNoSIP();
   }
@@ -238,8 +238,7 @@ namespace alllink {
     //if (!result_or_error.ok()) {
     //  E_LOG("Failed to add audio track to PeerConnection:{}", result_or_error.error().message());
     //}
-    audioEngine.AddAudioTracks(peerConnectionFactory_, peerConnection_);
-
+    //
     // 寻找本地采集设备
     //rtc::scoped_refptr<CapturerTrackSource> video_device = CapturerTrackSource::Create();
     //if (video_device) {
@@ -262,7 +261,10 @@ namespace alllink {
     rtc::scoped_refptr<webrtc::VideoTrackInterface> video_track_;
     int videoType = seeker::IniConfig::GetInteger("this", "video_type", 0);
     if(videoType == 1) videoEngine.addScreenTrack(peerConnectionFactory_, peerConnection_, video_track_);
-    else videoEngine.addVideoTrack(peerConnectionFactory_, peerConnection_, video_track_);
+    else {
+      audioEngine.AddAudioTracks(peerConnectionFactory_, peerConnection_);
+      videoEngine.addVideoTrack(peerConnectionFactory_, peerConnection_, video_track_);
+    }
     //videoEngine.addVideoTrack(peerConnectionFactory_, peerConnection_, video_track_);
     // 向视觉控制器添加本地渲染器
     vision_->startLocalRenderer(video_track_.get());
@@ -500,7 +502,7 @@ namespace alllink {
 
   void Controller::OnReconnect() {
     W_LOG("[Controller::OnReconnect] Network disconnection detected, start reconnect");
-    hi::PostMsg({ msgTo(MessageType::RECONNECT_PEER), nullptr });
+    hi::PostMsg({ msgTo(MessageType::RECONNECT_SERVER), nullptr });
   }
 
   //
@@ -576,7 +578,7 @@ namespace alllink {
         }
         break;
       }
-      case msgTo(MessageType::RECONNECT_PEER): {
+      case msgTo(MessageType::RECONNECT_SERVER): {
         break;
       }
       case msgTo(MessageType::LOGIN_SUCCESS): {
@@ -689,11 +691,16 @@ namespace alllink {
         }
         break;
       }
+      case msgTo(MessageType::RECONNECT_SERVER): {
+        client_->reLogin();
+        break;
+      }
       case msgTo(MessageType::RECONNECT_PEER): {
-        if (!client_->reLogin()) break;
         if (peerConnection_.get()) {
-          DeletePeerConnection();
+          DeletePeerConnection(false);
+          I_LOG("renegotiation peer connection");
         }
+        if (!meetId_.empty()) ConnectToPeer(meetId_);
         break;
       }
       default:

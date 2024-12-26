@@ -100,9 +100,9 @@ void VideoEngine::addVideoTrack(rtc::scoped_refptr<webrtc::PeerConnectionFactory
 	/*rtc::scoped_refptr<CapturerTrackSource> video_device =
 		CapturerTrackSource::Create();*/
 	video_device = CapturerTrackSource::Create(0);
-	video_track_ = peer_connection_factory_->CreateVideoTrack(video_device, "video_label");
+	video_track_ = peer_connection_factory_->CreateVideoTrack(video_device, "camera_video");
 	video_track = video_track_;
-	auto result_or_error = peer_connection_->AddTrack(video_track_, { "stream_id" });
+	auto result_or_error = peer_connection_->AddTrack(video_track_, { "000" });
 	I_LOG("[VideoEngine::init] add track done");
 
 	////set frameRate...
@@ -112,6 +112,18 @@ void VideoEngine::addVideoTrack(rtc::scoped_refptr<webrtc::PeerConnectionFactory
 	//	encoding.max_framerate = 60;
 	//}
 	//sender->SetParameters(parameters);
+
+	// set payloadtype
+	auto senders = peer_connection_->GetSenders();
+	//webrtc::RtpParameters parameters = sender->GetParameters();
+	for (const auto& e : senders) {
+		I_LOG("sender id is {}, ssrc is {}", e->id(), e->ssrc());
+		if (e->id() == "camera_video") {
+			webrtc::RtpParameters parameters = e->GetParameters();
+			I_LOG("parameter codec size is {}", parameters.codecs.size());
+		}
+	}
+
 
 	if (!result_or_error.ok()) {
 		RTC_LOG(LS_ERROR) << "Failed to add video track to PeerConnection: "

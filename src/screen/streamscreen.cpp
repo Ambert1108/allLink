@@ -292,14 +292,14 @@ namespace alllink {
         /*将YUV420格式的图像，转成RGB格式的图像。*/
         libyuv::I420ToABGR(ydata, stride_y, udata,
           stride_u, vdata, stride_v,
-          src,
+          image_.get(),
           bmi_.bmiHeader.biWidth * bmi_.bmiHeader.biBitCount / 8,
           buffer->width() / scaleRatio, buffer->height() / scaleRatio);
 
         /*将图像镜像反转*/
-        libyuv::ARGBMirror(src, bmi_.bmiHeader.biWidth * bmi_.bmiHeader.biBitCount / 8,
-          image_.get(), bmi_.bmiHeader.biWidth * bmi_.bmiHeader.biBitCount / 8,
-          buffer->width() / scaleRatio, buffer->height() / scaleRatio);
+        //libyuv::ARGBMirror(src, bmi_.bmiHeader.biWidth * bmi_.bmiHeader.biBitCount / 8,
+        //  image_.get(), bmi_.bmiHeader.biWidth * bmi_.bmiHeader.biBitCount / 8,
+        //  buffer->width() / scaleRatio, buffer->height() / scaleRatio);
 
         delete ydata;
         delete udata;
@@ -313,14 +313,14 @@ namespace alllink {
         /*将YUV420格式的图像，转成RGB格式的图像。*/
         libyuv::I420ToABGR(buffer->DataY(), buffer->StrideY(), buffer->DataU(),
           buffer->StrideU(), buffer->DataV(), buffer->StrideV(),
-          src,
+          image_.get(),
           bmi_.bmiHeader.biWidth * bmi_.bmiHeader.biBitCount / 8,
           buffer->width(), buffer->height());
 
         /*将图像镜像反转*/
-        libyuv::ARGBMirror(src, bmi_.bmiHeader.biWidth * bmi_.bmiHeader.biBitCount / 8,
-          image_.get(), bmi_.bmiHeader.biWidth * bmi_.bmiHeader.biBitCount / 8,
-          buffer->width(), buffer->height());
+        //libyuv::ARGBMirror(src, bmi_.bmiHeader.biWidth * bmi_.bmiHeader.biBitCount / 8,
+        //  image_.get(), bmi_.bmiHeader.biWidth * bmi_.bmiHeader.biBitCount / 8,
+        //  buffer->width(), buffer->height());
 
         delete src;
       }

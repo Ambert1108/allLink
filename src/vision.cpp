@@ -125,14 +125,16 @@ namespace alllink {
         case msgTo(MessageType::IS_ENTER): {
           if (type_ == VisionType::LOGOUT) break;
           // 收到连接窗口连接消息
-          std::vector<std::string> meetingInfo = std::any_cast<std::vector<std::string>>(msg.data);
+          //std::vector<std::string> meetingInfo = std::any_cast<std::vector<std::string>>(msg.data);
+          std::string meetingInfo = std::any_cast<std::string>(msg.data);
           if (meetingInfo.empty()) {
             break;
           }
-          I_LOG("[debug] meeting id is {}", meetingInfo.at(0));
+          //I_LOG("[debug] meeting id is {}", meetingInfo.at(0));
+          I_LOG("[debug] meeting id is {}", meetingInfo);
       
           // 调用中控器的回调接口进行通话连接
-          callback_->ConnectToPeer(meetingInfo.at(0));
+          callback_->ConnectToPeer(meetingInfo);
 
           // 假设连接成功，隐藏连接窗口及开始窗口，显示会议窗口
           //I_LOG("[test] link success");
@@ -145,13 +147,19 @@ namespace alllink {
           //TODO:如果登录失败，调用setError方法告知用户，让用户重新登录
           //收到信令回复登录成功，关闭登录窗口
           loginWnd->OnExit();
-          type_ = VisionType::LOGIN;
+          I_LOG("login success 2");
           // 将用户名提供给开始窗口
           std::shared_ptr<StartScreen> point = std::dynamic_pointer_cast<StartScreen>(wnd);
           if (!point) break;
+          I_LOG("login success 3");
           std::string userId = std::any_cast<std::string>(msg.data);
           point->setUseId(userId);
+          I_LOG("login success 4");
           callback_->CustomMessageCallback(msg);
+          if (type_ == VisionType::RECONNECT) {
+            callback_->CustomMessageCallback({ msgTo(MessageType::RECONNECT_PEER), nullptr });
+          }
+          type_ = VisionType::LOGIN;
           break;
         }
         case msgTo(MessageType::MEETING_END): {
@@ -181,7 +189,8 @@ namespace alllink {
           point->setSessionMode(mode);
           break;
         }
-        case msgTo(MessageType::RECONNECT_PEER): {
+        case msgTo(MessageType::RECONNECT_SERVER): {
+          type_ = VisionType::RECONNECT;
           I_LOG("network disconnection, close stream screen");
           // 隐藏会议窗口
           streamWnd->OnExit();

@@ -94,9 +94,7 @@ namespace alllink {
 				if ((createButton->onClick(event, getMousePosition(), this)
 					|| (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Enter))
 					&& createButton->getActive()) {
-					std::vector<std::string> info{
-						inputMeetingIdWidget->getInput() };
-					hi::PostMsg({ msgTo(MessageType::IS_ENTER), info });
+					hi::PostMsg({ msgTo(MessageType::IS_ENTER), inputMeetingIdWidget->getInput() });
 					if (type_ == EnterType::CREATE) createButton->setActive(false);
 					else createButton->setActive(false);
 				}
@@ -105,9 +103,7 @@ namespace alllink {
 				if ((joinButton->onClick(event, getMousePosition(), this)
 					|| (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Enter))
 					&& joinButton->getActive()) {
-					std::vector<std::string> info{
-						inputMeetingIdWidget->getInput()};
-					hi::PostMsg({ msgTo(MessageType::IS_ENTER), info });
+					hi::PostMsg({ msgTo(MessageType::IS_ENTER), inputMeetingIdWidget->getInput() });
 					if (type_ == EnterType::CREATE) createButton->setActive(false);
 					else joinButton->setActive(false);
 				}

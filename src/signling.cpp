@@ -83,7 +83,6 @@ namespace alllink {
   }
 
   bool SignlingInteractionSystem::sendToPeer(const std::string& to, const std::string& message) {
-    I_LOG("1");
     SignInfo msg;
     std::regex pattern("^\\d{3}-\\d{3}$");
     if (std::regex_match(to, pattern)) {
@@ -97,6 +96,10 @@ namespace alllink {
       msg.set_cseq(cseq_);
       callId = userInfo.id_ + to + std::to_string(cseq_++);
       msg.set_call_id(callId);
+      int videoType = seeker::IniConfig::GetInteger("this", "video_type", 0);
+      if (videoType == 1) {
+        msg.set_signal("1");
+      }
       signalState = State::CALLING;
     }
     else{
@@ -141,6 +144,10 @@ namespace alllink {
       msg.set_to(to);
       msg.set_cseq(cseq_++);
       msg.set_call_id(callId);
+      int videoType = seeker::IniConfig::GetInteger("this", "video_type", 0);
+      if (videoType == 1) {
+        msg.set_signal("1");
+      }
     }
     else {
       msg.set_meth("FORWARD");
@@ -202,9 +209,10 @@ namespace alllink {
     else if (info.cmeth() == "REGISTER") {
       signalState = State::LOGIN_ON;
       //收到信令回复登录请求
+      I_LOG("login success 1");
       hi::PostMsg({ msgTo(MessageType::LOGIN_SUCCESS), info.to() });
     }
-    else if (info.cmeth() == "INVITE") {
+    else if (info.cmeth() == "INVITE" || info.cmeth() == "INVITE_SHARE") {
       
       hi::PostMsg({ msgTo(MessageType::MEETING_OK), nullptr });
       callback_->OnCSMessageFromSignling(info);

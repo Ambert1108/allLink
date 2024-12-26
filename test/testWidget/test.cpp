@@ -74,12 +74,16 @@ int main() {
       //    input.setActive(false);
       //  }
       //}
-      if (!inputWidget.getInputActive()) {
-        if (inputWidget.getInput().empty()) textRect.setActive(false);
-        else {
+      if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Enter) {
+        std::cout << "aaa" << std::endl;
+        if (!inputWidget.getInputActive()) {
+          std::cout << "bbb" << std::endl;
           saveText = inputWidget.getInput();
-          I_LOG("save:{}", saveText);
-          textRect.setActive(true);
+          if (saveText.empty()) textRect.setActive(false);
+          else {
+            I_LOG("save:{}", saveText);
+            textRect.setActive(true);
+          }
         }
       }
       //input.eventProcess(event);

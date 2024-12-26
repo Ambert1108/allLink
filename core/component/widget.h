@@ -52,8 +52,9 @@ namespace alllink {
 				isClick = true;
 			}
 			else {
-				if (event.type == sf::Event::MouseButtonPressed
-					&& event.key.code == sf::Mouse::Left) {
+				if ((event.type == sf::Event::MouseButtonPressed
+					&& event.key.code == sf::Mouse::Left) ||
+					(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Enter)) {
 					inputBox.setActive(false);
 				}
 			}
@@ -71,7 +72,7 @@ namespace alllink {
 			tar->draw(sprite);
 		}
 
-		std::string getInput() const { return inputBox.getEnterText(); }
+		std::string getInput() { return inputBox.getEnterText(); }
 
 		bool empty() const { return inputBox.inputEmpty(); }
 

@@ -383,7 +383,11 @@ namespace alllink {
 			return 0;
 		}
 
-		std::string getEnterText() const { return text; }
+		std::string getEnterText() {
+			std::string out{ text };
+			resetText(); 
+			return out;
+		}
 
 		bool inputEmpty() const { return text.empty(); }
 
@@ -392,6 +396,7 @@ namespace alllink {
 			inputText.setString(defaultDesc);
 			inputText.setFillColor(sf::Color(255, 255, 255, 150));
 			text.clear(); 
+			cursorPosition = 0;
 		}
 
 		bool getActive() const { return isActive; }
@@ -505,6 +510,13 @@ namespace alllink {
 		}
 
 	protected:
+		void reset() {
+			// TODO: 重置输入框
+			inputText.setString("");
+			inputText.setFillColor(textColor);
+			cursorPosition = 0;
+		}
+
 		sf::String defaultDesc;
 		BaseText inputText;
 		std::string text{};

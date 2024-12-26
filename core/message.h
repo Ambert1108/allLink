@@ -74,6 +74,7 @@ namespace alllink {
 		ADD_TRACK,                      //添加新轨道
 		REMOVE_TRACK,                   //移除轨道
 		DISCONNECT_PEER,                //通知中控器断开连接
+		RECONNECT_SERVER,               //通知中控器重新连接信令服务器和Janus服务器
 		RECONNECT_PEER                  //通知中控器重新连接对端
 	};
 
@@ -87,7 +88,9 @@ namespace alllink {
 				{MessageType::SEND_PROCESS_TO_JANUS, "SEND_PROCESS_TO_JANUS"},
 				{MessageType::SEND_SDP_TO_PEER, "SEND_SDP_TO_PEER"},
 				{MessageType::SEND_ICE_TO_PEER, "SEND_ICE_TO_PEER"},
-				{MessageType::SEND_ICE_COMPLETE_TO_PEER, "SEND_ICE_COMPLETE_TO_PEER"}
+				{MessageType::SEND_ICE_COMPLETE_TO_PEER, "SEND_ICE_COMPLETE_TO_PEER"},
+				{MessageType::RECONNECT_SERVER, "RECONNECT_SERVER"},
+				{MessageType::RECONNECT_PEER, "RECONNECT_PEER"}
 		};
 		auto it = enumMap.find(e);
 		if (it != enumMap.end()) {

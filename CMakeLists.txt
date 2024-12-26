@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.11)
-project(AllLink VERSION 0.1.1)
+project(AllLink VERSION 0.1.2)
 set(ObjType console CACHE STRING "build object type")
 set(PROJECT_INCLUDE ${PROJECT_SOURCE_DIR}/inc)
 list(APPEND PROJECT_INCLUDE ${PROJECT_SOURCE_DIR}/core)
@@ -185,9 +185,9 @@ add_definitions(
 
 # Add your source files here
 add_subdirectory(src)
-add_subdirectory(test/localCapture)
-add_subdirectory(test/nosip)
-#add_subdirectory(test/testWidget)
+#add_subdirectory(test/localCapture)
+#add_subdirectory(test/nosip)
+add_subdirectory(test/testWidget)
 #add_subdirectory(test/customWindows)
 #add_subdirectory(test/win32Test)
 #add_subdirectory(test/outscreenRender)
