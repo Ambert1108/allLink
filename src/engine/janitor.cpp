@@ -46,7 +46,7 @@ namespace rtcengine {
     }
 
     void Janitor::init() {
-
+        if (isInit.load()) return;
         json j;
         j = {
             {"janus", "create"},
@@ -63,6 +63,7 @@ namespace rtcengine {
 
         std::thread loop3{ &Janitor::sendPing, this };
         pingThread = std::move(loop3);
+        isInit.store(true);
     }
 
     void Janitor::addNoSIP() {
@@ -248,6 +249,7 @@ namespace rtcengine {
         sessionID = 0;
         handleID = 0;
         destory.store(false);
+        isInit.store(false);
         engineState.store(ONLINE);
         if (pingThread.joinable()) pingThread.join();
         if (listenThread.joinable()) listenThread.join();

@@ -63,6 +63,7 @@ namespace rtcengine {
         int64_t receivePongTime;
         int64_t transaction = 0;
         std::atomic<bool> destory = false;
+        std::atomic<bool> isInit = false;
 
 
         std::thread pingThread;

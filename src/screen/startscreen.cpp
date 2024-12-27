@@ -135,8 +135,8 @@ namespace alllink {
 			}
 			else if (isLogin->onClick(event, getMousePosition(), this) && type_ == LoginType::ONLINE) {
 				//点击注销，进行响应
-				//type_ = LoginType::OFFLINE;
-				//useId.setString(L"你好");
+				type_ = LoginType::OFFLINE;
+				useId.setString(L"你好");
 				hi::PostMsg({ msgTo(MessageType::START_LOGOUT), nullptr });
 			}
 		}

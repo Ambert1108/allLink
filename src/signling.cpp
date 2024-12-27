@@ -13,28 +13,53 @@ namespace alllink {
     listener = std::make_shared<WSListener>();
     listener->registerObserver(this);
     listenBody = aom::InvokeTimer::CreateTimer(std::chrono::milliseconds(1), true, [&] {
-      if (signalState > 0 && client) {
-        I_LOG("signling listen start");
-        client->listen();
-        I_LOG("signling listen finish");
+      try {
+        if (signalState > 0 && client) {
+          I_LOG("signling listen start");
+          client->listen();
+          I_LOG("signling listen finish");
+        }
+      }
+      catch (const std::exception& ex) {
+        E_LOG("listenBody timer catch:{}", ex.what());
+      }
+      catch (...) {
+        E_LOG("listenBody timer catch unknown exception");
       }
     });
     listenBody->Start();
     keepBody = aom::InvokeTimer::CreateTimer(std::chrono::milliseconds(1500), true, [&] {
-      if (signalState > 1 && client) {
-        SignInfo msg;
-        msg.set_meth("Heartbeat");
-        msg.set_from(userInfo.id_);
-        msg.set_to("system");
-        oatpp::String js = oatpp::String(msg.js.dump());
-        client->sendOneFrame(true, oatpp::websocket::Frame::OPCODE_TEXT, js);
-        if(lastBeatPoint == 0) lastBeatPoint = seeker::time::currentTime();
-        if (seeker::time::currentTime() - lastBeatPoint > 3000) {
-          W_LOG("[Signling::keepBody] heartbeat timeout 3s");
-          logout();
-          lastBeatPoint = 0;
-          signalState = State::NONE;
+      try {
+        if (signalState > 1 && client) {
+          SignInfo msg;
+          msg.set_meth("Heartbeat");
+          msg.set_from(userInfo.id_);
+          msg.set_to("system");
+          oatpp::String js = oatpp::String(msg.js.dump());
+          std::unique_lock<std::mutex> lck(Locker);
+          client->sendOneFrame(true, oatpp::websocket::Frame::OPCODE_TEXT, js);
+          if(lastBeatPoint == 0) lastBeatPoint = seeker::time::currentTime();
+          if (seeker::time::currentTime() - lastBeatPoint > 3000) {
+            W_LOG("[Signling::keepBody] heartbeat timeout 3s");
+            logout();
+            lastBeatPoint = 0;
+            signalState = State::NONE;
+          }
         }
+      }
+      catch (const std::exception& ex) {
+        E_LOG("keepBody timer catch:{}, start logout", ex.what());
+        client->stopListening();
+        client = nullptr;
+        lastBeatPoint = 0;
+        signalState = State::NONE;
+      }
+      catch (...) {
+        E_LOG("keepBody timer catch unknown exception, start logout");
+        client->stopListening();
+        client = nullptr;
+        lastBeatPoint = 0;
+        signalState = State::NONE;
       }
     });
     keepBody->Start();
@@ -75,6 +100,16 @@ namespace alllink {
     msg.set_userid(info.id_);
     msg.set_password(info.pwd_);
     return ToSignaling(msg);
+  }
+
+  void SignlingInteractionSystem::disConnectServer() {
+    {
+      std::unique_lock<std::mutex> lck(Locker);
+      logout();
+    }
+    serverInfo.clear();
+    userInfo.clear();
+    std::this_thread::sleep_for(std::chrono::seconds(1));
   }
 
   bool SignlingInteractionSystem::reLogin() {
@@ -164,7 +199,8 @@ namespace alllink {
     client->sendClose();
     client->stopListening();
     client = nullptr;
-    signalState = State::CONNECT_ON;
+    lastBeatPoint = 0;
+    signalState = State::NONE;
   }
 
   void SignlingInteractionSystem::OnFORWARD(const SignInfo& info) {
@@ -245,12 +281,18 @@ namespace alllink {
         I_LOG("[SignlingInteractionSystem::connectServer] login out! new server is {}:{}",
           info.serverIp_, info.serverPort_);
       }
+      I_LOG("signling link 1");
       auto connectionProvider =
         oatpp::network::tcp::client::ConnectionProvider::createShared({ info.serverIp_, info.serverPort_ });
+      I_LOG("signling link 2");
       auto connector = oatpp::websocket::Connector::createShared(connectionProvider);
+      I_LOG("signling link 3");
       auto connection = connector->connect("/connectWS");
+      I_LOG("signling link 4");
       client = oatpp::websocket::WebSocket::createShared(connection, true);
+      I_LOG("signling link 5");
       client->setListener(listener);
+      I_LOG("signling link 6");
       signalState = State::CONNECT_ON;
     }
     catch (std::exception& ex) {

@@ -454,6 +454,11 @@ namespace alllink {
     }
   }
 
+  void Controller::OnSignlingDisconnect() {
+    W_LOG("[Controller::OnSignlingDisconnect] Signling disconnection detected, start reconnect");
+    hi::PostMsg({ msgTo(MessageType::RECONNECT_SERVER), nullptr });
+  }
+
   //
   // JanusInteractionObserver implementation.
   //
@@ -501,7 +506,7 @@ namespace alllink {
   }
 
   void Controller::OnReconnect() {
-    W_LOG("[Controller::OnReconnect] Network disconnection detected, start reconnect");
+    W_LOG("[Controller::OnReconnect] Janus disconnection detected, start reconnect");
     hi::PostMsg({ msgTo(MessageType::RECONNECT_SERVER), nullptr });
   }
 
@@ -526,7 +531,7 @@ namespace alllink {
 
 
   void Controller::DisconnectFromServer() {
-
+    client_->disConnectServer();
   }
 
 

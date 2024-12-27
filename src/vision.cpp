@@ -104,6 +104,7 @@ namespace alllink {
           loginWnd->OnEnter();
           break;
         case msgTo(MessageType::START_LOGOUT):
+          callback_->DisconnectFromServer();
           break;
         case msgTo(MessageType::SETTING):
           break;

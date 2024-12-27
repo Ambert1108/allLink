@@ -37,6 +37,11 @@ namespace alllink {
       }
       return *this;
     }
+
+    void clear() {
+      id_.clear();
+      pwd_.clear();
+    }
   };
 
   struct ServerInfo {
@@ -72,6 +77,11 @@ namespace alllink {
       }
       return *this;
     }
+
+    void clear() {
+      serverIp_.clear();
+      serverPort_ = 0;
+    }
   };
 
   struct SignlingInteractionObserver {
@@ -83,6 +93,8 @@ namespace alllink {
 
     /* 通知 中控器 其他客户端挂断通话 */
     virtual void OnPeerDisconnected(const std::string& id) = 0;
+
+    virtual void OnSignlingDisconnect() = 0;
 
   protected:
     virtual ~SignlingInteractionObserver() {}
@@ -135,6 +147,8 @@ namespace alllink {
 
     bool login(const UserInfo& info);
 
+    void disConnectServer();
+
     bool reLogin();
 
     bool sendToPeer(const std::string& to, const std::string& message);
@@ -168,6 +182,7 @@ namespace alllink {
 
     SignlingInteractionObserver* callback_;
     static constexpr const char* TAG = "WSClient";
+    mutable std::mutex Locker{};
     std::shared_ptr<oatpp::websocket::WebSocket> client;
     std::shared_ptr<WSListener> listener;
     aom::InvokeTimerPtr listenBody;

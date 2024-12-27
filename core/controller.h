@@ -73,6 +73,8 @@ namespace alllink {
 
     void OnCSMessageFromSignling(const SignInfo& info) override;
 
+    void OnSignlingDisconnect() override;
+
     //
     // JanusInteractionObserver implementation.
     //
