@@ -145,6 +145,11 @@ namespace alllink {
 	StartScreen::LoginType StartScreen::type() const { return type_; }
 
 	void StartScreen::setUseId(const std::string& id) {
+		if (id.empty()) {
+			useId.setString(L"你好");
+			type_ = LoginType::OFFLINE;
+			return;
+		}
 		useId.setString(id);
 		type_ = LoginType::ONLINE;
 	}

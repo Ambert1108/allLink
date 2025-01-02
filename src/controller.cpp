@@ -697,7 +697,9 @@ namespace alllink {
         break;
       }
       case msgTo(MessageType::RECONNECT_SERVER): {
-        client_->reLogin();
+        if (!client_->reLogin()) {
+          hi::PostMsg({ msgTo(MessageType::RECONNECT_SERVER_FAILED), nullptr });
+        }
         break;
       }
       case msgTo(MessageType::RECONNECT_PEER): {

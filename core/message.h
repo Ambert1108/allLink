@@ -75,6 +75,7 @@ namespace alllink {
 		REMOVE_TRACK,                   //移除轨道
 		DISCONNECT_PEER,                //通知中控器断开连接
 		RECONNECT_SERVER,               //通知中控器重新连接信令服务器和Janus服务器
+		RECONNECT_SERVER_FAILED,        //通知视觉控制器重新连接信令服务器失败
 		RECONNECT_PEER                  //通知中控器重新连接对端
 	};
 

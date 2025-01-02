@@ -31,19 +31,22 @@ namespace alllink {
     keepBody = aom::InvokeTimer::CreateTimer(std::chrono::milliseconds(1500), true, [&] {
       try {
         if (signalState > 1 && client) {
-          SignInfo msg;
-          msg.set_meth("Heartbeat");
-          msg.set_from(userInfo.id_);
-          msg.set_to("system");
-          oatpp::String js = oatpp::String(msg.js.dump());
-          std::unique_lock<std::mutex> lck(Locker);
-          client->sendOneFrame(true, oatpp::websocket::Frame::OPCODE_TEXT, js);
           if(lastBeatPoint == 0) lastBeatPoint = seeker::time::currentTime();
           if (seeker::time::currentTime() - lastBeatPoint > 3000) {
             W_LOG("[Signling::keepBody] heartbeat timeout 3s");
             logout();
             lastBeatPoint = 0;
             signalState = State::NONE;
+            callback_->OnSignlingDisconnect();
+          }
+          else {
+            SignInfo msg;
+            msg.set_meth("Heartbeat");
+            msg.set_from(userInfo.id_);
+            msg.set_to("system");
+            oatpp::String js = oatpp::String(msg.js.dump());
+            std::unique_lock<std::mutex> lck(Locker);
+            client->sendOneFrame(true, oatpp::websocket::Frame::OPCODE_TEXT, js);
           }
         }
       }
@@ -53,6 +56,7 @@ namespace alllink {
         client = nullptr;
         lastBeatPoint = 0;
         signalState = State::NONE;
+        callback_->OnSignlingDisconnect();
       }
       catch (...) {
         E_LOG("keepBody timer catch unknown exception, start logout");
@@ -60,6 +64,7 @@ namespace alllink {
         client = nullptr;
         lastBeatPoint = 0;
         signalState = State::NONE;
+        callback_->OnSignlingDisconnect();
       }
     });
     keepBody->Start();
@@ -113,8 +118,15 @@ namespace alllink {
   }
 
   bool SignlingInteractionSystem::reLogin() {
-    if (!connect(serverInfo)) return false;
-    return login(userInfo);
+    if (!connect(serverInfo)) {
+      serverInfo.clear();
+      return false;
+    }
+    if (!login(userInfo)) {
+      userInfo.clear();
+      return false;
+    }
+    return true;
   }
 
   bool SignlingInteractionSystem::sendToPeer(const std::string& to, const std::string& message) {
@@ -267,8 +279,7 @@ namespace alllink {
   void SignlingInteractionSystem::OnUnauthorized(const SignInfo& info) {
     if (info.cmeth() == "REGISTER") {
       W_LOG("login {}:{} -> {} failed", serverInfo.serverIp_, serverInfo.serverPort_, userInfo.id_);
-      serverInfo.serverIp_.clear();
-      serverInfo.serverPort_ = 0;
+      serverInfo.clear();
     }
   }
 
@@ -297,6 +308,10 @@ namespace alllink {
     }
     catch (std::exception& ex) {
       E_LOG("[SignlingInteractionSystem::connectServer] connect sever failed:{}", ex.what());
+      return false;
+    }
+    catch (...) {
+      E_LOG("[SignlingInteractionSystem::connectServer] connect sever failed");
       return false;
     }
     return true;

@@ -99,10 +99,23 @@ namespace alllink {
           point->setType(EnterScreen::EnterType::JOIN);
           break;
         }
-        case msgTo(MessageType::START_LOGIN):
+        case msgTo(MessageType::START_LOGIN): {
+          // 判断是否能够自动登录
+          if (autoLogin) {
+            std::string addr = seeker::IniConfig::Get("this", "signling", "0.0.0.0");
+            std::string user = seeker::IniConfig::Get("this", "userId", "a");
+            std::string pwd = seeker::IniConfig::Get("this", "passwd", "1");
+
+            callback_->StartLogin(ServerInfo(addr), { user, pwd });
+
+            autoLogin = false;
+          }
+          
+
           // 收到开始窗口请求登录交互，显示登录窗口
           loginWnd->OnEnter();
           break;
+        }
         case msgTo(MessageType::START_LOGOUT):
           callback_->DisconnectFromServer();
           break;
@@ -190,13 +203,19 @@ namespace alllink {
           point->setSessionMode(mode);
           break;
         }
+        case msgTo(MessageType::RECONNECT_SERVER_FAILED): {
+          std::shared_ptr<StartScreen> point = std::dynamic_pointer_cast<StartScreen>(wnd);
+          if (!point) break;
+          point->setUseId("");
+          break;
+        }
         case msgTo(MessageType::RECONNECT_SERVER): {
           type_ = VisionType::RECONNECT;
           I_LOG("network disconnection, close stream screen");
           // 隐藏会议窗口
-          streamWnd->OnExit();
+          //streamWnd->OnExit();
           // 显示开始窗口
-          wnd->OnEnter();
+          //wnd->OnEnter();
         }
         case msgTo(MessageType::MEETING_OK):
         case msgTo(MessageType::SWITCH_AUDIO_INPUT):
