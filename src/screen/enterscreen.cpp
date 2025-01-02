@@ -36,7 +36,7 @@ namespace alllink {
 
 	int EnterScreen::init() {
 		inputMeetingIdWidget = std::make_unique<EnterDescriptionWidget>(290 * wr, 94 * hr, 36 * wr, 126 * hr);
-		inputMeetingIdWidget->setInput(msyhFile, L"请输入10156+会议号");
+		inputMeetingIdWidget->setInput(msyhFile, L"请输入会议号 xxx-xxx");
 		inputMeetingIdWidget->setDescription(msyhFile, L"会议号");
 
 		createButton = std::make_unique<TextRectangle>();

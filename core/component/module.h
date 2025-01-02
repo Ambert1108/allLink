@@ -320,11 +320,11 @@ namespace alllink {
 		}
 	};
 
-	class HorizonGraphicTextsModule : public VerticalGraphicTextsModule {
+	class HorizonGraphicTextsModule : public GraphicTextsModule {
 	public:
 		void setText(const sf::String& text, sf::Color textColor) override {
 			text_.setString(text);
-			int x = this->getPosition().x + 10;
+			int x = this->getPosition().x + image.getGlobalBounds().width + 20;
 			int y = this->getPosition().y + (this->getSize().y - text_.getGlobalBounds().height) / 2.f;
 			text_.setPosition(x, y);
 			text_.setFillColor(textColor);
@@ -332,7 +332,7 @@ namespace alllink {
 		}
 
 		void setImage() override {
-			int x = this->getPosition().x + this->getSize().x - image.getGlobalBounds().width - 10;
+			int x = this->getPosition().x + 10;
 			int y = this->getPosition().y + (this->getSize().y - image.getGlobalBounds().height) / 2.f;
 			image.setPosition(x, y);
 		}

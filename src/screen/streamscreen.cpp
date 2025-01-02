@@ -44,11 +44,28 @@ namespace alllink {
 	}
 
 	int StreamScreen::init() {
+    // 初始化本地及远端画面纹理
     remoteSrc = new sf::Texture();
     localSrc = new sf::Texture();
-    remoteVideo.init(1920, 1080, 0, 0);
+
+    // 初始化本地及远端精灵尺寸，其中远端精灵尺寸需要适配不同分辨率屏幕
+    remoteVideo.init(1920 * wr, 1080 * hr, 0, 0);
     localVideo.init(640, 480, 1180, 590);
-    this->setSize(sf::Vector2u(1280, 720));
+
+    // 设置窗口大小为等比例720p
+    this->setSize(sf::Vector2u(1280 * wr, 720 * hr));
+
+    // 获取屏幕的分辨率
+    sf::VideoMode desktop = sf::VideoMode::getDesktopMode();
+    unsigned int screenWidth = desktop.width;
+    unsigned int screenHeight = desktop.height;
+
+    // 计算窗口初始化位置并进行设置
+    int posX = (screenWidth - this->getSize().x) / 2;
+    int posY = (screenHeight - this->getSize().y) / 2;
+    wndPosition = sf::Vector2i(posX, posY);
+    this->setPosition(wndPosition);
+
 		return 0;
 	}
 
