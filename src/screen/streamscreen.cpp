@@ -11,6 +11,15 @@
 namespace alllink {
   float scaleRatio = 0.0f;
 
+  static inline std::string parseTime(int64_t timestamp) {
+    timestamp *= 0.001;
+    int64_t hour = timestamp / 3600;
+    int64_t min = timestamp / 60 - hour * (int64_t)60;
+    int64_t sec = timestamp - hour * (int64_t)3600 - min * (int64_t)60;
+    std::string s = std::to_string(hour) + ":" + std::to_string(min) + ":" + std::to_string(sec) + "";
+    return s;
+  }
+
 	StreamScreen::StreamScreen(sf::VideoMode mode, const sf::String& title, sf::Image icon, sf::Uint32 style)
 		: BaseScreen(mode, title, icon, style, sf::ContextSettings()) {
 		wr = static_cast<float>(mode.width) / 1920;
@@ -30,6 +39,7 @@ namespace alllink {
 		// 设置界面可见
 		this->setVisible(true);
     this->setPosition(wndPosition);
+    timePoint = seeker::time::currentTime();
 		isActive = true;
 		return true;
 	}
@@ -40,6 +50,8 @@ namespace alllink {
 		isActive = false;
     camState = false;
     micState = false;
+    shareState = false;
+    timePoint = 0;
 		return true;
 	}
 
@@ -51,6 +63,78 @@ namespace alllink {
     // 初始化本地及远端精灵尺寸，其中远端精灵尺寸需要适配不同分辨率屏幕
     remoteVideo.init(1920 * wr, 1080 * hr, 0, 0);
     localVideo.init(640, 480, 1180, 590);
+
+
+    closeMic = std::make_unique<VariableStateGraphicModule>();
+    openMic = std::make_unique<VariableStateGraphicModule>();
+    closeCam = std::make_unique<VariableStateGraphicModule>();
+    openCam = std::make_unique<VariableStateGraphicModule>();
+    closeShare = std::make_unique<VariableStateGraphicModule>();
+    openShare = std::make_unique<VariableStateGraphicModule>();
+
+    closeMic->init(80 * wr, 50 * hr, 20 * wr, 1020 * hr);
+    closeMic->setTexture(closeMicFile);
+    closeMic->setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225, 200));
+    closeMic->setImageSize(40 * wr, 40 * wr);
+    closeMic->setImageColor(sf::Color::Black);
+
+    openMic->init(80 * wr, 50 * hr, 20 * wr, 1020 * hr);
+    openMic->setTexture(openMicFile);
+    openMic->setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225, 200));
+    openMic->setImageSize(40 * wr, 40 * wr);
+    openMic->setImageColor(sf::Color(74, 224, 84));
+
+    closeCam->init(80 * wr, 50 * hr, 140 * wr, 1020 * hr);
+    closeCam->setTexture(closeCamFile);
+    closeCam->setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225, 200));
+    closeCam->setImageSize(40 * wr, 40 * wr);
+    closeCam->setImageColor(sf::Color::Black);
+
+    openCam->init(80 * wr, 50 * hr, 140 * wr, 1020 * hr);
+    openCam->setTexture(openCamFile);
+    openCam->setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225, 200));
+    openCam->setImageSize(40 * wr, 40 * wr);
+    openCam->setImageColor(sf::Color(117, 188, 255));
+
+    closeShare->init(80 * wr, 50 * hr, 280 * wr, 1020 * hr);
+    closeShare->setTexture(closeShareFile);
+    closeShare->setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225, 200));
+    closeShare->setImageSize(40 * wr, 40 * wr);
+    closeShare->setImageColor(sf::Color::Black);
+
+    openShare->init(80 * wr, 50 * hr, 280 * wr, 1020 * hr);
+    openShare->setTexture(openShareFile);
+    openShare->setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225, 200));
+    openShare->setImageSize(40 * wr, 40 * wr);
+    openShare->setImageColor(sf::Color(242, 80, 125));
+
+    meetingTime = std::make_unique<HorizonGraphicTextsModule>(false);
+    meetingTime->init(240 * wr, 16 * hr, 6 * wr, 12 * hr);
+    meetingTime->setSource(18 * hr, msyhFile, meetingTimeFile);
+    meetingTime->setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225, 200));
+    meetingTime->setText(L"会议时长 0:0:0", sf::Color(0, 0, 0));
+    meetingTime->setImageSize(24 * wr, 24 * wr);
+    meetingTime->setImageColor(sf::Color(117, 188, 255));
+
+    leaveMeeting = std::make_unique<TextFillRectangle>(sf::Color::Red, 3 * wr);
+    leaveMeeting->init(190 * wr, 50 * hr, 1686 * wr, 1015 * hr, 8.0 * wr);
+    leaveMeeting->setColor(sf::Color::White, sf::Color::Red, sf::Color(191, 23, 23));
+    leaveMeeting->setText(msyhFile, L"离开会议", sf::Color::Black, sf::Color::White);
+
+    meetingDescribe = std::make_unique<BaseText>();
+    meetingDescribe->init(msyhFile);
+    meetingDescribe->setCharacterSize(18 * hr);
+    meetingDescribe->setString(L"会议号 unknown");
+    meetingDescribe->setFillColor(sf::Color::Black);
+    meetingDescribe->setPosition(((1920 - meetingDescribe->getGlobalBounds().width) / 2) * wr, 11 * hr);
+
+    bottom.setPosition(0 * wr, 1000 * hr);
+    bottom.setSize(sf::Vector2f(1920 * wr, 80 * hr));
+    bottom.setFillColor(sf::Color(255, 255, 255));
+
+    top.setPosition(0, 0);
+    top.setSize(sf::Vector2f(1920 * wr, 40 * hr));
+    top.setFillColor(sf::Color(255, 255, 255));
 
     // 设置窗口大小为等比例720p
     this->setSize(sf::Vector2u(1280 * wr, 720 * hr));
@@ -112,7 +196,21 @@ namespace alllink {
       localVideo.setScale(0.25f, 0.25f);
       localVideo.render(this);
     }
+    if (!isFull) {
+      this->draw(top);
+      this->draw(bottom);
+      leaveMeeting->render(this);
+      if (micState) openMic->render(this);
+      else closeMic->render(this);
 
+      if (camState) openCam->render(this);
+      else closeCam->render(this);
+
+      if (shareState) openShare->render(this);
+      else closeShare->render(this);
+      meetingTime->render(this);
+      this->draw(*meetingDescribe.get());
+    }
     this->display();
 	}
 
@@ -155,7 +253,62 @@ namespace alllink {
         // 通知视觉控制器会议画面被关闭
         hi::PostMsg({ msgTo(MessageType::MEETING_END), nullptr });
       }
+      sf::Vector2i mousePosWin = sf::Mouse::getPosition(*this);
+      // 检查鼠标是否在窗口内
+      if (mousePosWin.x >= 0 && mousePosWin.x < this->getSize().x &&
+        mousePosWin.y >= 0 && mousePosWin.y < this->getSize().y) {
+        sf::Vector2f mousePosView = this->mapPixelToCoords(mousePosWin);
+        if (leaveMeeting->onClick(event, mousePosView, this)) {
+          I_LOG("leave meeting");
+          hi::PostMsg({ msgTo(MessageType::MEETING_END), nullptr });
+        }
+        if (!micState) {
+          if (closeMic->onClick(event, mousePosView, this)) {
+            I_LOG("open microphone");
+            micState = !micState;
+            hi::PostMsg({ msgTo(MessageType::SET_MIC_PHONE), micState });
+          }
+        }
+        else {
+          if (openMic->onClick(event, mousePosView, this)) {
+            I_LOG("close microphone");
+            micState = !micState;
+            hi::PostMsg({ msgTo(MessageType::SET_MIC_PHONE), micState });
+          }
+        }
+        if (!camState) {
+          if (closeCam->onClick(event, mousePosView, this)) {
+            I_LOG("open camera");
+            camState = !camState;
+            hi::PostMsg({ msgTo(MessageType::SET_CAMERA), camState });
+          }
+        }
+        else {
+          if (openCam->onClick(event, mousePosView, this)) {
+            I_LOG("close camera");
+            camState = !camState;
+            hi::PostMsg({ msgTo(MessageType::SET_CAMERA), camState });
+          }
+        }
+        if (!shareState) {
+          if (closeShare->onClick(event, mousePosView, this)) {
+            I_LOG("open share");
+            shareState = !shareState;
+          }
+        }
+        else {
+          if (openShare->onClick(event, mousePosView, this)) {
+            I_LOG("close share");
+            shareState = !shareState;
+          }
+        }
+        isFull = false;
+      }
+      else isFull = true;
     }
+    std::wstring time = L"会议时长 " +
+      WstrConv.from_bytes(parseTime(seeker::time::currentTime() - timePoint));
+    meetingTime->setText(time, sf::Color(0, 0, 0));
 	}
 
   void StreamScreen::startLocalRenderer(webrtc::VideoTrackInterface* local_video) {
@@ -180,6 +333,11 @@ namespace alllink {
 
   void StreamScreen::setSessionMode(int mode) {
     this->mode = mode;
+  }
+
+  void StreamScreen::setSessionId(std::string id) {
+    std::wstring s = L"会议号 " + WstrConv.from_bytes(id);
+    meetingDescribe->setString(s);
   }
 
   // 远端流收到视频帧和本地捕捉到视频帧都会调用此函数

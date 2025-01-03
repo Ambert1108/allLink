@@ -149,7 +149,9 @@ namespace alllink {
       
           // 调用中控器的回调接口进行通话连接
           callback_->ConnectToPeer(meetingInfo);
-
+          std::shared_ptr<StreamScreen> point = std::dynamic_pointer_cast<StreamScreen>(streamWnd);
+          if (!point) return;
+          point->setSessionId(meetingInfo);
           // 假设连接成功，隐藏连接窗口及开始窗口，显示会议窗口
           //I_LOG("[test] link success");
           //enterWnd->OnExit();

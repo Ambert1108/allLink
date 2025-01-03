@@ -22,15 +22,15 @@ namespace alllink {
 	/*
 	* 素材路径:会议界面
 	*/
-	static std::string closeCameraFile = "./resources/comp/start/close_camera.png";
-	static std::string closeMircoFile = "./resources/comp/start/close_mic.png";
-	static std::string closeShareFile = "./resources/comp/start/close_share.png";
+	static std::string closeCamFile = "./resources/comp/meeting/close_camera.png";
+	static std::string closeMicFile = "./resources/comp/meeting/close_mic.png";
+	static std::string closeShareFile = "./resources/comp/meeting/close_share.png";
 
-	static std::string openCameraFile = "./resources/comp/start/open_camera.png";
-	static std::string openMircoFile = "./resources/comp/start/open_mic.png";
-	static std::string openShareFile = "./resources/comp/start/open_share.png";
+	static std::string openCamFile = "./resources/comp/meeting/open_camera.png";
+	static std::string openMicFile = "./resources/comp/meeting/open_mic.png";
+	static std::string openShareFile = "./resources/comp/meeting/open_share.png";
 
-	static std::string meetingTimeFile = "./resources/comp/start/meeting_time.png";
+	static std::string meetingTimeFile = "./resources/comp/meeting/16/meeting_time.png";
 
 	/*
 	* 素材路径:图标

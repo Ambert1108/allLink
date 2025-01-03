@@ -234,6 +234,8 @@ namespace alllink {
 
 		void setSessionMode(int mode);
 
+		void setSessionId(std::string id);
+
 		struct ImageData {
 			BITMAPINFO bmi;
 			std::unique_ptr<uint8_t[]> image = nullptr;
@@ -313,6 +315,17 @@ namespace alllink {
 		void OnPaint();
 
 	private:
+		std::unique_ptr<VariableStateGraphicModule> closeMic;
+		std::unique_ptr<VariableStateGraphicModule> openMic;
+		std::unique_ptr<VariableStateGraphicModule> closeCam;
+		std::unique_ptr<VariableStateGraphicModule> openCam;
+		std::unique_ptr<VariableStateGraphicModule> closeShare;
+		std::unique_ptr<VariableStateGraphicModule> openShare;
+		std::unique_ptr<HorizonGraphicTextsModule> meetingTime;
+		std::unique_ptr<TextFillRectangle> leaveMeeting;
+		std::unique_ptr<BaseText> meetingDescribe;
+		sf::RectangleShape bottom, top;
+
 		std::unique_ptr<VideoRenderer> local_renderer_;
 		std::unique_ptr<VideoRenderer> remote_renderer_;
 		sf::Texture* localSrc = nullptr;
@@ -326,7 +339,10 @@ namespace alllink {
 		sf::Vector2i wndPosition;
 		bool micState = false;
 		bool camState = false;
+		bool shareState = false;
+		bool isFull = true;
 		int micVolume = 50;
 		int mode = 0; //1v1通话:0, 会议流程:1
+		int64_t timePoint = 0;
 	};
 }
