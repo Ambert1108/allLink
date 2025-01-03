@@ -23,6 +23,28 @@ namespace alllink {
 		return 0;
 	}
 
+	static sf::Texture createColoredTexture(const sf::Texture& originalTexture, const sf::Color& color) {
+		// 创建一个图像对象
+		sf::Image image = originalTexture.copyToImage();
+
+		// 遍历图像的每个像素并修改颜色
+		for (unsigned int x = 0; x < image.getSize().x; ++x) {
+			for (unsigned int y = 0; y < image.getSize().y; ++y) {
+				sf::Color pixelColor = image.getPixel(x, y);
+				// 乘以颜色值
+				pixelColor.r = static_cast<sf::Uint8>(pixelColor.r * color.r / 255);
+				pixelColor.g = static_cast<sf::Uint8>(pixelColor.g * color.g / 255);
+				pixelColor.b = static_cast<sf::Uint8>(pixelColor.b * color.b / 255);
+				image.setPixel(x, y, pixelColor);
+			}
+		}
+
+		// 创建新的纹理并加载修改后的图像
+		sf::Texture coloredTexture;
+		coloredTexture.loadFromImage(image);
+		return coloredTexture;
+	}
+
 	class BaseText : public sf::Text {
 	public:
 		bool init(const std::string& fontFile) {
@@ -33,6 +55,206 @@ namespace alllink {
 
 	protected:
 		sf::Font font_;
+	};
+
+	class RoundedRectangle : public sf::Drawable {
+	public:
+		RoundedRectangle()
+			: m_size(100, 50), m_radius(10) {
+
+			// 创建角落的圆形
+			for (int i = 0; i < 4; ++i) {
+				sf::CircleShape corner(m_radius);
+				corner.setPointCount(30); // 增加圆的平滑度
+				corner.setFillColor(sf::Color::Transparent); // 设置填充颜色为透明
+				m_corners.push_back(corner);
+			}
+
+			// 创建矩形中间部分
+			m_center.setSize(sf::Vector2f(m_size.x - m_radius * 2, m_size.y));
+			m_center.setFillColor(sf::Color::White); // 填充颜色
+			m_center.setOutlineColor(sf::Color::Transparent); // 边缘颜色
+			m_center.setOutlineThickness(0); // 边缘厚度
+
+			m_center2.setSize(sf::Vector2f(m_size.x, m_size.y - m_radius * 2));
+			m_center2.setFillColor(sf::Color::White); // 填充颜色
+			m_center2.setOutlineColor(sf::Color::Transparent); // 边缘颜色
+			m_center2.setOutlineThickness(0); // 边缘厚度
+
+			updateCorners();
+		}
+
+		RoundedRectangle(sf::Vector2f size, float radius)
+			: m_size(size), m_radius(radius) {
+
+			// 创建角落的圆形
+			for (int i = 0; i < 4; ++i) {
+				sf::CircleShape corner(m_radius);
+				corner.setPointCount(30); // 增加圆的平滑度
+				corner.setFillColor(sf::Color::Transparent); // 设置填充颜色为透明
+				m_corners.push_back(corner);
+			}
+
+			// 创建矩形中间部分
+			m_center.setSize(sf::Vector2f(m_size.x - m_radius * 2, m_size.y));
+			m_center.setFillColor(sf::Color::White); // 填充颜色
+			m_center.setOutlineColor(sf::Color::Transparent); // 边缘颜色
+			m_center.setOutlineThickness(0); // 边缘厚度
+
+			m_center2.setSize(sf::Vector2f(m_size.x, m_size.y - m_radius * 2));
+			m_center2.setFillColor(sf::Color::White); // 填充颜色
+			m_center2.setOutlineColor(sf::Color::Transparent); // 边缘颜色
+			m_center2.setOutlineThickness(0); // 边缘厚度
+
+			updateCorners();
+		}
+
+		void setPosition(float x, float y) {
+			m_position = { x, y };
+			m_center.setPosition(x + m_radius, y);
+			m_center2.setPosition(x, y + m_radius);
+			updateCorners(); // 更新角落的位置信息
+		}
+
+		void setSize(sf::Vector2f size, float radius) {
+			m_size = size;
+			m_radius = radius;
+			m_center.setSize(sf::Vector2f(m_size.x - m_radius * 2, m_size.y));
+			m_center2.setSize(sf::Vector2f(m_size.x, m_size.y - m_radius * 2));
+			for (int i = 0; i < 4; ++i) {
+				sf::CircleShape corner(m_radius);
+				corner.setPointCount(30);
+				corner.setFillColor(m_fillColor);
+				corner.setOutlineColor(m_outlineColor);
+				corner.setOutlineThickness(m_outlineThickness);
+				m_corners.at(i) = corner;
+			}
+			m_center.setPosition(m_position.x + m_radius, m_position.y);
+			m_center2.setPosition(m_position.x, m_position.y + m_radius);
+			updateCorners();
+		}
+
+		void setFillColor(const sf::Color& color) {
+			m_fillColor = color;
+			m_center.setFillColor(color);
+			m_center2.setFillColor(color);
+			for (auto& corner : m_corners) {
+				corner.setFillColor(color);
+			}
+		}
+
+		void setOutlineColor(const sf::Color& color) {
+			m_outlineColor = color;
+			m_center.setOutlineColor(color);
+			m_center2.setOutlineColor(color);
+			for (auto& corner : m_corners) {
+				corner.setOutlineColor(color);
+			}
+		}
+
+		void setOutlineThickness(float thickness) {
+			m_outlineThickness = thickness;
+			m_center.setOutlineThickness(thickness);
+			m_center2.setOutlineThickness(thickness);
+			for (auto& corner : m_corners) {
+				corner.setOutlineThickness(thickness);
+			}
+		}
+
+		sf::Vector2f getPosition() const {
+			return m_position;
+		}
+
+		sf::FloatRect getGlobalBounds() const {
+			return sf::FloatRect(m_position.x, m_position.y, m_size.x, m_size.y);
+		}
+
+		sf::Vector2f getSize() const {
+			return m_size;
+		}
+
+		void draw(sf::RenderTarget& target, sf::RenderStates states) const override {
+			// 绘制四个圆角
+			for (const auto& corner : m_corners) {
+				target.draw(corner, states);
+			}
+
+			// 绘制中间部分
+			target.draw(m_center, states);
+			target.draw(m_center2, states);
+
+		}
+
+	private:
+		void updateCorners() {
+			// 设置角落的位置
+			m_corners[0].setPosition(m_position.x, m_position.y); // 左上角
+			m_corners[1].setPosition(m_position.x + m_size.x - m_radius * 2, m_position.y); // 右上角
+			m_corners[2].setPosition(m_position.x, m_position.y + m_size.y - m_radius * 2); // 左下角
+			m_corners[3].setPosition(m_position.x + m_size.x - m_radius * 2, m_position.y + m_size.y - m_radius * 2); // 右下角
+		}
+
+		sf::Vector2f m_size;
+		float m_radius;
+		sf::Vector2f m_position; // 存储位置
+		sf::Color m_fillColor; // 填充颜色
+		sf::Color m_outlineColor; // 边缘颜色
+		float m_outlineThickness; // 边缘厚度
+		sf::RectangleShape m_center;
+		sf::RectangleShape m_center2;
+		std::vector<sf::CircleShape> m_corners;
+	};
+
+	class CircleRectangle : public sf::Drawable {
+	public:
+		CircleRectangle() : round(), fill() {};
+
+		CircleRectangle(sf::Vector2f size, float radius)
+			: round(size, radius), fill(size, radius) {};
+
+		void setPosition(float x, float y) {
+			round.setPosition(x, y);
+			fill.setPosition(x, y);
+		}
+
+		void setSize(sf::Vector2f size, float radius) {
+			round.setSize(size, radius);
+			fill.setSize(size, radius);
+		}
+
+		void setFillColor(const sf::Color& color) {
+			round.setFillColor(color);
+			fill.setFillColor(color);
+		}
+
+		void setOutlineColor(const sf::Color& color) {
+			round.setOutlineColor(color);
+		}
+
+		void setOutlineThickness(float thickness) {
+			round.setOutlineThickness(thickness);
+		}
+
+		sf::Vector2f getPosition() const {
+			return round.getPosition();
+		}
+
+		sf::FloatRect getGlobalBounds() const {
+			return round.getGlobalBounds();
+		}
+
+		sf::Vector2f getSize() const {
+			return round.getSize();
+		}
+
+		void draw(sf::RenderTarget& target, sf::RenderStates states) const override {
+			target.draw(round);
+			target.draw(fill);
+		}
+
+	private:
+		RoundedRectangle round;
+		RoundedRectangle fill;
 	};
 
 	class VariableStateModule :public sf::RectangleShape {
@@ -117,6 +339,97 @@ namespace alllink {
 		virtual ~VariableStateModule() = default;
 		bool isPressed = false;
 		bool isHover = false;
+		sf::Color fillColor;
+		sf::Color hoverColor;
+		sf::Color pressColor;
+		bool activate_ = true;
+		bool fill_ = true;
+		sf::Cursor::Type curType_ = sf::Cursor::Type::Hand;
+	};
+
+	class VariableStateFillModule :public CircleRectangle {
+	public:
+		VariableStateFillModule(sf::Color color, int thickness) : CircleRectangle(), outLineColor(color) {
+			this->setOutlineColor(outLineColor);
+			this->setOutlineThickness(thickness);
+		}
+
+		bool onClick(sf::Event& event_, sf::Vector2f mousePos_,
+			sf::RenderWindow* win_ = nullptr,
+			sf::Mouse::Button btn = sf::Mouse::Left) {
+			if (!activate_) {
+				return false;
+			}
+			bool flag = false;
+			if (this->getGlobalBounds().contains(mousePos_)) {
+				if (!isHover) {
+					if (win_ != nullptr) {
+						setCursor(win_, curType_);
+					}
+					if (fill_) {
+						//this->setOutlineColor(hoverColor);
+						this->setFillColor(hoverColor);
+					}
+					isHover = true;
+				}
+				if (event_.type == sf::Event::MouseButtonReleased
+					&& event_.key.code == btn && isPressed) {
+					isPressed = false;
+					if (fill_) {
+						//this->setFillColor(fillColor);
+						this->setFillColor(hoverColor);
+					}
+					flag = true;
+				}
+				else {
+					flag = false;
+				}
+				if (event_.type == sf::Event::MouseButtonPressed
+					&& event_.key.code == btn) {
+					if (!isPressed) {
+						if (fill_) this->setFillColor(pressColor);
+					}
+					isPressed = true;
+				}
+			}
+			else {
+				if (isHover) {
+					if (win_ != nullptr) {
+						setCursor(win_, sf::Cursor::Arrow);
+					}
+					if (fill_) {
+						//this->setOutlineColor(sf::Color(0, 0, 0, 0));
+						this->setFillColor(fillColor);
+					}
+					isHover = false;
+				}
+			}
+			return flag;
+		}
+
+		void setCursorType(sf::Cursor::Type cursorType) { curType_ = cursorType; }
+
+		int setColor(sf::Color fillColor_, sf::Color hoverColor_, sf::Color pressColor_) {
+			fillColor = fillColor_;
+			hoverColor = hoverColor_;
+			pressColor = pressColor_;
+			this->setFillColor(fillColor_);
+			return 0;
+		}
+
+		/* 设置是否启用点击检测 */
+		void setActivate(bool val) { activate_ = val; }
+
+		/* 设置是否启用鼠标交互 */
+		void setFill(bool val) { fill_ = val; }
+
+		virtual void render(sf::RenderTarget* win_) = 0;
+
+	protected:
+		virtual ~VariableStateFillModule() = default;
+		bool isPressed = false;
+		bool isHover = false;
+		sf::Color outLineColor;
 		sf::Color fillColor;
 		sf::Color hoverColor;
 		sf::Color pressColor;
@@ -228,10 +541,14 @@ namespace alllink {
 				setImage();
 			}
 			catch (std::exception& ex) {
-				E_LOG("[VerticalWidget::init] catch exception:{}", ex.what());
+				E_LOG("[VariableStateGraphicModule::setImageSize] catch exception:{}", ex.what());
 				return false;
 			}
 			return true;
+		}
+
+		void setImageColor(sf::Color imageColor) { 
+			image_.setColor(imageColor); 
 		}
 
 		void render(sf::RenderTarget* tar) {
@@ -273,7 +590,7 @@ namespace alllink {
 
 		virtual void setImage() = 0;
 
-		void setImageColor(sf::Color imageColor) { image.setColor(sf::Color(117, 188, 255)); }
+		void setImageColor(sf::Color imageColor) { image.setColor(imageColor); }
 
 		bool setImageSize(float width, float height) {
 			try {
@@ -322,20 +639,38 @@ namespace alllink {
 
 	class HorizonGraphicTextsModule : public GraphicTextsModule {
 	public:
+		HorizonGraphicTextsModule(bool isReversal) : rev(isReversal) {};
 		void setText(const sf::String& text, sf::Color textColor) override {
 			text_.setString(text);
-			int x = this->getPosition().x + image.getGlobalBounds().width + 20;
-			int y = this->getPosition().y + (this->getSize().y - text_.getGlobalBounds().height) / 2.f;
+			int x, y;
+			if (rev) {
+				x = this->getPosition().x + 10;
+				y = this->getPosition().y + (this->getSize().y - text_.getGlobalBounds().height) / 2.f;
+			}
+			else {
+				x = this->getPosition().x + image.getGlobalBounds().width + 20;
+				y = this->getPosition().y + (this->getSize().y - text_.getGlobalBounds().height) / 2.f;
+			}
 			text_.setPosition(x, y);
 			text_.setFillColor(textColor);
 			text_.setOutlineColor(textColor);
 		}
 
 		void setImage() override {
-			int x = this->getPosition().x + 10;
-			int y = this->getPosition().y + (this->getSize().y - image.getGlobalBounds().height) / 2.f;
+			int x, y;
+			if (rev) {
+				x = this->getPosition().x + this->getSize().x - image.getGlobalBounds().width - 10;
+				y = this->getPosition().y + (this->getSize().y - image.getGlobalBounds().height) / 2.f;
+			}
+			else {
+				x = this->getPosition().x + 10;
+				y = this->getPosition().y + (this->getSize().y - image.getGlobalBounds().height) / 2.f;
+			}
 			image.setPosition(x, y);
 		}
+
+	private:
+		bool rev; //通常图标在文字左边，如果反转则图标在文字右边
 	};
 
 	class InputBoxMoudule : public VariableStateModule {
@@ -572,6 +907,99 @@ namespace alllink {
 		bool isActive;
 		sf::Color activeColor;
 		sf::Color inactiveColor;
+	};
+
+	class TextFillRectangle : public VariableStateFillModule {
+	public:
+		TextFillRectangle(sf::Color outlineColor, int thickness = 2)
+			: VariableStateFillModule(outlineColor, thickness) {};
+
+		void init(int width, int height, int x, int y, float radius) {
+			this->setSize(sf::Vector2f(width, height), radius);
+			this->setPosition(x, y);
+		}
+
+		void setText(const std::string& fontFile, const sf::String& text, sf::Color textColor, sf::Color hoverColor) {
+			text_.init(fontFile);
+			text_.setCharacterSize(this->getSize().y / 2.5);
+			text_.setFillColor(textColor);
+			text_.setString(text);
+			text_.setPosition(
+				this->getPosition().x + (this->getSize().x - text_.getGlobalBounds().width) / 2,
+				this->getPosition().y + (this->getSize().y - this->getSize().y / 2) / 2);
+			textColor_ = textColor;
+			textHoverColor_ = hoverColor;
+		}
+
+		bool onClick(sf::Event& event_, sf::Vector2f mousePos_,
+			sf::RenderWindow* win_ = nullptr,
+			sf::Mouse::Button btn = sf::Mouse::Left) {
+			if (!activate_) {
+				return false;
+			}
+			bool flag = false;
+			if (this->getGlobalBounds().contains(mousePos_)) {
+				if (!isHover) {
+					text_.setFillColor(textHoverColor_);
+					if (win_ != nullptr) {
+						setCursor(win_, curType_);
+					}
+					if (fill_) {
+						//this->setOutlineColor(hoverColor);
+						this->setFillColor(hoverColor);
+					}
+					isHover = true;
+				}
+				if (event_.type == sf::Event::MouseButtonReleased
+					&& event_.key.code == btn && isPressed) {
+					isPressed = false;
+					if (fill_) {
+						//this->setFillColor(fillColor);
+						this->setFillColor(hoverColor);
+						this->setOutlineColor(outLineColor);
+					}
+					flag = true;
+				}
+				else {
+					flag = false;
+				}
+				if (event_.type == sf::Event::MouseButtonPressed
+					&& event_.key.code == btn) {
+					if (!isPressed) {
+						if (fill_) {
+							this->setFillColor(pressColor);
+							this->setOutlineColor(pressColor);
+						}
+					}
+					isPressed = true;
+				}
+			}
+			else {
+				if (isHover) {
+					text_.setFillColor(textColor_);
+					if (win_ != nullptr) {
+						setCursor(win_, sf::Cursor::Arrow);
+					}
+					if (fill_) {
+						//this->setOutlineColor(sf::Color(0, 0, 0, 0));
+						this->setFillColor(fillColor);
+						this->setOutlineColor(outLineColor);
+					}
+					isHover = false;
+				}
+			}
+			return flag;
+		}
+
+		void render(sf::RenderTarget* tar) {
+			tar->draw(*this);
+			tar->draw(text_);
+		}
+
+	protected:
+		BaseText text_;
+		sf::Color textColor_;
+		sf::Color textHoverColor_;
 	};
 
 	class VideoModule : public sf::RectangleShape {

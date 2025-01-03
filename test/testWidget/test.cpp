@@ -23,14 +23,15 @@ int main() {
   src1.setText(L"创建会议", sf::Color(0, 0, 0));
   //src1.setImageSize(16, 16);
   src1.setImage();
-  src1.setImageColor(sf::Color(124, 171, 214));
+  src1.setImageColor(sf::Color(117, 188, 255));
 
-  HorizonGraphicTextsModule src2;
+  HorizonGraphicTextsModule src2(true);
   src2.init(140, 42, 95, 211);
   src2.setSource(20, font2File, image2File);
   src2.setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225));
   src2.setText(L"请登录", sf::Color(0, 0, 0));
   src2.setImage();
+  src2.setImageColor(sf::Color(117, 188, 255));
   src2.setFill(false);
 
   //InputBoxMoudule input;

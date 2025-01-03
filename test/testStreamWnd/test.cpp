@@ -41,39 +41,58 @@ int main() {
   closeMic.setTexture(closeMicFile);
   closeMic.setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225, 200));
   closeMic.setImageSize(40, 40);
+  closeMic.setImageColor(sf::Color::Black);
 
   openMic.init(80, 50, 20, 1020);
   openMic.setTexture(openMicFile);
   openMic.setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225, 200));
   openMic.setImageSize(40, 40);
+  openMic.setImageColor(sf::Color(74, 224, 84));
 
   closeCam.init(80, 50, 140, 1020);
   closeCam.setTexture(closeCamFile);
   closeCam.setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225, 200));
   closeCam.setImageSize(40, 40);
+  closeCam.setImageColor(sf::Color::Black);
 
   openCam.init(80, 50, 140, 1020);
   openCam.setTexture(openCamFile);
   openCam.setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225, 200));
   openCam.setImageSize(40, 40);
+  openCam.setImageColor(sf::Color(117, 188, 255));
 
   closeShare.init(80, 50, 280, 1020);
   closeShare.setTexture(closeShareFile);
   closeShare.setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225, 200));
   closeShare.setImageSize(40, 40);
+  closeShare.setImageColor(sf::Color::Black);
 
   openShare.init(80, 50, 280, 1020);
   openShare.setTexture(openShareFile);
   openShare.setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225, 200));
   openShare.setImageSize(40, 40);
+  openShare.setImageColor(sf::Color(242, 80, 125));
 
-  HorizonGraphicTextsModule meetingTime;
+  HorizonGraphicTextsModule meetingTime(false);
   meetingTime.init(240, 16, 6, 12);
   meetingTime.setSource(18, font2File, timeFile);
   meetingTime.setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225, 200));
   meetingTime.setText(L"会议时长 0:0:0", sf::Color(0, 0, 0));
   meetingTime.setImageSize(24, 24);
+  meetingTime.setImageColor(sf::Color(117, 188, 255));
   std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
+
+  TextFillRectangle leaveMeeting(sf::Color::Red, 3);
+  leaveMeeting.init(190, 50, 1686, 1015, 8.0);
+  leaveMeeting.setColor(sf::Color::White, sf::Color::Red, sf::Color(191, 23, 23));
+  leaveMeeting.setText(font2File, L"离开会议", sf::Color::Black, sf::Color::White);
+
+  BaseText meetingDescribe;
+  meetingDescribe.init(font2File);
+  meetingDescribe.setCharacterSize(18);
+  meetingDescribe.setString(L"会议号 000-512");
+  meetingDescribe.setFillColor(sf::Color::Black);
+  meetingDescribe.setPosition((1920 - meetingDescribe.getGlobalBounds().width) / 2, 11);
 
   bool micState = false;
   bool camState = false;
@@ -103,6 +122,9 @@ int main() {
       if (mousePosWin.x >= 0 && mousePosWin.x < wnd->getSize().x &&
         mousePosWin.y >= 0 && mousePosWin.y < wnd->getSize().y) {
         sf::Vector2f mousePosView = wnd->mapPixelToCoords(mousePosWin);
+        if (leaveMeeting.onClick(event, mousePosView, wnd)) {
+          I_LOG("离开会议");
+        }
         if (!micState) {
           if (closeMic.onClick(event, mousePosView, wnd)) {
             I_LOG("开启麦克风");
@@ -150,6 +172,7 @@ int main() {
     if (!isFull) {
       wnd->draw(top);
       wnd->draw(bottom);
+      leaveMeeting.render(wnd);
       if (micState) openMic.render(wnd);
       else closeMic.render(wnd);
 
@@ -159,6 +182,7 @@ int main() {
       if (shareState) openShare.render(wnd);
       else closeShare.render(wnd);
       meetingTime.render(wnd);
+      wnd->draw(meetingDescribe);
     }
     wnd->display();
   }

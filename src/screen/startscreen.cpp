@@ -38,22 +38,22 @@ namespace alllink {
 	int StartScreen::init() {
 		createMeeting = std::make_unique<VerticalGraphicTextsModule>();
 		joinMeeting = std::make_unique<VerticalGraphicTextsModule>();
-		startLogin = std::make_unique<HorizonGraphicTextsModule>();
-		isLogin = std::make_unique<HorizonGraphicTextsModule>();
+		startLogin = std::make_unique<HorizonGraphicTextsModule>(true);
+		isLogin = std::make_unique<HorizonGraphicTextsModule>(true);
 
 		createMeeting->init(138 * wr, 130 * hr, 425 * wr, 65 * hr);
 		createMeeting->setSource(15 * hr, fzchFile, createMeetingFile);
 		createMeeting->setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225, 200));
 		createMeeting->setText(L"创建会议", sf::Color(0, 0, 0));
 		createMeeting->setImageSize(72 * wr, 72 * wr);
-		createMeeting->setImageColor(sf::Color(124, 171, 214));
+		createMeeting->setImageColor(sf::Color(117, 188, 255));
 
 		joinMeeting->init(138 * wr, 130 * hr, 425 * wr, 275 * hr);
 		joinMeeting->setSource(15 * hr, fzchFile, joinMeetingFile);
 		joinMeeting->setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225, 200));
 		joinMeeting->setText(L"加入会议", sf::Color(0, 0, 0));
 		joinMeeting->setImageSize(72 * wr, 72 * wr);
-		joinMeeting->setImageColor(sf::Color(124, 171, 214));
+		joinMeeting->setImageColor(sf::Color(117, 188, 255));
 
 		startLogin->init(140 * wr, 42 * hr, 95 * wr, 211 * hr);
 		startLogin->setSource(20 * hr, msyhFile, startLoginFile);
