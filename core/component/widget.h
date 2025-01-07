@@ -83,7 +83,7 @@ namespace alllink {
 		void setInputActive(bool val) { inputBox.setActive(val); }
 
 	protected:
-		InputBoxMoudule inputBox;
+		InputBoxModule inputBox;
 		BaseText description;
 	private:
 		int w, h, x, y;

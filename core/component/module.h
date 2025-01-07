@@ -53,6 +53,8 @@ namespace alllink {
 			return true;
 		}
 
+		bool empty() const { return this->getFont() == nullptr ? true : false; }
+
 	protected:
 		sf::Font font_;
 	};
@@ -423,10 +425,12 @@ namespace alllink {
 		/* 设置是否启用鼠标交互 */
 		void setFill(bool val) { fill_ = val; }
 
-		virtual void render(sf::RenderTarget* win_) = 0;
+		virtual void render(sf::RenderTarget* win_) {
+			win_->draw(*this);
+		}
 
-	protected:
 		virtual ~VariableStateFillModule() = default;
+	protected:
 		bool isPressed = false;
 		bool isHover = false;
 		sf::Color outLineColor;
@@ -486,6 +490,27 @@ namespace alllink {
 
 		void set(int width, int height, int x, int y) {
 			this->setSize(sf::Vector2f(width, height));
+			this->setPosition(x, y);
+		}
+
+		void setVer(std::vector<sf::Vertex> vec) { ver_.swap(vec); }
+
+		void render(sf::RenderTarget* tar) {
+			tar->draw(*this);
+			tar->draw(ver_.data(), ver_.size(), sf::Lines);
+		}
+
+	protected:
+		std::vector<sf::Vertex> ver_;
+	};
+
+	class VariableStateVertxFillModule : public VariableStateFillModule {
+	public:
+		VariableStateVertxFillModule() : 
+			VariableStateFillModule(sf::Color::Transparent, 2), ver_(6) {};
+
+		void set(int width, int height, int x, int y) {
+			this->setSize(sf::Vector2f(width, height), 10);
 			this->setPosition(x, y);
 		}
 
@@ -673,7 +698,7 @@ namespace alllink {
 		bool rev; //通常图标在文字左边，如果反转则图标在文字右边
 	};
 
-	class InputBoxMoudule : public VariableStateModule {
+	class InputBoxModule : public VariableStateModule {
 	public:
 		void init(int width, int height, int x, int y) {
 			this->setSize(sf::Vector2f(width, height));
@@ -691,7 +716,7 @@ namespace alllink {
 				this->getPosition().y + (this->getSize().y - inputText.getGlobalBounds().height) / 2 - 3);
 			if (defaultDesc.isEmpty()) inputText.setString("");
 			inputText.setFillColor(sf::Color(255, 255, 255, 150));
-			textColor = color;
+			textColor = color; 
 			this->setFillColor(sf::Color(232, 230, 230));
 			this->setOutlineThickness(2);
 			this->setOutlineColor(sf::Color(200, 200, 200));
@@ -1002,6 +1027,312 @@ namespace alllink {
 		sf::Color textHoverColor_;
 	};
 
+	class VariableStateCircleModule : public sf::CircleShape {
+	public:
+		VariableStateCircleModule() {
+			this->setOutlineColor(sf::Color(0, 0, 0, 0));
+			this->setOutlineThickness(2);
+		}
+
+		void init(float radius, int x, int y, std::size_t pointCount = 30) {
+			this->setRadius(radius);
+			this->setOrigin(radius, radius);
+			pos = sf::Vector2f(x, y);
+			this->setPosition(pos);
+			this->setPointCount(pointCount);
+
+			innerRadius = radius * 0.5;
+			innerCircle.setRadius(innerRadius);
+			innerCircle.setOrigin(innerRadius, innerRadius);
+			innerCircle.setPosition(sf::Vector2f(x, y));
+			innerCircle.setPointCount(pointCount);
+		}
+
+		void setCursorType(sf::Cursor::Type cursorType) { curType_ = cursorType; }
+
+		int setColor(sf::Color fillColor_, sf::Color innerColor_) {
+			fillColor = fillColor_;
+			innerColor = innerColor_;
+			this->setFillColor(fillColor_);
+			innerCircle.setFillColor(innerColor_);
+			return 0;
+		}
+
+		void setPos(sf::Vector2f pos) {
+			this->pos = pos;
+			this->setPosition(pos);
+			innerCircle.setPosition(pos);
+		}
+
+		void setInnerRadius(float radius) {
+			innerCircle.setRadius(radius);
+			innerCircle.setOrigin(radius, radius);
+		}
+
+		void render(sf::RenderTarget* win_) {
+			win_->draw(*this);
+			win_->draw(innerCircle);
+		}
+
+	protected:
+		sf::CircleShape innerCircle;
+		sf::Color fillColor;
+		sf::Color innerColor;
+		float innerRadius = 0.0f;
+		sf::Vector2f pos;
+		
+		sf::Cursor::Type curType_ = sf::Cursor::Type::Hand;
+	};
+
+	class SeekBarModule {
+	public:
+		/**
+		* 初始化拖动条，必须调用
+		* size: 拖动条尺寸
+		* radius: 拖动按钮半径
+		* position: 拖动条位置，按钮自动居中
+		* fillColor: 拖动按钮填充颜色
+		* innerColor: 拖动按钮交互颜色
+		* isHorizon: 拖动是否沿水平方向移动，默认为水平方向
+		*/
+		void init(sf::Vector2f size, float radius, sf::Vector2f position, 
+			sf::Color fillColor, sf::Color innerColor, bool isHorizon = true) {
+			originalSize = size;
+			originalRadius = radius;
+			pos = originalPosition = position;
+			
+
+			if (isHorizon) {
+				int circleY = originalPosition.y + originalSize.y / 2;
+				circle.init(originalRadius, originalPosition.x, circleY, 360);
+				useBar.setSize(sf::Vector2f(1, originalSize.y));
+			}
+			else {
+				int circleX = originalPosition.x + originalSize.x / 2;
+				circle.init(originalRadius, circleX, originalPosition.y, 360);
+				useBar.setSize(sf::Vector2f(originalSize.x, 1));
+			}
+			circle.setColor(fillColor, innerColor);
+			useBar.setFillColor(sf::Color(68, 118, 235));
+			useBar.setPosition(originalPosition);
+
+			unuseBar.setSize(originalSize);
+			unuseBar.setFillColor(sf::Color(189, 190, 191));
+			unuseBar.setPosition(originalPosition);
+
+			this->isHorizon = isHorizon;
+		}
+
+		/**
+		* 初始化拖动条数据描述，可选调用
+		* fontFile: 描述所使用的字体
+		* position: 描述文本位置，可传入0-3，0:右置 1:左置 2:上置 3:下置，传入错误值为0
+		* characterSize: 描述文本大小
+		* textColor: 描述文本颜色
+		*/
+		void setText(const std::string& fontFile, int position, 
+			int characterSize, sf::Color textColor) {
+			describe.init(fontFile);
+			describe.setString("0");
+			if (position == 3) {
+				int x = originalPosition.x - originalSize.x / 2;
+				int y = originalPosition.y + originalSize.y + 15;
+				describe.setPosition(sf::Vector2f(x, y));
+			}
+			else if(position == 2) {
+				int x = originalPosition.x - originalSize.x / 2;
+				int y = originalPosition.y - 30;
+				describe.setPosition(sf::Vector2f(x, y));
+			}
+			else if(position == 1) {
+				int x = originalPosition.x - 30;
+				int y = originalPosition.y - std::abs(originalSize.y - characterSize) / 2;
+				describe.setPosition(sf::Vector2f(x, y));
+			}
+			else {
+				int x = originalPosition.x + originalSize.x + 15;
+				int y = originalPosition.y - std::abs(originalSize.y - characterSize) / 2;
+				describe.setPosition(sf::Vector2f(x, y));
+			}
+			//describe.setPosition(position);
+			describe.setCharacterSize(characterSize);
+			describe.setFillColor(textColor);
+		}
+
+		void reset() {
+			int circleY = originalPosition.y + originalSize.y / 2;
+			circle.setPos(sf::Vector2f(originalPosition.x, circleY));
+			if (isHorizon) {
+				useBar.setSize(sf::Vector2f(1, originalSize.y));
+			}
+			else {
+				useBar.setSize(sf::Vector2f(originalSize.x, 1));
+			}
+			unuseBar.setSize(originalSize);
+			describe.setString("0");
+		}
+
+		void eventProcess(sf::Event& event_, sf::RenderWindow* win) {
+			if (event_.type == sf::Event::Closed)
+				win->close();
+
+			// 获取鼠标位置
+			sf::Vector2f mousePos(sf::Mouse::getPosition(*win));
+
+			// 检查鼠标是否在圆形内
+			if (circle.getGlobalBounds().contains(mousePos)) {
+				// 处理鼠标按下事件
+				if (event_.type == sf::Event::MouseButtonPressed) {
+					if (event_.mouseButton.button == sf::Mouse::Left) {
+						if (!isPressed) {
+							isDragging = true; // 开始拖动
+							offset = circle.getPosition() - mousePos; // 计算偏移量
+							circle.setInnerRadius(originalRadius * 0.5 * 0.75); // 鼠标按住时内圆缩小为原始半径的一半
+						}
+						isPressed = true;
+					}
+				}
+			}
+			else if (unuseBar.getGlobalBounds().contains(mousePos)) {
+				if (event_.type == sf::Event::MouseButtonPressed) {
+					if (event_.mouseButton.button == sf::Mouse::Left) {
+						if (!isBarPressed) {
+							isDragging = true; // 开始拖动
+							offset = sf::Vector2f{ 0,0 }; // 计算偏移量
+						}
+						isBarPressed = true;
+					}
+				}
+			}
+			// 处理鼠标释放事件
+			if (event_.type == sf::Event::MouseButtonReleased) {
+				if (event_.mouseButton.button == sf::Mouse::Left) {
+					if (isPressed) {
+						isDragging = false; // 停止拖动
+						circle.setInnerRadius(originalRadius * 0.5 * 1.6); // 鼠标松开时内圆放大至原始半径的3/4
+					}
+					if (isBarPressed) {
+						isDragging = false; // 停止拖动
+					}
+					isPressed = false;
+					isBarPressed = false;
+				}
+			}
+		}
+
+		bool update(sf::RenderWindow* win) {
+			bool result = false;
+			// 获取鼠标位置
+			sf::Vector2f mousePos(sf::Mouse::getPosition(*win));
+
+			// 处理鼠标沿水平方向移动事件
+			if (isDragging) {
+				auto newPos = mousePos + offset;
+				if (isHorizon) {
+					if (newPos.x > originalSize.x + originalPosition.x) {
+						newPos.x = originalSize.x + originalPosition.x;
+					}
+					else if (newPos.x < originalPosition.x) {
+						newPos.x = originalPosition.x;
+					}
+					if (pos.x != newPos.x) {
+						result = true;
+						newPos.y = pos.y;
+						pos = newPos;
+						int circleY = pos.y + originalSize.y / 2;
+						circle.setPos(sf::Vector2f(pos.x, circleY)); // 更新圆形位置
+						if (pos.x > originalPosition.x) {
+							useBar.setSize(sf::Vector2f(pos.x - originalPosition.x, originalSize.y));
+						}
+						else if (pos.x == originalPosition.x) {
+							useBar.setSize(sf::Vector2f(1, originalSize.y));
+						}
+						int val = (pos.x - originalPosition.x) / originalSize.x * 100;
+						describe.setString(std::to_string(val));
+					}
+				}
+
+				// 处理鼠标沿垂直方向移动事件
+				else {
+					if (newPos.y > originalSize.y + originalPosition.y) {
+						newPos.y = originalSize.y + originalPosition.y;
+					}
+					else if (newPos.y < originalPosition.y) {
+						newPos.y = originalPosition.y;
+					}
+					if (pos.y != newPos.y) {
+						result = true;
+						newPos.x = pos.x;
+						pos = newPos;
+						int circleX = pos.x + originalSize.x / 2;
+						circle.setPos(sf::Vector2f(circleX, pos.y)); // 更新圆形位置
+						if (pos.y > originalPosition.y) {
+							useBar.setSize(sf::Vector2f(originalSize.x, pos.y - originalPosition.y));
+						}
+						else if (pos.y == originalPosition.y) {
+							useBar.setSize(sf::Vector2f(originalSize.x, 1));
+						}
+					}
+					int val = (pos.y - originalPosition.y) / originalSize.y * 100;
+					describe.setString(std::to_string(val));
+				}
+			}
+			else {
+				// 检查鼠标是否在圆形内
+				if (circle.getGlobalBounds().contains(mousePos)) {
+					if (!isHover) {
+						setCursor(win, sf::Cursor::Type::Hand);
+						circle.setInnerRadius(originalRadius * 0.5 * 1.6); // 鼠标松开时内圆放大至原始半径的3/4
+						isHover = true;
+					}
+				}
+				else if (unuseBar.getGlobalBounds().contains(mousePos)) {
+					if (!isHover) {
+						setCursor(win, sf::Cursor::Type::Hand);
+						isHover = true;
+					}
+				}
+				else {
+					if (isHover) {
+						setCursor(win, sf::Cursor::Arrow);
+						circle.setInnerRadius(originalRadius * 0.5); // 恢复原尺寸
+						isHover = false;
+					}
+				}
+			}
+			return result;
+		}
+
+		void render(sf::RenderTarget* tar) {
+			tar->draw(unuseBar);
+			tar->draw(useBar);
+			circle.render(tar);
+			if(!describe.empty()) tar->draw(describe);
+		}
+
+		inline int data() const {
+			if (isHorizon) {
+				return static_cast<float>(pos.x - originalPosition.x) / originalSize.x * 100;
+			}
+			return static_cast<float>(pos.y - originalPosition.y) / originalSize.y * 100;
+		}
+
+	protected:
+		VariableStateCircleModule circle;
+		sf::RectangleShape useBar, unuseBar;
+		BaseText describe;
+		float originalRadius = 10;              // 存储拖动按钮初始半径
+		sf::Vector2f originalSize{ 0, 0 };      // 存储拖动条初始大小
+		sf::Vector2f originalPosition{ 0, 0 };  // 存储拖动按钮初始位置
+		sf::Vector2f pos{ 0, 0 };               // 存储拖动按钮当前位置
+		bool isHorizon = true;                  // 标记按钮是否沿水平方向移动
+		bool isDragging = false;                // 标记按钮是否正在拖动
+		bool isPressed = false;                 // 标记按钮是否被按下
+		bool isBarPressed = false;              // 拖动条是否被按下
+		bool isHover = false;                   // 标记鼠标是否悬浮于按钮上
+		sf::Vector2f offset;                    // 存储鼠标相对于圆心的偏移量
+	};
+
 	class VideoModule : public sf::RectangleShape {
 	public:
 		VideoModule() {};
@@ -1043,5 +1374,90 @@ namespace alllink {
 		
 	protected:
 		sf::Sprite source;
+	};
+
+	class DropListModule :public VariableStateModule {
+	public:
+		void init(int width, int height, int x, int y, int labelHeight, 
+			const std::string& fontFile, int limit = 5,
+			float edgeMargin = 2, bool rise = false) {
+			this->setSize(sf::Vector2f(width, height));
+			this->setPosition(x, y);
+			this->fontFile = fontFile;
+			this->setFillColor(sf::Color(200, 200, 200, 0));
+			this->setOutlineColor(sf::Color(200, 200, 200, 0));
+			this->setOutlineThickness(1);
+			btnHeight = labelHeight;
+			labelLimit = limit;
+			margin = edgeMargin;
+			isRise = rise;
+		}
+		
+		bool eventProcess(sf::Event& event_, sf::Vector2f mousePos_, sf::RenderWindow* win_, bool clipHide = true) {
+			if (!showList) {
+				return false;
+			}
+			for (auto& each : labelList) {
+				if (each.second.onClick(event_, mousePos_, win_)) {
+					selectedLabel = each.first;
+					if(clipHide) switchShow();
+					return true;
+				}
+			}
+			return false;
+		}
+
+		void render(sf::RenderTarget* tar) {
+			if (!showList) {
+				return;
+			}
+			tar->draw(*this);
+			for (auto& each : labelList) {
+				each.second.render(tar);
+			}
+		}
+
+		void addLabel(sf::String labelText, bool activate = true) {
+			if (labelList.size() >= labelLimit) {
+				E_LOG("label size is more than limit {}", labelLimit);
+				return;
+			}
+			if (labelList.find(labelText) != labelList.end()) {
+				E_LOG("label {} is exist", WstrConv.to_bytes(labelText));
+				return;
+			}
+			auto label = labelList.emplace(labelText, TextFillRectangle(sf::Color::Transparent, 2));
+			label.first->second.setActivate(activate);
+			label.first->second.init(this->getGlobalBounds().getSize().x - margin * 3, btnHeight, this->getPosition().x + margin, this->getPosition().y + (labelList.size() - 1) * (btnHeight + margin * 2) + margin, 5);
+			label.first->second.setText(fontFile, labelText, sf::Color::White, sf::Color::Red);
+			label.first->second.setColor(sf::Color(143, 170, 220), sf::Color(121, 177, 243), sf::Color(218, 127, 143));
+			label.first->second.setFill(true);
+		}
+		
+		void clearList() {
+			labelList.clear();
+		}
+		
+		void switchShow() {
+			showList = !showList;
+		}
+		
+		void setShow(bool isShow) {
+			showList = isShow;
+		}
+		
+		const std::wstring& getSelectedLabel() { return selectedLabel; }
+
+	protected:
+		std::string fontFile;
+		int textSize = 12;
+		std::map<std::wstring, TextFillRectangle> labelList;
+		float btnHeight = 60;
+		float btnWidth = 60;
+		float margin = 2;
+		std::wstring selectedLabel{};
+		bool isRise = false;
+		int labelLimit = 5;
+		bool showList = false;
 	};
 }

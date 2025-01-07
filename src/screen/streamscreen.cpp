@@ -16,7 +16,13 @@ namespace alllink {
     int64_t hour = timestamp / 3600;
     int64_t min = timestamp / 60 - hour * (int64_t)60;
     int64_t sec = timestamp - hour * (int64_t)3600 - min * (int64_t)60;
-    std::string s = std::to_string(hour) + ":" + std::to_string(min) + ":" + std::to_string(sec) + "";
+    std::string s;
+    if (hour < 10) s = "0" + std::to_string(hour) + ":";
+    else s = std::to_string(hour) + ":";
+    if(min < 10) s += "0" + std::to_string(min) + ":";
+    else s += std::to_string(min) + ":";
+    if(sec < 10) s += "0" + std::to_string(sec);
+    else s += std::to_string(sec);
     return s;
   }
 
