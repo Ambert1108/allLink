@@ -69,8 +69,6 @@ namespace alllink {
 
     void OnMessageFromSignling(const SignInfo& info) override;
 
-    void OnCSMessageFromSignling(const SignInfo& info) override;
-
     void OnSignlingDisconnect() override;
 
     //

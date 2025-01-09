@@ -88,9 +88,6 @@ namespace alllink {
     /*通知 中控器 接收到信令转发的其他客户端(p2p流程)发送过来的信息*/
     virtual void OnMessageFromSignling(const SignInfo& info) = 0;
 
-    /* 通知 中控器 接收到信令转发的其他客户端(c/s流程)发送过来的信息 */
-    virtual void OnCSMessageFromSignling(const SignInfo& info) = 0;
-
     /* 通知 中控器 其他客户端挂断通话 */
     virtual void OnPeerDisconnected(const std::string& id) = 0;
 
@@ -157,8 +154,6 @@ namespace alllink {
 
     void sendTrickleComplete(const std::string& to);
 
-    bool startSendTrickle(const std::string& to);
-
     bool sendAck(const std::string& to);
 
     bool sendInfo(const std::string& to, int info);
@@ -199,8 +194,6 @@ namespace alllink {
     int64_t lastBeatPoint = 0;
     int64_t cseq_ = 0;
     std::string callId;
-    std::queue<Candidate> iceList;
-    bool trickleComplete = false;
     int mode = 0; //1v1通话:0, 会议流程:1
   };
 }

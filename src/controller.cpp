@@ -174,8 +174,8 @@ namespace alllink {
     I_LOG("Current audio input device:");
     audioEngine.GetRecordingDevices(audioInputDevMap);
     audioEngine.setMicrophoneVolume(50);
-    int videoType = seeker::IniConfig::GetInteger("this", "video_type", 0);
-    if(videoType == 0) videoEngine.switchCamera(false);
+    videoEngine.switchCamera(false);
+    videoEngine.switchScreen(false);
     I_LOG("init finish");
 
     return true;
@@ -249,12 +249,9 @@ namespace alllink {
     //  E_LOG("OpenVideoCaptureDevice failed");
     //}
     rtc::scoped_refptr<webrtc::VideoTrackInterface> video_track_;
-    int videoType = seeker::IniConfig::GetInteger("this", "video_type", 0);
-    if(videoType == 1) videoEngine.addScreenTrack(peerConnectionFactory_, peerConnection_, video_track_);
-    else {
-      audioEngine.AddAudioTracks(peerConnectionFactory_, peerConnection_);
-      videoEngine.addVideoTrack(peerConnectionFactory_, peerConnection_, video_track_);
-    }
+    audioEngine.AddAudioTracks(peerConnectionFactory_, peerConnection_);
+    videoEngine.addVideoTrack(peerConnectionFactory_, peerConnection_, video_track_);
+    videoEngine.addScreenTrack(peerConnectionFactory_, peerConnection_, video_track_);
     //videoEngine.addVideoTrack(peerConnectionFactory_, peerConnection_, video_track_);
     // 向视觉控制器添加本地渲染器
     vision_->startLocalRenderer(video_track_.get());
@@ -412,33 +409,6 @@ namespace alllink {
     }
   }
 
-  void Controller::OnCSMessageFromSignling(const SignInfo& info) {
-    if (!peerConnection_.get()) {
-      I_LOG("callee on message");
-      meetId_ = info.from();
-      // 如果没有peerConnection代表终端作为被叫
-      Jsep sdp;
-      sdp.sdp = info.sdp();
-      sdp.type = "offer";
-      hi::PostMsg({ msgTo(MessageType::SEND_PROCESS_TO_JANUS), sdp });
-    }
-    else {
-      I_LOG("caller on message");
-      if (info.from() != meetId_ && info.from() != "system") {
-        // 在1v1流程中，判断主叫保存的呼叫id和信令发来的from是否一致
-        // 如果是会议流程，信令发来的from应该是from
-        E_LOG("[Controller::OnCSMessageFromSignling] meet id {} and from {} not match",
-          meetId_, info.from());
-        hi::PostMsg({ msgTo(MessageType::SEND_MSG_FAILED), nullptr });
-        return;
-      }
-      Jsep sdp;
-      sdp.sdp = info.sdp();
-      sdp.type = "answer";
-      hi::PostMsg({ msgTo(MessageType::SEND_PROCESS_TO_JANUS), sdp });
-    }
-  }
-
   void Controller::OnSignlingDisconnect() {
     W_LOG("[Controller::OnSignlingDisconnect] Signling disconnection detected, start reconnect");
     hi::PostMsg({ msgTo(MessageType::RECONNECT_SERVER), nullptr });
@@ -504,7 +474,7 @@ namespace alllink {
     if (callType == 0) {
       switch (msg.id) {
       case msgTo(MessageType::SEND_ICE_TO_PEER):
-      case msgTo(MessageType::SEND_JSEP_SDP_TO_PEER): {
+      case msgTo(MessageType::SEND_SDP_TO_PEER): {
         // p2p流程，通知信令交互系统处理 offer/answer sdp 或 ice candidate
         if (!client_->sendToPeer(meetId_, std::any_cast<std::string>(msg.data))) {
           hi::PostMsg({ msgTo(MessageType::SEND_MSG_FAILED), nullptr });
@@ -541,7 +511,6 @@ namespace alllink {
         break;
       }
       case msgTo(MessageType::PEER_RINGING): {
-        //client_->startSendTrickle(meetId_);
         webrtc::SdpParseError error;
         std::unique_ptr<webrtc::SessionDescriptionInterface> tdesc
           = webrtc::CreateSessionDescription(type, sdpTmp, &error);
@@ -558,23 +527,12 @@ namespace alllink {
         }
         break;
       }
-      case msgTo(MessageType::SEND_JSEP_SDP_TO_PEER): {
-        break;
-      }
-      case msgTo(MessageType::SEND_PROCESS_TO_JANUS): {
-        break;
-      }
       case msgTo(MessageType::SEND_ICE_TO_PEER): {
         client_->sendTrickle(meetId_, std::any_cast<Candidate>(msg.data));
         break;
       }
       case msgTo(MessageType::SEND_ICE_COMPLETE_TO_PEER): {
         client_->sendTrickleComplete(meetId_); 
-        break;
-      }
-      case msgTo(MessageType::SET_REMOTE_DESC): {
-        SignInfo info = std::any_cast<SignInfo>(msg.data);
-        OnMessageFromSignling(info);
         break;
       }
       case msgTo(MessageType::SWITCH_AUDIO_INPUT): {
@@ -610,11 +568,7 @@ namespace alllink {
       }
       case msgTo(MessageType::SET_CAMERA): {
         bool state = std::any_cast<bool>(msg.data);
-        int videoType = seeker::IniConfig::GetInteger("this", "video_type", 0);
-        if (videoType == 0) {
-          I_LOG("set camera state {}", state);
-          videoEngine.switchCamera(state);
-        }
+        videoEngine.switchCamera(state);
         break;
       }
       case msgTo(MessageType::DISCONNECT_PEER): {

@@ -232,9 +232,6 @@ namespace alllink {
         case msgTo(MessageType::SWITCH_MIC_VOLUME):
         case msgTo(MessageType::SET_MIC_PHONE):
         case msgTo(MessageType::SET_CAMERA):
-        case msgTo(MessageType::SET_REMOTE_DESC):
-        case msgTo(MessageType::SEND_PROCESS_TO_JANUS):
-        case msgTo(MessageType::SEND_JSEP_SDP_TO_PEER):
         case msgTo(MessageType::SEND_SDP_TO_PEER): 
         case msgTo(MessageType::SEND_ICE_COMPLETE_TO_PEER):
         case msgTo(MessageType::SEND_ICE_TO_PEER):
