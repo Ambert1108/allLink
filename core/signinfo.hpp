@@ -213,7 +213,22 @@ namespace alllink {
 		void set_statuscode(int input) {
 			js["statusCode"] = input;
 		}
-		
+		//completed
+		void set_completed(bool val) {
+			js["completed"] = val;
+		}
+		//candidate
+		void set_candidate(std::string val) {
+			js["candidate"] = val;
+		}
+		//sdpMLineIndex
+		void set_sdpMLineIndex(int val) {
+			js["sdpMLineIndex"] = val;
+		}
+		//sdpMid
+		void set_sdpMid(std::string val) {
+			js["sdpMid"] = val;
+		}
 		json js;
 	};
 

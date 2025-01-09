@@ -107,6 +107,8 @@ namespace rtcengine {
 			rtc::scoped_refptr<webrtc::PeerConnectionInterface>& peer_connection,
 			rtc::scoped_refptr<webrtc::VideoTrackInterface>& video_track);
 
+		void setScreenCapture(uint8_t id);
+
 		const std::string GetSourceListString();
 		bool GetSourceList(webrtc::DesktopCapturer::SourceList* sources);
 		webrtc::DesktopCaptureOptions CreateDesktopCaptureOptions();

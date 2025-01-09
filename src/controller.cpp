@@ -127,17 +127,9 @@ namespace alllink {
 
 namespace alllink {
   Controller::Controller(SignlingInteractionSystem* client, VisionCnetralBase* vcb, JanusInteractionSystem* janus)
-  : client_(client), vision_(vcb), janus_(janus), janusEngine(nullptr) {
+  : client_(client), vision_(vcb) {
     client_->registerObserver(this);
     vision_->registerObserver(this);
-    //janus_->registerObserver(this);
-    // 使用连接引擎
-    int callType = seeker::IniConfig::GetInteger("this", "call_type", 0);
-    if (callType == 1) {
-      ServerInfo janusServerInfo(seeker::IniConfig::Get("this", "janus", "10.1.29.246:8188"));
-      janusEngine = std::make_shared<rtcengine::Janitor>(janusServerInfo.serverIp_, janusServerInfo.serverPort_);
-      janusEngine->registerObserver(this);
-    }
   }
 
   void Controller::Close() {
@@ -214,8 +206,6 @@ namespace alllink {
     peerConnection_ = nullptr;
     peerConnectionFactory_ = nullptr;
     if(clear) meetId_.clear();
-    // 重新注册nosip插件
-    janusEngine->addNoSIP();
   }
 
   void Controller::EnsureStreamingUI() {
@@ -313,9 +303,14 @@ namespace alllink {
     }
     jmessage["candidate"] = sdp;
 
+    Candidate ice;
+    ice.sdpMid = candidate->sdp_mid();
+    ice.sdpMLineIndex = candidate->sdp_mline_index();
+    ice.candidate = sdp;
+
     Json::StreamWriterBuilder factory;
     std::string obj = (Json::writeString(factory, jmessage));
-    hi::PostMsg({ msgTo(MessageType::SEND_ICE_TO_PEER), obj });
+    hi::PostMsg({ msgTo(MessageType::SEND_ICE_TO_PEER), ice });
   }
 
 
@@ -360,17 +355,6 @@ namespace alllink {
     rtc::GetStringFromJsonObject(jmessage, "type", &type_str);
 
     if (!type_str.empty()) { //type不为空代表收到sdp
-      if (type_str == "offer-loopback") {
-        // This is a loopback call.
-        // Recreate the peerconnection with DTLS disabled.
-        //if (!ReinitializePeerConnectionForLoopback()) {
-        //  E_LOG("Failed to initialize our PeerConnection instance");
-        //  DeletePeerConnection();
-        //  client_->SignOut();
-        //}
-        //D_LOG("on peer 6-2");
-        return;
-      }
       std::optional<webrtc::SdpType> type_maybe = webrtc::SdpTypeFromString(type_str);
       if (!type_maybe) {
         E_LOG("Unknown SDP type: {}", type_str);
@@ -394,6 +378,7 @@ namespace alllink {
       peerConnection_->SetRemoteDescription(
         DummySetSessionDescriptionObserver::Create().get(),
         session_description.release());
+      I_LOG("peerConnection setRemoteDescription finish");
       if (type == webrtc::SdpType::kOffer) { //如果收到的是offer sdp则需要创建answer sdp，成功后回调OnSuccess
         peerConnection_->CreateAnswer(this, webrtc::PeerConnectionInterface::RTCOfferAnswerOptions());
         I_LOG("create answer done");
@@ -456,57 +441,6 @@ namespace alllink {
 
   void Controller::OnSignlingDisconnect() {
     W_LOG("[Controller::OnSignlingDisconnect] Signling disconnection detected, start reconnect");
-    hi::PostMsg({ msgTo(MessageType::RECONNECT_SERVER), nullptr });
-  }
-
-  //
-  // JanusInteractionObserver implementation.
-  //
-
-  // Janus回复generate请求后需要告知信令并透传给对端
-  /*void Controller::OnGenerated(const Jsep& tranditional) {
-    hi::PostMsg({ msgTo(MessageType::SEND_SDP_TO_PEER), tranditional });
-  }*/
-
-  // Janus回复process请求后需要设置为远端会话描述以获取Janus的ICE候选
-  //void Controller::OnProcessed(const Jsep& jsep) {
-  //  std::string msg = seeker::json::toJsonString(jsep);
-  //  SignInfo info;
-  //  info.set_sdp(msg);
-  //  // 此处设置，若程序作为主叫触发OnProcessed，meetId的值来源于ConnectToPeer函数中用户输入
-  //  // 若程序作为被叫触发OnProcessed，meetId的值来源于OnCSMessageFromSignling函数中信令透传offer时的from值
-  //  info.set_from(meetId_);
-  //  //OnMessageFromSignling(info);
-  //  hi::PostMsg({ msgTo(MessageType::SET_REMOTE_DESC), info });
-  //}
-
-  //
-  // JanitorObserver implementation.
-  //
-
-  void Controller::OnGenerated(const std::string& sdp, const std::string& type) {
-    I_LOG("on generated");
-    Jsep tranditional;
-    tranditional.sdp = sdp;
-    tranditional.type = type;
-    hi::PostMsg({ msgTo(MessageType::SEND_SDP_TO_PEER), tranditional });
-  }
-
-  void Controller::OnProcessed(const std::string& sdp, const std::string& type) {
-    Jsep jsep;
-    jsep.sdp = sdp;
-    jsep.type = type;
-    std::string msg = seeker::json::toJsonString(jsep);
-    SignInfo info;
-    info.set_sdp(msg);
-    // 此处设置，若程序作为主叫触发OnProcessed，meetId的值来源于ConnectToPeer函数中用户输入
-    // 若程序作为被叫触发OnProcessed，meetId的值来源于OnCSMessageFromSignling函数中信令透传offer时的from值
-    info.set_from(meetId_);
-    hi::PostMsg({ msgTo(MessageType::SET_REMOTE_DESC), info });
-  }
-
-  void Controller::OnReconnect() {
-    W_LOG("[Controller::OnReconnect] Janus disconnection detected, start reconnect");
     hi::PostMsg({ msgTo(MessageType::RECONNECT_SERVER), nullptr });
   }
 
@@ -589,12 +523,6 @@ namespace alllink {
       }
       case msgTo(MessageType::LOGIN_SUCCESS): {
         I_LOG("[Controller::CustomMessageCallback] login success");
-        int callType = seeker::IniConfig::GetInteger("this", "call_type", 0);
-        if (callType == 1) {
-          //ServerInfo janusServerInfo(seeker::IniConfig::Get("this", "janus", "10.1.29.246:8188"));
-          //janus_->connectServer(janusServerInfo);
-          janusEngine->init();
-        }
         break;
       }
       default:
@@ -606,53 +534,42 @@ namespace alllink {
       switch (msg.id) {
       case msgTo(MessageType::LOGIN_SUCCESS): {
         I_LOG("[Controller::CustomMessageCallback] login success");
-        int callType = seeker::IniConfig::GetInteger("this", "call_type", 0);
-        if (callType == 1) {
-          janusEngine->init();
-        }
         break;
       }
       case msgTo(MessageType::MEETING_OK): {
         client_->sendAck(meetId_);
         break;
       }
+      case msgTo(MessageType::PEER_RINGING): {
+        //client_->startSendTrickle(meetId_);
+        webrtc::SdpParseError error;
+        std::unique_ptr<webrtc::SessionDescriptionInterface> tdesc
+          = webrtc::CreateSessionDescription(type, sdpTmp, &error);
+
+        peerConnection_->SetLocalDescription(
+          DummySetSessionDescriptionObserver::Create().get(), tdesc.release());
+        I_LOG("peerConnection setLocalDescription finish");
+        break;
+      }
       case msgTo(MessageType::SEND_SDP_TO_PEER): {
-        Jsep jsep = std::any_cast<Jsep>(msg.data);
-        if (!client_->sendToPeer(meetId_, jsep.sdp)) {
+        std::string sdp = std::any_cast<std::string>(msg.data);
+        if (!client_->sendToPeer(meetId_, sdp)) {
           hi::PostMsg({ msgTo(MessageType::SEND_MSG_FAILED), nullptr });
         }
         break;
       }
       case msgTo(MessageType::SEND_JSEP_SDP_TO_PEER): {
-        //if (!janus_->sendGenerateToJanus(std::any_cast<std::string>(msg.data))) {
-        //  hi::PostMsg({ msgTo(MessageType::SEND_MSG_FAILED), nullptr });
-        //}
-        Jsep jsep;
-        seeker::json::fromJsonString(jsep, std::any_cast<std::string>(msg.data));
-        janusEngine->generateSDP(jsep.sdp, jsep.type);
         break;
       }
       case msgTo(MessageType::SEND_PROCESS_TO_JANUS): {
-        
-        Jsep jsep = std::any_cast<Jsep>(msg.data);
-        //if (!janus_->sendProcessToJanus(jsep.sdp, jsep.type)) {
-        //  hi::PostMsg({ msgTo(MessageType::SEND_MSG_FAILED), nullptr });
-        //}
-        janusEngine->processSDP(jsep.sdp, jsep.type);
         break;
       }
       case msgTo(MessageType::SEND_ICE_TO_PEER): {
-        //if (!janus_->sendTrckileToJanus(std::any_cast<std::string>(msg.data))) {
-        //  hi::PostMsg({ msgTo(MessageType::SEND_MSG_FAILED), nullptr });
-        //}
-        janusEngine->sendTrickleToJanus(std::any_cast<std::string>(msg.data));
+        client_->sendTrickle(meetId_, std::any_cast<Candidate>(msg.data));
         break;
       }
       case msgTo(MessageType::SEND_ICE_COMPLETE_TO_PEER): {
-        //if (!janus_->sendTrckileCompleteToJanus()) {
-        //  hi::PostMsg({ msgTo(MessageType::SEND_MSG_FAILED), nullptr });
-        //}
-        janusEngine->sendTrickleCompleteToJanus();
+        client_->sendTrickleComplete(meetId_); 
         break;
       }
       case msgTo(MessageType::SET_REMOTE_DESC): {
@@ -737,26 +654,16 @@ namespace alllink {
   void Controller::OnSuccess(webrtc::SessionDescriptionInterface* desc) {
     std::string sdp;
     desc->ToString(&sdp);
-    std::string sdpTmp = audioEngine.modifySdp(sdp);
+    sdpTmp = audioEngine.modifySdp(sdp);
 
     I_LOG("LOG SDP\n{}", sdpTmp);
-    // For loopback test. To save some connecting delay.
-    //if (loopback_) {
-    //  // Replace message type from "offer" to "answer"
-    //  std::unique_ptr<webrtc::SessionDescriptionInterface> session_description =
-    //    webrtc::CreateSessionDescription(webrtc::SdpType::kAnswer, sdp);
-    //  peer_connection_->SetRemoteDescription(
-    //    DummySetSessionDescriptionObserver::Create().get(),
-    //    session_description.release());
-    //  return;
-    //}
-    webrtc::SdpType type = desc->GetType();
-    webrtc::SdpParseError error;
+    type = desc->GetType();
+    /*webrtc::SdpParseError error;
     std::unique_ptr<webrtc::SessionDescriptionInterface> tdesc 
       = webrtc::CreateSessionDescription(type, sdpTmp, &error);
 
     peerConnection_->SetLocalDescription(
-      DummySetSessionDescriptionObserver::Create().get(), tdesc.release());
+      DummySetSessionDescriptionObserver::Create().get(), tdesc.release());*/
 
     Json::Value jmessage;
     jmessage["type"] = webrtc::SdpTypeToString(type);
@@ -766,7 +673,7 @@ namespace alllink {
     std::string obj = Json::writeString(factory, jmessage);
     // 在peerConnection线程中无法直接执行信令
     // 使用消息队列在主线程中处理
-    hi::PostMsg({ msgTo(MessageType::SEND_JSEP_SDP_TO_PEER), obj });
+    hi::PostMsg({ msgTo(MessageType::SEND_SDP_TO_PEER), sdpTmp });
     I_LOG("create sdp success");
   }
 

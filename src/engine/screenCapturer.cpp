@@ -9,11 +9,14 @@ void ScreenCapturer::startCapturer() {
   options.set_allow_directx_capturer(true);
   capturer_ = webrtc::DesktopCapturer::CreateScreenCapturer(options);
   capturer_->Start(this);
-
   I_LOG("startCapturer");
   working = true;
   std::thread captureTh(&ScreenCapturer::captureThread, this);
   captureTh.detach();
+}
+
+void ScreenCapturer::setScreen(uint8_t id) {
+  capturer_->SelectSource(id);
 }
 
 webrtc::MediaSourceInterface::SourceState ScreenCapturer::state() const {
@@ -65,6 +68,6 @@ void ScreenCapturer::captureThread() {
   while (working) {
     if (!isOnResult)
       CaptureFrame();
-    Sleep(5);
+    Sleep(1);
   }
 }

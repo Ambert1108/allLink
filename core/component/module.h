@@ -1421,6 +1421,7 @@ namespace alllink {
 		void reset() {
 			isPoint = false;
 			selectedLabel.clear();
+			labelList.clear();
 		}
 		
 		bool eventProcess(sf::Event& event_, sf::Vector2f mousePos_, sf::RenderWindow* win_, bool clipHide = true) {

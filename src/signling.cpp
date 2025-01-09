@@ -162,6 +162,63 @@ namespace alllink {
     return ToSignaling(msg);
   }
 
+  void SignlingInteractionSystem::sendTrickle(const std::string& to, const Candidate& ice) {
+    //if (signalState >= State::RINGING) {
+      SignInfo msg;
+      msg.set_meth("TRICKLE");
+      msg.set_from(userInfo.id_);
+      msg.set_to(to);
+      msg.set_candidate(ice.candidate);
+      msg.set_sdpMid(ice.sdpMid);
+      msg.set_sdpMLineIndex(ice.sdpMLineIndex);
+      msg.set_cseq(cseq_++);
+      msg.set_call_id(callId);
+      if (!ToSignaling(msg)) E_LOG("send msg to Signaling failed {}", msg.js.dump(4));
+    //}
+    //else iceList.push(ice);
+  }
+
+  void SignlingInteractionSystem::sendTrickleComplete(const std::string& to) {
+    //if (signalState >= State::RINGING) {
+      SignInfo msg;
+      msg.set_meth("TRICKLE");
+      msg.set_from(userInfo.id_);
+      msg.set_to(to);
+      msg.set_completed(true);
+      msg.set_cseq(cseq_++);
+      msg.set_call_id(callId);
+      if (!ToSignaling(msg)) E_LOG("send msg to Signaling failed {}", msg.js.dump(4));
+    //}
+    //else trickleComplete = true;
+  }
+
+  bool SignlingInteractionSystem::startSendTrickle(const std::string& to) {
+    while (!iceList.empty()) {
+      Candidate ice = iceList.front();
+      SignInfo msg;
+      msg.set_meth("TRICKLE");
+      msg.set_from(userInfo.id_);
+      msg.set_to(to);
+      msg.set_candidate(ice.candidate);
+      msg.set_sdpMid(ice.sdpMid);
+      msg.set_sdpMLineIndex(ice.sdpMLineIndex);
+      msg.set_cseq(cseq_++);
+      msg.set_call_id(callId);
+      iceList.pop();
+      if (!ToSignaling(msg)) E_LOG("send msg to Signaling failed {}", msg.js.dump(4));
+    }
+    if (trickleComplete) {
+      SignInfo msg;
+      msg.set_meth("TRICKLE");
+      msg.set_from(userInfo.id_);
+      msg.set_to(to);
+      msg.set_completed(true);
+      msg.set_cseq(cseq_++);
+      msg.set_call_id(callId);
+      if (!ToSignaling(msg)) E_LOG("send msg to Signaling failed {}", msg.js.dump(4));
+    }
+  }
+
   bool SignlingInteractionSystem::sendAck(const std::string& to) {
     SignInfo msg;
     msg.set_meth("ACK");
@@ -261,10 +318,16 @@ namespace alllink {
       hi::PostMsg({ msgTo(MessageType::LOGIN_SUCCESS), info.to() });
     }
     else if (info.cmeth() == "INVITE" || info.cmeth() == "INVITE_SHARE") {
-      
       hi::PostMsg({ msgTo(MessageType::MEETING_OK), nullptr });
-      callback_->OnCSMessageFromSignling(info);
-      signalState = State::CALLER;
+      SignInfo msg;
+      msg.set_from(info.from());
+      Jsep jsep;
+      jsep.sdp = info.sdp();
+      jsep.type = "answer";
+      std::string sdp = seeker::json::toJsonString(jsep);
+      msg.set_sdp(sdp);
+      callback_->OnMessageFromSignling(msg);
+      signalState = State::CALLER; 
     }
   }
 
@@ -274,6 +337,7 @@ namespace alllink {
 
   void SignlingInteractionSystem::OnRinging(const SignInfo& info) {
     signalState = State::RINGING;
+    hi::PostMsg({ msgTo(MessageType::PEER_RINGING), nullptr });
   }
 
   void SignlingInteractionSystem::OnUnauthorized(const SignInfo& info) {

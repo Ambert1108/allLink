@@ -153,6 +153,12 @@ namespace alllink {
 
     bool sendToPeer(const std::string& to, const std::string& message);
 
+    void sendTrickle(const std::string& to, const Candidate& ice);
+
+    void sendTrickleComplete(const std::string& to);
+
+    bool startSendTrickle(const std::string& to);
+
     bool sendAck(const std::string& to);
 
     bool sendInfo(const std::string& to, int info);
@@ -193,6 +199,8 @@ namespace alllink {
     int64_t lastBeatPoint = 0;
     int64_t cseq_ = 0;
     std::string callId;
+    std::queue<Candidate> iceList;
+    bool trickleComplete = false;
     int mode = 0; //1v1通话:0, 会议流程:1
   };
 }

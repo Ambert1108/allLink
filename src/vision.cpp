@@ -225,6 +225,7 @@ namespace alllink {
           // 显示开始窗口
           //wnd->OnEnter();
         }
+        case msgTo(MessageType::PEER_RINGING):
         case msgTo(MessageType::MEETING_OK):
         case msgTo(MessageType::SWITCH_AUDIO_INPUT_STR):
         case msgTo(MessageType::SWITCH_AUDIO_INPUT):

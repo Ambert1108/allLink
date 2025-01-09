@@ -210,6 +210,10 @@ namespace rtcengine {
 		}
 	}
 
+	void RTCVideoEngine::setScreenCapture(uint8_t id) {
+		screen_device->setScreen(id);
+	}
+
 	int RTCVideoEngine::switchScreen(bool flag) {
 		screen_track_->set_enabled(flag);
 		screenState = flag;
