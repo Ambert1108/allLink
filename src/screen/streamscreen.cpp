@@ -163,7 +163,7 @@ namespace alllink {
     audioDevList->init(280 * wr, 150 * hr, 15 * wr, 655 * hr, 45 * hr, msyhFile);
     audioDevList->setShow(true);
 
-    audioDevBackground->setSize(sf::Vector2f(300 * wr, 400), 5 * wr);
+    audioDevBackground->setSize(sf::Vector2f(300 * wr, 400 * hr), 5 * wr);
     audioDevBackground->setPosition(5 * wr, 600 * hr);
     audioDevBackground->setFillColor(sf::Color(220, 220, 220));
 
