@@ -551,6 +551,7 @@ namespace alllink {
     // 在OnSuccess函数中触发信令流程
     peerConnection_->CreateOffer(this, webrtc::PeerConnectionInterface::RTCOfferAnswerOptions());
     I_LOG("create offer done");
+    hi::PostMsg({ msgTo(MessageType::AUDIO_DEV_INFO), audioInputDevMap });
     return true;
   }
 
@@ -664,6 +665,16 @@ namespace alllink {
         auto it = audioInputDevMap.find(device);
         if (it != audioInputDevMap.end()) I_LOG("pick mic input device:{}", it->second);
         audioEngine.ReplaceRecordingDevices(device);
+        break;
+      }
+      case msgTo(MessageType::SWITCH_AUDIO_INPUT_STR): {
+        std::string device = std::any_cast<std::string>(msg.data);
+        for (const auto& [id, name] : audioInputDevMap) {
+          if (device == name) {
+            I_LOG("pick mic input device:{}", name);
+            audioEngine.ReplaceRecordingDevices(id);
+          }
+        }
         break;
       }
       case msgTo(MessageType::SWITCH_MIC_VOLUME): {

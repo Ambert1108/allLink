@@ -52,6 +52,7 @@ namespace alllink {
 		
 		MEETING_END,                    //通知中控器通话应该结束
 		SWITCH_AUDIO_INPUT,             //通知中控器切换音频输入设备
+		SWITCH_AUDIO_INPUT_STR,         //通知中控器切换音频输入设备字符版本
 		SWITCH_MIC_VOLUME,              //通知中控器修改麦克风输入音量
 		SET_MIC_PHONE,                  //通知中控器设置麦克风状态
 		SET_CAMERA,                     //通知中控器设置摄像头状态
@@ -76,7 +77,8 @@ namespace alllink {
 		DISCONNECT_PEER,                //通知中控器断开连接
 		RECONNECT_SERVER,               //通知中控器重新连接信令服务器和Janus服务器
 		RECONNECT_SERVER_FAILED,        //通知视觉控制器重新连接信令服务器失败
-		RECONNECT_PEER                  //通知中控器重新连接对端
+		RECONNECT_PEER,                 //通知中控器重新连接对端
+		AUDIO_DEV_INFO                  //通知视觉控制器读取音频设备信息
 	};
 
 	static constexpr int msgTo(MessageType msg) { return static_cast<int>(msg); }
@@ -84,6 +86,7 @@ namespace alllink {
 	static std::string enumToString(MessageType e) {
 		static const std::unordered_map<MessageType, std::string> enumMap = {
 				{MessageType::SWITCH_AUDIO_INPUT, "SWITCH_AUDIO_INPUT"},
+				{MessageType::SWITCH_AUDIO_INPUT_STR, "SWITCH_AUDIO_INPUT_STR"},
 				{MessageType::SET_REMOTE_DESC, "SET_REMOTE_DESC"},
 				{MessageType::SEND_JSEP_SDP_TO_PEER, "SEND_JSEP_SDP_TO_PEER"},
 				{MessageType::SEND_PROCESS_TO_JANUS, "SEND_PROCESS_TO_JANUS"},

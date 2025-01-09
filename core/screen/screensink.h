@@ -236,6 +236,8 @@ namespace alllink {
 
 		void setSessionId(std::string id);
 
+		void setAudioDev(const std::map<int16_t, std::string>& list);
+
 		struct ImageData {
 			BITMAPINFO bmi;
 			std::unique_ptr<uint8_t[]> image = nullptr;
@@ -324,6 +326,10 @@ namespace alllink {
 		std::unique_ptr<HorizonGraphicTextsModule> meetingTime;
 		std::unique_ptr<TextFillRectangle> leaveMeeting;
 		std::unique_ptr<BaseText> meetingDescribe;
+		std::unique_ptr<SeekBarModule> volumeBar;
+		std::unique_ptr<VariableStateVertxModule> audioDevArrow;
+		std::unique_ptr<DropListModule> audioDevList;
+		std::unique_ptr<VariableStateFillModule> audioDevBackground;
 		sf::RectangleShape bottom, top;
 
 		std::unique_ptr<VideoRenderer> local_renderer_;
@@ -341,6 +347,7 @@ namespace alllink {
 		bool camState = false;
 		bool shareState = false;
 		bool isFull = true;
+		bool micSettingPop = false;
 		int micVolume = 50;
 		int mode = 0; //1v1通话:0, 会议流程:1
 		int64_t timePoint = 0;

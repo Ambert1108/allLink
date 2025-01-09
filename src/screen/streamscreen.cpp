@@ -58,6 +58,8 @@ namespace alllink {
     micState = false;
     shareState = false;
     timePoint = 0;
+    volumeBar->reset();
+    audioDevList->reset();
 		return true;
 	}
 
@@ -77,6 +79,10 @@ namespace alllink {
     openCam = std::make_unique<VariableStateGraphicModule>();
     closeShare = std::make_unique<VariableStateGraphicModule>();
     openShare = std::make_unique<VariableStateGraphicModule>();
+    volumeBar = std::make_unique<SeekBarModule>();
+    audioDevArrow = std::make_unique<VariableStateVertxModule>();
+    audioDevList = std::make_unique<DropListModule>();
+    audioDevBackground = std::make_unique<VariableStateFillModule>(sf::Color::Transparent, 2);
 
     closeMic->init(80 * wr, 50 * hr, 20 * wr, 1020 * hr);
     closeMic->setTexture(closeMicFile);
@@ -88,7 +94,7 @@ namespace alllink {
     openMic->setTexture(openMicFile);
     openMic->setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225, 200));
     openMic->setImageSize(40 * wr, 40 * wr);
-    openMic->setImageColor(sf::Color(74, 224, 84));
+    openMic->setImageColor(sf::Color(117, 188, 255));
 
     closeCam->init(80 * wr, 50 * hr, 140 * wr, 1020 * hr);
     closeCam->setTexture(closeCamFile);
@@ -100,7 +106,7 @@ namespace alllink {
     openCam->setTexture(openCamFile);
     openCam->setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225, 200));
     openCam->setImageSize(40 * wr, 40 * wr);
-    openCam->setImageColor(sf::Color(117, 188, 255));
+    openCam->setImageColor(sf::Color(74, 224, 84));
 
     closeShare->init(80 * wr, 50 * hr, 280 * wr, 1020 * hr);
     closeShare->setTexture(closeShareFile);
@@ -134,13 +140,32 @@ namespace alllink {
     meetingDescribe->setFillColor(sf::Color::Black);
     meetingDescribe->setPosition(((1920 - meetingDescribe->getGlobalBounds().width) / 2) * wr, 11 * hr);
 
-    bottom.setPosition(0 * wr, 1000 * hr);
+    bottom.setPosition(0, 1000 * hr);
     bottom.setSize(sf::Vector2f(1920 * wr, 80 * hr));
     bottom.setFillColor(sf::Color(255, 255, 255));
 
     top.setPosition(0, 0);
     top.setSize(sf::Vector2f(1920 * wr, 40 * hr));
     top.setFillColor(sf::Color(255, 255, 255));
+
+    volumeBar->init(sf::Vector2f(210 * wr, 9 * hr), 13 * wr, sf::Vector2f(35 * wr, 622 * hr), 
+      sf::Color::White, sf::Color(68, 118, 235));
+    volumeBar->setText(msyhFile, 0, 21 * hr, sf::Color::Black);
+
+    audioDevArrow->set(10 * wr, 50 * hr, 101 * wr, 1020 * hr);
+    audioDevArrow->setVer({
+    sf::Vertex(sf::Vector2f(101 * wr, 1050 * hr), sf::Color::Black),
+    sf::Vertex(sf::Vector2f((101 + 4) * wr, 1040 * hr), sf::Color::Black),
+    sf::Vertex(sf::Vector2f((101 + 4) * wr, 1040 * hr), sf::Color::Black),
+    sf::Vertex(sf::Vector2f((101 + 8) * wr, 1050 * hr), sf::Color::Black) });
+    audioDevArrow->setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225, 200));
+
+    audioDevList->init(280 * wr, 150 * hr, 15 * wr, 655 * hr, 45 * hr, msyhFile);
+    audioDevList->setShow(true);
+
+    audioDevBackground->setSize(sf::Vector2f(300 * wr, 400), 5 * wr);
+    audioDevBackground->setPosition(5 * wr, 600 * hr);
+    audioDevBackground->setFillColor(sf::Color(220, 220, 220));
 
     // 设置窗口大小为等比例720p
     this->setSize(sf::Vector2u(1280 * wr, 720 * hr));
@@ -216,6 +241,12 @@ namespace alllink {
       else closeShare->render(this);
       meetingTime->render(this);
       this->draw(*meetingDescribe.get());
+      if (micSettingPop) {
+        this->draw(*audioDevBackground.get());
+        volumeBar->render(this);
+        audioDevList->render(this);
+      }
+      audioDevArrow->render(this);
     }
     this->display();
 	}
@@ -311,10 +342,42 @@ namespace alllink {
         isFull = false;
       }
       else isFull = true;
+
+      // 处理音频设备设置事件
+      bool arrowClick = false;
+      sf::Vector2f mousePosView = this->mapPixelToCoords(mousePosWin);
+      if (audioDevArrow->onClick(event, mousePosView, this)) {
+        arrowClick = true;
+        micSettingPop = !micSettingPop;
+      }
+      if (audioDevBackground->getGlobalBounds().contains(mousePosView)) {
+        volumeBar->eventProcess(event, this);
+        if (audioDevList->eventProcess(event, mousePosView, this, false)) {
+          std::string label = WstrConv.to_bytes(audioDevList->getSelectedLabel());
+          I_LOG("labal is {}", label);
+          // 向中控器发送消息，选择麦克风设备
+          hi::PostMsg({ msgTo(MessageType::SWITCH_AUDIO_INPUT_STR), label });
+        }
+      }
+      else {
+        if (event.type == sf::Event::MouseButtonReleased
+          && event.mouseButton.button == sf::Mouse::Left
+          && !arrowClick) {
+          if (micSettingPop) micSettingPop = false;
+        }
+        if (isFull && micSettingPop) micSettingPop = false;
+      }
     }
     std::wstring time = L"会议时长 " +
       WstrConv.from_bytes(parseTime(seeker::time::currentTime() - timePoint));
     meetingTime->setText(time, sf::Color(0, 0, 0));
+
+    if (volumeBar->update(this)) {
+      int volume = volumeBar->data();
+      I_LOG("volume data is {}", volume);
+      // 向中控器发送消息，调整麦克风音量
+      hi::PostMsg({ msgTo(MessageType::SWITCH_MIC_VOLUME), volume });
+    }
 	}
 
   void StreamScreen::startLocalRenderer(webrtc::VideoTrackInterface* local_video) {
@@ -344,6 +407,13 @@ namespace alllink {
   void StreamScreen::setSessionId(std::string id) {
     std::wstring s = L"会议号 " + WstrConv.from_bytes(id);
     meetingDescribe->setString(s);
+  }
+
+  void StreamScreen::setAudioDev(const std::map<int16_t, std::string>& list) {
+    for (const auto& [id, name] : list) {
+      audioDevList->addLabel(WstrConv.from_bytes(name), sf::Color(225, 225, 225), 
+        sf::Color(230, 230, 230), sf::Color(240, 240, 240));
+    }
   }
 
   // 远端流收到视频帧和本地捕捉到视频帧都会调用此函数

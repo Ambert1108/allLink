@@ -109,9 +109,37 @@ int main() {
   top.setSize(sf::Vector2f(1920, 40));
   top.setFillColor(sf::Color(255, 255, 255));
 
+  SeekBarModule seekbar;
+  seekbar.init(sf::Vector2f(210, 9), 13, sf::Vector2f(35, 622), sf::Color::White, sf::Color(68, 118, 235));
+  seekbar.setText(fontFile, 0, 21, sf::Color::Black);
+
+  VariableStateVertxModule arrow;
+  arrow.set(10, 50, 101, 1020);
+  arrow.setVer({
+    sf::Vertex(sf::Vector2f(101, 1050), sf::Color::Black),
+    sf::Vertex(sf::Vector2f(101 + 4, 1040), sf::Color::Black),
+    sf::Vertex(sf::Vector2f(101 + 4, 1040), sf::Color::Black),
+    sf::Vertex(sf::Vector2f(101 + 8, 1050), sf::Color::Black) });
+  arrow.setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225, 200));
+
+  DropListModule drop;
+  drop.init(280, 150, 15, 650, 45, fontFile);
+  drop.addLabel(L"麦克风阵列", sf::Color(225, 225, 225), sf::Color(230, 230, 230), sf::Color(240, 240, 240));
+  drop.addLabel(L"logic microphone", sf::Color(225, 225, 225), sf::Color(230, 230, 230), sf::Color(240, 240, 240));
+  drop.addLabel(L"麦克风", sf::Color(225, 225, 225), sf::Color(230, 230, 230), sf::Color(240, 240, 240));
+  drop.setShow(true);
+
+  VariableStateFillModule background(sf::Color::Transparent, 2);
+  background.setSize(sf::Vector2f(300, 400), 5);
+  background.setPosition(5, 600);
+  background.setFillColor(sf::Color(220, 220, 220));
+
+  bool micSettingPop = false;
+
   wnd->setSize(sf::Vector2u(1280, 720));
   int64_t timePoint = seeker::time::currentTime();
   while (wnd->isOpen()) {
+    sf::Vector2f mousePosView;
     while (wnd->pollEvent(event)) {
       if (event.type == sf::Event::Closed) {
         wnd->close();
@@ -164,10 +192,35 @@ int main() {
         isFull = false;
       }
       else isFull = true;
+
+      bool arrowClick = false;
+      mousePosView = wnd->mapPixelToCoords(mousePosWin);
+      if (arrow.onClick(event, mousePosView, wnd)) {
+        arrowClick = true;
+        micSettingPop = !micSettingPop;
+      }
+      if (background.getGlobalBounds().contains(mousePosView)) {
+        seekbar.eventProcess(event, wnd);
+        if (drop.eventProcess(event, mousePosView, wnd, false)) {
+          I_LOG("labal is {}", WstrConv.to_bytes(drop.getSelectedLabel()));
+        }
+      }
+      else {
+        if (event.type == sf::Event::MouseButtonReleased
+          && event.mouseButton.button == sf::Mouse::Left
+          && !arrowClick) {
+          if (micSettingPop) micSettingPop = false;
+        }
+        if (isFull && micSettingPop) micSettingPop = false;
+      }
     }
     std::wstring time = L"会议时长 " + 
       converter.from_bytes(parseTime(seeker::time::currentTime() - timePoint));
     meetingTime.setText(time, sf::Color(0, 0, 0));
+
+    if (seekbar.update(wnd)) {
+      I_LOG("horseekbar data is {}", seekbar.data());
+    }
     wnd->clear(sf::Color(240, 240, 240));
     if (!isFull) {
       wnd->draw(top);
@@ -183,6 +236,12 @@ int main() {
       else closeShare.render(wnd);
       meetingTime.render(wnd);
       wnd->draw(meetingDescribe);
+      if (micSettingPop) {
+        wnd->draw(background);
+        seekbar.render(wnd);
+        drop.render(wnd);
+      }
+      arrow.render(wnd);
     }
     wnd->display();
   }

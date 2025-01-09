@@ -903,6 +903,7 @@ namespace alllink {
 			text_.setCharacterSize(this->getSize().y / 2.5);
 			text_.setFillColor(textColor);
 			text_.setString(text);
+			truncateText(text_, this->getSize().x - 4);
 			text_.setPosition(
 				this->getPosition().x + (this->getSize().x - text_.getGlobalBounds().width) / 2,
 				this->getPosition().y + (this->getSize().y - this->getSize().y / 2) / 2);
@@ -928,6 +929,15 @@ namespace alllink {
 		}
 
 	protected:
+		void truncateText(sf::Text& text, float maxWidth) {
+			// 如果文本的宽度超过最大宽度，进行截断
+			while (text.getGlobalBounds().width > maxWidth && text.getString().getSize() > 0) {
+				std::wstring currentString = text.getString();
+				currentString.pop_back(); // 删除最后一个字符
+				text.setString(currentString); // 更新文本
+			}
+		}
+
 		BaseText text_;
 		bool isActive;
 		sf::Color activeColor;
@@ -949,6 +959,7 @@ namespace alllink {
 			text_.setCharacterSize(this->getSize().y / 2.5);
 			text_.setFillColor(textColor);
 			text_.setString(text);
+			truncateText(text_, this->getSize().x - 4);
 			text_.setPosition(
 				this->getPosition().x + (this->getSize().x - text_.getGlobalBounds().width) / 2,
 				this->getPosition().y + (this->getSize().y - this->getSize().y / 2) / 2);
@@ -1022,6 +1033,15 @@ namespace alllink {
 		}
 
 	protected:
+		void truncateText(sf::Text& text, float maxWidth) {
+			// 如果文本的宽度超过最大宽度，进行截断
+			while (text.getGlobalBounds().width > maxWidth && text.getString().getSize() > 0) {
+				std::wstring currentString = text.getString();
+				currentString.pop_back(); // 删除最后一个字符
+				text.setString(currentString); // 更新文本
+			}
+		}
+
 		BaseText text_;
 		sf::Color textColor_;
 		sf::Color textHoverColor_;
@@ -1094,23 +1114,26 @@ namespace alllink {
 		* fillColor: 拖动按钮填充颜色
 		* innerColor: 拖动按钮交互颜色
 		* isHorizon: 拖动是否沿水平方向移动，默认为水平方向
+		* defaultData: 拖动条表达的初始数据
 		*/
 		void init(sf::Vector2f size, float radius, sf::Vector2f position, 
-			sf::Color fillColor, sf::Color innerColor, bool isHorizon = true) {
+			sf::Color fillColor, sf::Color innerColor, bool isHorizon = true, float defaultData = 0.5) {
 			originalSize = size;
 			originalRadius = radius;
 			pos = originalPosition = position;
 			
-
+			useBarOffset = originalSize.x * defaultData;
 			if (isHorizon) {
-				int circleY = originalPosition.y + originalSize.y / 2;
-				circle.init(originalRadius, originalPosition.x, circleY, 360);
-				useBar.setSize(sf::Vector2f(1, originalSize.y));
+				defaultPosition.x = originalPosition.x + useBarOffset;
+				defaultPosition.y = originalPosition.y + originalSize.y / 2;
+				circle.init(originalRadius, defaultPosition.x, defaultPosition.y, 360);
+				useBar.setSize(sf::Vector2f(useBarOffset, originalSize.y));
 			}
 			else {
-				int circleX = originalPosition.x + originalSize.x / 2;
-				circle.init(originalRadius, circleX, originalPosition.y, 360);
-				useBar.setSize(sf::Vector2f(originalSize.x, 1));
+				defaultPosition.x = originalPosition.x + originalSize.x / 2;
+				defaultPosition.y = originalPosition.y + useBarOffset;
+				circle.init(originalRadius, defaultPosition.x, defaultPosition.y, 360);
+				useBar.setSize(sf::Vector2f(originalSize.x, useBarOffset));
 			}
 			circle.setColor(fillColor, innerColor);
 			useBar.setFillColor(sf::Color(68, 118, 235));
@@ -1133,7 +1156,7 @@ namespace alllink {
 		void setText(const std::string& fontFile, int position, 
 			int characterSize, sf::Color textColor) {
 			describe.init(fontFile);
-			describe.setString("0");
+			describe.setString(std::to_string(static_cast<int>(useBarOffset / originalSize.x * 100)));
 			if (position == 3) {
 				int x = originalPosition.x - originalSize.x / 2;
 				int y = originalPosition.y + originalSize.y + 15;
@@ -1160,25 +1183,20 @@ namespace alllink {
 		}
 
 		void reset() {
-			int circleY = originalPosition.y + originalSize.y / 2;
-			circle.setPos(sf::Vector2f(originalPosition.x, circleY));
+			circle.setPos(sf::Vector2f(defaultPosition.x, defaultPosition.y));
 			if (isHorizon) {
-				useBar.setSize(sf::Vector2f(1, originalSize.y));
+				useBar.setSize(sf::Vector2f(useBarOffset, originalSize.y));
 			}
 			else {
-				useBar.setSize(sf::Vector2f(originalSize.x, 1));
+				useBar.setSize(sf::Vector2f(originalSize.x, useBarOffset));
 			}
 			unuseBar.setSize(originalSize);
-			describe.setString("0");
+			describe.setString(std::to_string(static_cast<int>(useBarOffset / originalSize.x * 100)));
 		}
 
 		void eventProcess(sf::Event& event_, sf::RenderWindow* win) {
-			if (event_.type == sf::Event::Closed)
-				win->close();
-
 			// 获取鼠标位置
-			sf::Vector2f mousePos(sf::Mouse::getPosition(*win));
-
+			sf::Vector2f mousePos(win->mapPixelToCoords(sf::Mouse::getPosition(*win)));
 			// 检查鼠标是否在圆形内
 			if (circle.getGlobalBounds().contains(mousePos)) {
 				// 处理鼠标按下事件
@@ -1223,7 +1241,7 @@ namespace alllink {
 		bool update(sf::RenderWindow* win) {
 			bool result = false;
 			// 获取鼠标位置
-			sf::Vector2f mousePos(sf::Mouse::getPosition(*win));
+			sf::Vector2f mousePos(win->mapPixelToCoords(sf::Mouse::getPosition(*win)));
 
 			// 处理鼠标沿水平方向移动事件
 			if (isDragging) {
@@ -1323,7 +1341,9 @@ namespace alllink {
 		BaseText describe;
 		float originalRadius = 10;              // 存储拖动按钮初始半径
 		sf::Vector2f originalSize{ 0, 0 };      // 存储拖动条初始大小
-		sf::Vector2f originalPosition{ 0, 0 };  // 存储拖动按钮初始位置
+		int useBarOffset = 0;                   // 拖动条初始偏移量
+		sf::Vector2f originalPosition{ 0, 0 };  // 存储拖动按钮原点位置
+		sf::Vector2f defaultPosition{ 0, 0 };   // 存储拖动按钮初始位置
 		sf::Vector2f pos{ 0, 0 };               // 存储拖动按钮当前位置
 		bool isHorizon = true;                  // 标记按钮是否沿水平方向移动
 		bool isDragging = false;                // 标记按钮是否正在拖动
@@ -1387,22 +1407,36 @@ namespace alllink {
 			this->setFillColor(sf::Color(200, 200, 200, 0));
 			this->setOutlineColor(sf::Color(200, 200, 200, 0));
 			this->setOutlineThickness(1);
+			point.setRadius(5);
+			point.setOrigin(5, 5);
+			point.setFillColor(sf::Color::Red);
+			point.setPointCount(360);
+
 			btnHeight = labelHeight;
 			labelLimit = limit;
 			margin = edgeMargin;
 			isRise = rise;
+		}
+
+		void reset() {
+			isPoint = false;
+			selectedLabel.clear();
 		}
 		
 		bool eventProcess(sf::Event& event_, sf::Vector2f mousePos_, sf::RenderWindow* win_, bool clipHide = true) {
 			if (!showList) {
 				return false;
 			}
+			int i = 2;
 			for (auto& each : labelList) {
 				if (each.second.onClick(event_, mousePos_, win_)) {
 					selectedLabel = each.first;
 					if(clipHide) switchShow();
+					point.setPosition(sf::Vector2f(each.second.getPosition().x, each.second.getPosition().y));
+					isPoint = true;
 					return true;
 				}
+				i++;
 			}
 			return false;
 		}
@@ -1415,9 +1449,11 @@ namespace alllink {
 			for (auto& each : labelList) {
 				each.second.render(tar);
 			}
+			if (isPoint) tar->draw(point);
 		}
 
-		void addLabel(sf::String labelText, bool activate = true) {
+		void addLabel(sf::String labelText, sf::Color fillColor, sf::Color hoverColor, 
+			sf::Color pressColor, bool activate = true) {
 			if (labelList.size() >= labelLimit) {
 				E_LOG("label size is more than limit {}", labelLimit);
 				return;
@@ -1429,9 +1465,9 @@ namespace alllink {
 			auto label = labelList.emplace(labelText, TextFillRectangle(sf::Color::Transparent, 2));
 			label.first->second.setActivate(activate);
 			label.first->second.init(this->getGlobalBounds().getSize().x - margin * 3, btnHeight, this->getPosition().x + margin, this->getPosition().y + (labelList.size() - 1) * (btnHeight + margin * 2) + margin, 5);
-			label.first->second.setText(fontFile, labelText, sf::Color::White, sf::Color::Red);
-			label.first->second.setColor(sf::Color(143, 170, 220), sf::Color(121, 177, 243), sf::Color(218, 127, 143));
-			label.first->second.setFill(true);
+			label.first->second.setText(fontFile, labelText, sf::Color::Black, sf::Color::Black);
+			label.first->second.setColor(fillColor, hoverColor, pressColor);
+			label.first->second.setFill(true); 
 		}
 		
 		void clearList() {
@@ -1452,6 +1488,7 @@ namespace alllink {
 		std::string fontFile;
 		int textSize = 12;
 		std::map<std::wstring, TextFillRectangle> labelList;
+		sf::CircleShape point;
 		float btnHeight = 60;
 		float btnWidth = 60;
 		float margin = 2;
@@ -1459,5 +1496,6 @@ namespace alllink {
 		bool isRise = false;
 		int labelLimit = 5;
 		bool showList = false;
+		bool isPoint = false;
 	};
 }
