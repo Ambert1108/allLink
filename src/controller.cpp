@@ -165,7 +165,7 @@ namespace alllink {
     audioEngine.GetRecordingDevices(audioInputDevMap);
     audioEngine.setMicrophoneVolume(50);
     videoEngine.switchCamera(false);
-    videoEngine.switchScreen(false);
+    //videoEngine.switchScreen(false);
     I_LOG("init finish");
 
     return true;
@@ -207,10 +207,10 @@ namespace alllink {
       return;  // 轨道已添加
     }
 
-    rtc::scoped_refptr<webrtc::VideoTrackInterface> video_track_;
+    rtc::scoped_refptr<webrtc::VideoTrackInterface> video_track_, screen_track_;
     audioEngine.AddAudioTracks(peerConnectionFactory_, peerConnection_);
     videoEngine.addVideoTrack(peerConnectionFactory_, peerConnection_, video_track_);
-    videoEngine.addScreenTrack(peerConnectionFactory_, peerConnection_, video_track_);
+    //videoEngine.addScreenTrack(peerConnectionFactory_, peerConnection_, screen_track_);
     // 向视觉控制器添加本地渲染器
     vision_->startLocalRenderer(video_track_.get());
   }
