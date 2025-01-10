@@ -190,6 +190,7 @@ namespace alllink {
 
   void Controller::DeletePeerConnection(bool clear) {
     vision_->stopLocalRenderer();
+    screenTrackInterface.release();
     vision_->stopRemoteRenderer();
     videoEngine.close();
     audioEngine.close();
@@ -213,6 +214,7 @@ namespace alllink {
     //videoEngine.addScreenTrack(peerConnectionFactory_, peerConnection_, screen_track_);
     // 向视觉控制器添加本地渲染器
     vision_->startLocalRenderer(video_track_.get());
+    screenTrackInterface = screen_track_.get();
   }
 
 

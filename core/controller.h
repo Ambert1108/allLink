@@ -98,6 +98,7 @@ namespace alllink {
     rtc::scoped_refptr<webrtc::PeerConnectionInterface> peerConnection_;
     rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface>
       peerConnectionFactory_;
+    rtc::scoped_refptr<webrtc::VideoTrackInterface> screenTrackInterface;
     rtcengine::rtcAudioEngine audioEngine;
     std::map<int16_t, std::string> audioInputDevMap;
     rtcengine::RTCVideoEngine videoEngine;
