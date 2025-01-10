@@ -1,13 +1,3 @@
-/*
- *  Copyright 2012 The WebRTC Project Authors. All rights reserved.
- *
- *  Use of this source code is governed by a BSD-style license
- *  that can be found in the LICENSE file in the root of the source
- *  tree. An additional intellectual property rights grant can be found
- *  in the file PATENTS.  All contributing project authors may
- *  be found in the AUTHORS file in the root of the source tree.
- */
-
 #include "controller.h"
 
 #include <stddef.h>
@@ -217,42 +207,10 @@ namespace alllink {
       return;  // 轨道已添加
     }
 
-    // 创建音频轨道
-    //rtc::scoped_refptr<webrtc::AudioTrackInterface> audio_track(
-    //  peerConnectionFactory_->CreateAudioTrack(
-    //    "audio_label",
-    //    peerConnectionFactory_->CreateAudioSource(cricket::AudioOptions())
-    //    .get()));
-    //// 添加音频轨道到peerConnection
-    //auto result_or_error = peerConnection_->AddTrack(audio_track, { "stream_id" });
-    //if (!result_or_error.ok()) {
-    //  E_LOG("Failed to add audio track to PeerConnection:{}", result_or_error.error().message());
-    //}
-    //
-    // 寻找本地采集设备
-    //rtc::scoped_refptr<CapturerTrackSource> video_device = CapturerTrackSource::Create();
-    //if (video_device) {
-    //  // 创建视频轨道
-    //  rtc::scoped_refptr<webrtc::VideoTrackInterface> video_track_(
-    //    peerConnectionFactory_->CreateVideoTrack(video_device, "video_label"));
-    //
-    //  // 向视觉控制器添加本地渲染器
-    //  vision_->startLocalRenderer(video_track_.get());
-    //
-    //  // 添加视频轨道到peerConnection
-    //  auto result_or_error = peerConnection_->AddTrack(video_track_, { "stream_id" });
-    //  if (!result_or_error.ok()) {
-    //    E_LOG("Failed to add video track to PeerConnection: {}", result_or_error.error().message());
-    //  }
-    //}
-    //else {
-    //  E_LOG("OpenVideoCaptureDevice failed");
-    //}
     rtc::scoped_refptr<webrtc::VideoTrackInterface> video_track_;
     audioEngine.AddAudioTracks(peerConnectionFactory_, peerConnection_);
     videoEngine.addVideoTrack(peerConnectionFactory_, peerConnection_, video_track_);
     videoEngine.addScreenTrack(peerConnectionFactory_, peerConnection_, video_track_);
-    //videoEngine.addVideoTrack(peerConnectionFactory_, peerConnection_, video_track_);
     // 向视觉控制器添加本地渲染器
     vision_->startLocalRenderer(video_track_.get());
   }
@@ -282,12 +240,6 @@ namespace alllink {
 
   // 生成offer/answer后PeerConnectionObserver会通过此函数上传生成的candidate
   void Controller::OnIceCandidate(const webrtc::IceCandidateInterface* candidate) {
-    //if (loopback_) {
-    //  if (!peerConnection_->AddIceCandidate(candidate)) {
-    //    W_LOG("Failed to apply the received candidate");
-    //  }
-    //  return;
-    //}
 
     Json::Value jmessage;
     jmessage["sdpMid"] = candidate->sdp_mid();

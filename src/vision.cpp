@@ -1,17 +1,5 @@
 #include "vision.h"
 
-#include <iostream>
-#include <cctype>
-#include <math.h>
-#include <conio.h>
-
-#include "api/video/i420_buffer.h"
-#include "rtc_base/arraysize.h"
-#include "rtc_base/checks.h"
-#include "rtc_base/logging.h"
-#include "third_party/libyuv/include/libyuv/convert_argb.h"
-#include "libyuv.h"
-
 namespace alllink {
   VisionCentralContoller::VisionCentralContoller() 
     : callback_(nullptr) {
