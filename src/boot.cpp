@@ -30,8 +30,7 @@ int main(int argc, char* argv[]) {
   {
     VisionCentralContoller vcc;
     SignlingInteractionSystem client;
-    JanusInteractionSystem janus;
-    auto controller = rtc::make_ref_counted<Controller>(&client, &vcc, &janus);
+    auto controller = rtc::make_ref_counted<Controller>(&client, &vcc);
     vcc.run();
   }
   oatpp::base::Environment::destroy();

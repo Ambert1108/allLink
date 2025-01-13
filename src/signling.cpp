@@ -271,7 +271,7 @@ namespace alllink {
       I_LOG("login success 1");
       hi::PostMsg({ msgTo(MessageType::LOGIN_SUCCESS), info.to() });
     }
-    else if (info.cmeth() == "INVITE" || info.cmeth() == "INVITE_SHARE") {
+    else if (info.cmeth() == "INVITE") {
       hi::PostMsg({ msgTo(MessageType::MEETING_OK), nullptr });
       SignInfo msg;
       msg.set_from(info.from());
@@ -282,6 +282,9 @@ namespace alllink {
       msg.set_sdp(sdp);
       callback_->OnMessageFromSignling(msg);
       signalState = State::CALLER; 
+    }
+    else if (info.cmeth() == "INVITE_SHARE") {
+      I_LOG("open share success");
     }
   }
 

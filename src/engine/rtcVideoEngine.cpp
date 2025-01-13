@@ -21,12 +21,12 @@ namespace rtcengine {
 		I_LOG("[VideoEngine::init] add track done");
 
 		////set frameRate...
-		//rtc::scoped_refptr<webrtc::RtpSenderInterface> sender = peer_connection_->GetSenders().at(0);
-		//webrtc::RtpParameters parameters = sender->GetParameters();
-		//for (auto& encoding : parameters.encodings) {
-		//	encoding.max_framerate = 60;
-		//}
-		//sender->SetParameters(parameters);
+		rtc::scoped_refptr<webrtc::RtpSenderInterface> sender = peer_connection_->GetSenders().at(0);
+		webrtc::RtpParameters parameters = sender->GetParameters();
+		for (auto& encoding : parameters.encodings) {
+			encoding.request_key_frame = true;
+		}
+		sender->SetParameters(parameters);
 
 		if (!result_or_error.ok()) {
 			RTC_LOG(LS_ERROR) << "Failed to add video track to PeerConnection: "
@@ -35,6 +35,28 @@ namespace rtcengine {
 		}
 		return 0;
 	}
+
+	void RTCVideoEngine::requestKeyFrame() {
+		// 获取第一个 RTP 发送器
+		rtc::scoped_refptr<webrtc::RtpSenderInterface> sender = peer_connection_->GetSenders().at(0);
+		I_LOG("VideoEngine::requestKeyFrame");
+		if (!sender) {
+			std::cerr << "No RTP sender available." << std::endl;
+			return;
+		}
+
+		// 获取当前的 RTP 参数
+		webrtc::RtpParameters parameters = sender->GetParameters();
+
+		// 遍历所有编码设置并请求关键帧
+		for (auto& encoding : parameters.encodings) {
+			encoding.request_key_frame = true; // 请求关键帧
+		}
+
+		// 设置修改后的参数
+		sender->SetParameters(parameters);
+	}
+
 
 	int RTCVideoEngine::switchCamera(bool flag) {
 		video_track_->set_enabled(flag);

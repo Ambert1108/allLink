@@ -27,7 +27,7 @@ namespace alllink {
     public VisionCnetralCallback {
 
   public:
-    Controller(SignlingInteractionSystem* client, VisionCnetralBase* vcb, JanusInteractionSystem* janus);
+    Controller(SignlingInteractionSystem* client, VisionCnetralBase* vcb);
 
     void Close() override;
 

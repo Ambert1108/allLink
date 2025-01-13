@@ -126,7 +126,7 @@ namespace alllink {
 }  // namespace
 
 namespace alllink {
-  Controller::Controller(SignlingInteractionSystem* client, VisionCnetralBase* vcb, JanusInteractionSystem* janus)
+  Controller::Controller(SignlingInteractionSystem* client, VisionCnetralBase* vcb)
   : client_(client), vision_(vcb) {
     client_->registerObserver(this);
     vision_->registerObserver(this);
@@ -175,7 +175,7 @@ namespace alllink {
     audioEngine.GetRecordingDevices(audioInputDevMap);
     audioEngine.setMicrophoneVolume(50);
     videoEngine.switchCamera(false);
-    //videoEngine.switchScreen(false);
+    videoEngine.switchScreen(false);
     I_LOG("init finish");
 
     return true;
@@ -201,6 +201,7 @@ namespace alllink {
   void Controller::DeletePeerConnection(bool clear) {
     vision_->stopLocalRenderer();
     vision_->stopRemoteRenderer();
+    screenTrackInterface.release();
     videoEngine.close();
     audioEngine.close();
     peerConnection_ = nullptr;
@@ -216,12 +217,13 @@ namespace alllink {
     if (!peerConnection_->GetSenders().empty()) {
       return;  // 轨道已添加
     }
-    rtc::scoped_refptr<webrtc::VideoTrackInterface> video_track_;
+    rtc::scoped_refptr<webrtc::VideoTrackInterface> video_track_, screen_track_;
     audioEngine.AddAudioTracks(peerConnectionFactory_, peerConnection_);
     videoEngine.addVideoTrack(peerConnectionFactory_, peerConnection_, video_track_);
-    //videoEngine.addScreenTrack(peerConnectionFactory_, peerConnection_, video_track_);
+    videoEngine.addScreenTrack(peerConnectionFactory_, peerConnection_, screen_track_);
     // 向视觉控制器添加本地渲染器
     vision_->startLocalRenderer(video_track_.get());
+    screenTrackInterface = screen_track_;
   }
 
 
@@ -536,20 +538,23 @@ namespace alllink {
       case msgTo(MessageType::SET_CAMERA): {
         bool state = std::any_cast<bool>(msg.data);
         videoEngine.switchCamera(state);
+        if (state) videoEngine.requestKeyFrame();
         break;
       }
       case msgTo(MessageType::SET_SHARE): {
-        I_LOG("11");
         bool state = std::any_cast<bool>(msg.data);
         if (state) {
           if (!client_->sendInfo(meetId_, 31)) {
             W_LOG("[Controller::CustomMessageCallback] Open Share failed");
           }
+          videoEngine.switchScreen(true);
+          videoEngine.requestKeyFrame();
         }
         else {
           if (!client_->sendInfo(meetId_, 30)) {
             W_LOG("[Controller::CustomMessageCallback] Close Share failed");
           }
+          videoEngine.switchScreen(false);
         }
         break;
       }

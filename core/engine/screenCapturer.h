@@ -49,5 +49,6 @@ private:
   std::unique_ptr<webrtc::DesktopCapturer> capturer_;
   rtc::scoped_refptr<webrtc::I420Buffer> i420_buffer_;
   bool isOnResult = false;
+  int appNum = 0;
   //mutable volatile int ref_count_;
 };

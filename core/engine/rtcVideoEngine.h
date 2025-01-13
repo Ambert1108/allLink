@@ -113,6 +113,8 @@ namespace rtcengine {
 		bool GetSourceList(webrtc::DesktopCapturer::SourceList* sources);
 		webrtc::DesktopCaptureOptions CreateDesktopCaptureOptions();
 
+		void requestKeyFrame();
+
     int switchCamera(bool flag);
     int switchScreen(bool flag);
     int openVideoMirror() {};
