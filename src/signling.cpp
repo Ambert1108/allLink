@@ -143,10 +143,6 @@ namespace alllink {
       msg.set_cseq(cseq_);
       callId = userInfo.id_ + to + std::to_string(cseq_++);
       msg.set_call_id(callId);
-      int videoType = seeker::IniConfig::GetInteger("this", "video_type", 0);
-      if (videoType == 1) {
-        msg.set_signal("1");
-      }
       signalState = State::CALLING;
     }
     else{
@@ -215,10 +211,6 @@ namespace alllink {
       msg.set_to(to);
       msg.set_cseq(cseq_++);
       msg.set_call_id(callId);
-      int videoType = seeker::IniConfig::GetInteger("this", "video_type", 0);
-      if (videoType == 1) {
-        msg.set_signal("1");
-      }
     }
     else {
       msg.set_meth("FORWARD");

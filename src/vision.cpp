@@ -1,5 +1,17 @@
 #include "vision.h"
 
+#include <iostream>
+#include <cctype>
+#include <math.h>
+#include <conio.h>
+
+#include "api/video/i420_buffer.h"
+#include "rtc_base/arraysize.h"
+#include "rtc_base/checks.h"
+#include "rtc_base/logging.h"
+#include "third_party/libyuv/include/libyuv/convert_argb.h"
+#include "libyuv.h"
+
 namespace alllink {
   VisionCentralContoller::VisionCentralContoller() 
     : callback_(nullptr) {
@@ -220,6 +232,7 @@ namespace alllink {
         case msgTo(MessageType::SWITCH_MIC_VOLUME):
         case msgTo(MessageType::SET_MIC_PHONE):
         case msgTo(MessageType::SET_CAMERA):
+        case msgTo(MessageType::SET_SHARE):
         case msgTo(MessageType::SEND_SDP_TO_PEER): 
         case msgTo(MessageType::SEND_ICE_COMPLETE_TO_PEER):
         case msgTo(MessageType::SEND_ICE_TO_PEER):

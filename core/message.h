@@ -56,6 +56,7 @@ namespace alllink {
 		SWITCH_MIC_VOLUME,              //通知中控器修改麦克风输入音量
 		SET_MIC_PHONE,                  //通知中控器设置麦克风状态
 		SET_CAMERA,                     //通知中控器设置摄像头状态
+		SET_SHARE,                      //通知中控器设置屏幕共享状态
 
 		/* 信令消息 */
 
@@ -88,6 +89,7 @@ namespace alllink {
 				{MessageType::SWITCH_MIC_VOLUME, "SWITCH_MIC_VOLUME"},
 				{MessageType::SET_MIC_PHONE, "SET_MIC_PHONE"},
 				{MessageType::SET_CAMERA, "SET_CAMERA"},
+				{MessageType::SET_SHARE, "SET_SHARE"},
 				{MessageType::SEND_SDP_TO_PEER, "SEND_SDP_TO_PEER"},
 				{MessageType::SEND_ICE_TO_PEER, "SEND_ICE_TO_PEER"},
 				{MessageType::SEND_ICE_COMPLETE_TO_PEER, "SEND_ICE_COMPLETE_TO_PEER"},

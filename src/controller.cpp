@@ -1,3 +1,13 @@
+/*
+ *  Copyright 2012 The WebRTC Project Authors. All rights reserved.
+ *
+ *  Use of this source code is governed by a BSD-style license
+ *  that can be found in the LICENSE file in the root of the source
+ *  tree. An additional intellectual property rights grant can be found
+ *  in the file PATENTS.  All contributing project authors may
+ *  be found in the AUTHORS file in the root of the source tree.
+ */
+
 #include "controller.h"
 
 #include <stddef.h>
@@ -190,7 +200,6 @@ namespace alllink {
 
   void Controller::DeletePeerConnection(bool clear) {
     vision_->stopLocalRenderer();
-    screenTrackInterface.release();
     vision_->stopRemoteRenderer();
     videoEngine.close();
     audioEngine.close();
@@ -207,14 +216,12 @@ namespace alllink {
     if (!peerConnection_->GetSenders().empty()) {
       return;  // 轨道已添加
     }
-
-    rtc::scoped_refptr<webrtc::VideoTrackInterface> video_track_, screen_track_;
+    rtc::scoped_refptr<webrtc::VideoTrackInterface> video_track_;
     audioEngine.AddAudioTracks(peerConnectionFactory_, peerConnection_);
     videoEngine.addVideoTrack(peerConnectionFactory_, peerConnection_, video_track_);
-    //videoEngine.addScreenTrack(peerConnectionFactory_, peerConnection_, screen_track_);
+    //videoEngine.addScreenTrack(peerConnectionFactory_, peerConnection_, video_track_);
     // 向视觉控制器添加本地渲染器
     vision_->startLocalRenderer(video_track_.get());
-    screenTrackInterface = screen_track_.get();
   }
 
 
@@ -242,6 +249,12 @@ namespace alllink {
 
   // 生成offer/answer后PeerConnectionObserver会通过此函数上传生成的candidate
   void Controller::OnIceCandidate(const webrtc::IceCandidateInterface* candidate) {
+    //if (loopback_) {
+    //  if (!peerConnection_->AddIceCandidate(candidate)) {
+    //    W_LOG("Failed to apply the received candidate");
+    //  }
+    //  return;
+    //}
 
     Json::Value jmessage;
     jmessage["sdpMid"] = candidate->sdp_mid();
@@ -471,7 +484,7 @@ namespace alllink {
 
         peerConnection_->SetLocalDescription(
           DummySetSessionDescriptionObserver::Create().get(), tdesc.release());
-        I_LOG("peerConnection setLocalDescription finish");
+        I_LOG("[Controller::CustomMessageCallback] peerConnection setLocalDescription finish");
         break;
       }
       case msgTo(MessageType::SEND_SDP_TO_PEER): {
@@ -492,7 +505,7 @@ namespace alllink {
       case msgTo(MessageType::SWITCH_AUDIO_INPUT): {
         int device = std::any_cast<int>(msg.data);
         auto it = audioInputDevMap.find(device);
-        if (it != audioInputDevMap.end()) I_LOG("pick mic input device:{}", it->second);
+        if (it != audioInputDevMap.end()) I_LOG("[Controller::CustomMessageCallback] pick mic input device:{}", it->second);
         audioEngine.ReplaceRecordingDevices(device);
         break;
       }
@@ -500,7 +513,7 @@ namespace alllink {
         std::string device = std::any_cast<std::string>(msg.data);
         for (const auto& [id, name] : audioInputDevMap) {
           if (device == name) {
-            I_LOG("pick mic input device:{}", name);
+            I_LOG("[Controller::CustomMessageCallback] pick mic input device:{}", name);
             audioEngine.ReplaceRecordingDevices(id);
           }
         }
@@ -508,13 +521,13 @@ namespace alllink {
       }
       case msgTo(MessageType::SWITCH_MIC_VOLUME): {
         int volume = std::any_cast<int>(msg.data);
-        I_LOG("current mic volume={}", volume);
+        I_LOG("[Controller::CustomMessageCallback] current mic volume={}", volume);
         audioEngine.setMicrophoneVolume(volume);
         break;
       }
       case msgTo(MessageType::SET_MIC_PHONE): {
         bool state = std::any_cast<bool>(msg.data);
-        I_LOG("set micphone state {}", state);
+        I_LOG("[Controller::CustomMessageCallback] set micphone state {}", state);
         //audioEngine.setMicrophone(state);
         if (state) client_->sendInfo(meetId_, 21);
         else client_->sendInfo(meetId_, 20);
@@ -523,6 +536,21 @@ namespace alllink {
       case msgTo(MessageType::SET_CAMERA): {
         bool state = std::any_cast<bool>(msg.data);
         videoEngine.switchCamera(state);
+        break;
+      }
+      case msgTo(MessageType::SET_SHARE): {
+        I_LOG("11");
+        bool state = std::any_cast<bool>(msg.data);
+        if (state) {
+          if (!client_->sendInfo(meetId_, 31)) {
+            W_LOG("[Controller::CustomMessageCallback] Open Share failed");
+          }
+        }
+        else {
+          if (!client_->sendInfo(meetId_, 30)) {
+            W_LOG("[Controller::CustomMessageCallback] Close Share failed");
+          }
+        }
         break;
       }
       case msgTo(MessageType::DISCONNECT_PEER): {
