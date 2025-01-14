@@ -88,9 +88,6 @@ namespace alllink {
     /*通知 中控器 接收到信令转发的其他客户端(p2p流程)发送过来的信息*/
     virtual void OnMessageFromSignling(const SignInfo& info) = 0;
 
-    /* 通知 中控器 接收到信令转发的其他客户端(c/s流程)发送过来的信息 */
-    virtual void OnCSMessageFromSignling(const SignInfo& info) = 0;
-
     /* 通知 中控器 其他客户端挂断通话 */
     virtual void OnPeerDisconnected(const std::string& id) = 0;
 
@@ -152,6 +149,10 @@ namespace alllink {
     bool reLogin();
 
     bool sendToPeer(const std::string& to, const std::string& message);
+
+    void sendTrickle(const std::string& to, const Candidate& ice);
+
+    void sendTrickleComplete(const std::string& to);
 
     bool sendAck(const std::string& to);
 

@@ -24,12 +24,10 @@ namespace alllink {
   class Controller : public webrtc::PeerConnectionObserver,
     public webrtc::CreateSessionDescriptionObserver,
     public SignlingInteractionObserver,
-    public rtcengine::JanitorObserver,
-    //public JanusInteractionObserver,
     public VisionCnetralCallback {
 
   public:
-    Controller(SignlingInteractionSystem* client, VisionCnetralBase* vcb, JanusInteractionSystem* janus);
+    Controller(SignlingInteractionSystem* client, VisionCnetralBase* vcb);
 
     void Close() override;
 
@@ -71,27 +69,7 @@ namespace alllink {
 
     void OnMessageFromSignling(const SignInfo& info) override;
 
-    void OnCSMessageFromSignling(const SignInfo& info) override;
-
     void OnSignlingDisconnect() override;
-
-    //
-    // JanusInteractionObserver implementation.
-    //
-
-    //void OnGenerated(const Jsep& tranditional) override;
-
-    //void OnProcessed(const Jsep& jsep) override;
-
-    //
-    // JanitorObserver implementation.
-    //
-
-    void OnGenerated(const std::string& sdp, const std::string& type) override;
-      
-    void OnProcessed(const std::string& sdp, const std::string& type) override;
-
-    void OnReconnect() override;
 
     //
     // VisionCnetralCallback implementation.
@@ -115,12 +93,12 @@ namespace alllink {
     void OnFailure(webrtc::RTCError error) override;
   private:
     SignlingInteractionSystem* client_;
-    JanusInteractionSystem* janus_;
     VisionCnetralBase* vision_;
     std::unique_ptr<rtc::Thread> signaling_thread_;
     rtc::scoped_refptr<webrtc::PeerConnectionInterface> peerConnection_;
     rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface>
       peerConnectionFactory_;
+    rtc::scoped_refptr<webrtc::VideoTrackInterface> screenTrackInterface;
     rtcengine::rtcAudioEngine audioEngine;
     std::map<int16_t, std::string> audioInputDevMap;
     rtcengine::RTCVideoEngine videoEngine;
@@ -128,5 +106,7 @@ namespace alllink {
     std::shared_ptr<rtcengine::Janitor> janusEngine;
     std::string meetId_;
     std::unique_ptr<webrtc::SessionDescriptionInterface> localDesc;
+    std::string sdpTmp;
+    webrtc::SdpType type;
   };
 }

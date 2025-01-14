@@ -225,21 +225,21 @@ namespace alllink {
           // 显示开始窗口
           //wnd->OnEnter();
         }
+        case msgTo(MessageType::PEER_RINGING):
         case msgTo(MessageType::MEETING_OK):
         case msgTo(MessageType::SWITCH_AUDIO_INPUT_STR):
         case msgTo(MessageType::SWITCH_AUDIO_INPUT):
         case msgTo(MessageType::SWITCH_MIC_VOLUME):
         case msgTo(MessageType::SET_MIC_PHONE):
         case msgTo(MessageType::SET_CAMERA):
-        case msgTo(MessageType::SET_REMOTE_DESC):
-        case msgTo(MessageType::SEND_PROCESS_TO_JANUS):
-        case msgTo(MessageType::SEND_JSEP_SDP_TO_PEER):
+        case msgTo(MessageType::SET_SHARE):
+        case msgTo(MessageType::REQUEST_IFRAME):
         case msgTo(MessageType::SEND_SDP_TO_PEER): 
         case msgTo(MessageType::SEND_ICE_COMPLETE_TO_PEER):
         case msgTo(MessageType::SEND_ICE_TO_PEER):
           // 中控器需要发送sdp/ice消息
           I_LOG("[test] send {} to peer", msg.id);
-          I_LOG("[Controller::CustomMessageCallback] msg {} to peer", enumToString(MessageType(msg.id)));
+          I_LOG("[Controller::CustomMessageCallback] {} msg send to peer", enumToString(MessageType(msg.id)));
           // 通知中控器处理消息数据
           callback_->CustomMessageCallback(msg);
           break;

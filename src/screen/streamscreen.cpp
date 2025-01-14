@@ -254,41 +254,16 @@ namespace alllink {
 	void StreamScreen::eventProcess() {
     if (!isActive) return;
     while (this->pollEvent(event)) {
+      if (event.type == sf::Event::Closed) {
+        // 通知视觉控制器会议画面被关闭
+        hi::PostMsg({ msgTo(MessageType::MEETING_END), nullptr });
+      }
       switch (event.type) {
       case sf::Event::KeyPressed:
         if (event.key.code == sf::Keyboard::F) {
-          isMirror.store(!isMirror);
-        }
-        else if (event.key.code == sf::Keyboard::M) {
-          micState = !micState;
-          hi::PostMsg({ msgTo(MessageType::SET_MIC_PHONE), micState });
-        }
-        else if (event.key.code == sf::Keyboard::V) {
-          camState = !camState;
-          hi::PostMsg({ msgTo(MessageType::SET_CAMERA), camState });
-        }
-        else if (event.key.code >= sf::Keyboard::Num0 && event.key.code <= sf::Keyboard::Num9) {
-          int num = event.key.code - sf::Keyboard::Num0;
-          if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)) {
-            hi::PostMsg({ msgTo(MessageType::SWITCH_AUDIO_INPUT), num });
-          }
-        }
-        else if (event.key.code == sf::Keyboard::Up) {
-          if (sf::Keyboard::isKeyPressed(sf::Keyboard::A) && micVolume < 100) {
-            micVolume += 10;
-            hi::PostMsg({ msgTo(MessageType::SWITCH_MIC_VOLUME), micVolume });
-          }
-        }
-        else if (event.key.code == sf::Keyboard::Down) {
-          if (sf::Keyboard::isKeyPressed(sf::Keyboard::A) && micVolume > 0) {
-            micVolume -= 10;
-            hi::PostMsg({ msgTo(MessageType::SWITCH_MIC_VOLUME), micVolume });
-          }
+          hi::PostMsg({ msgTo(MessageType::REQUEST_IFRAME), nullptr });
         }
         break;
-      case sf::Event::Closed:
-        // 通知视觉控制器会议画面被关闭
-        hi::PostMsg({ msgTo(MessageType::MEETING_END), nullptr });
       }
       sf::Vector2i mousePosWin = sf::Mouse::getPosition(*this);
       // 检查鼠标是否在窗口内
@@ -331,12 +306,14 @@ namespace alllink {
           if (closeShare->onClick(event, mousePosView, this)) {
             I_LOG("open share");
             shareState = !shareState;
+            hi::PostMsg({ msgTo(MessageType::SET_SHARE), shareState });
           }
         }
         else {
           if (openShare->onClick(event, mousePosView, this)) {
             I_LOG("close share");
             shareState = !shareState;
+            hi::PostMsg({ msgTo(MessageType::SET_SHARE), shareState });
           }
         }
         isFull = false;

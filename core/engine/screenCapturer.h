@@ -25,6 +25,10 @@ public:
 
   void startCapturer();
 
+  void setScreen(uint8_t id);
+
+  void setWindow(uint8_t id);
+
   void CaptureFrame();
 
   bool is_screencast() const override;
@@ -47,5 +51,6 @@ private:
   std::unique_ptr<webrtc::DesktopCapturer> capturer_;
   rtc::scoped_refptr<webrtc::I420Buffer> i420_buffer_;
   bool isOnResult = false;
+  int appNum = 0;
   //mutable volatile int ref_count_;
 };

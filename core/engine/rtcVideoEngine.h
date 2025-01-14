@@ -107,9 +107,13 @@ namespace rtcengine {
 			rtc::scoped_refptr<webrtc::PeerConnectionInterface>& peer_connection,
 			rtc::scoped_refptr<webrtc::VideoTrackInterface>& video_track);
 
+		void setScreenCapture(uint8_t id);
+
 		const std::string GetSourceListString();
 		bool GetSourceList(webrtc::DesktopCapturer::SourceList* sources);
 		webrtc::DesktopCaptureOptions CreateDesktopCaptureOptions();
+
+		void requestKeyFrame();
 
     int switchCamera(bool flag);
     int switchScreen(bool flag);
@@ -123,7 +127,7 @@ namespace rtcengine {
     int setCamera(const int index, rtc::scoped_refptr<webrtc::VideoTrackInterface>& video_track);
 
     void switchTrack(rtc::scoped_refptr<webrtc::VideoTrackInterface>& new_video_track);
-
+		std::string RTCVideoEngine::modifySdp(const std::string& sdp);
     void close();
 
     rtc::scoped_refptr<webrtc::PeerConnectionInterface> peer_connection_;

@@ -56,18 +56,18 @@ namespace alllink {
 		SWITCH_MIC_VOLUME,              //通知中控器修改麦克风输入音量
 		SET_MIC_PHONE,                  //通知中控器设置麦克风状态
 		SET_CAMERA,                     //通知中控器设置摄像头状态
+		SET_SHARE,                      //通知中控器设置屏幕共享状态
+		REQUEST_IFRAME,                 //通知中控器请求I帧
 
 		/* 信令消息 */
 
 		LOGIN_SUCCESS,
 		MEETING_OK,
 		CALL_MODE,
+		PEER_RINGING,
 
 		/* 中控器消息 */
 
-		SET_REMOTE_DESC,                //通知中控器设置远端sdp
-		SEND_JSEP_SDP_TO_PEER,          //发送jsep offer/answer sdp给对端
-		SEND_PROCESS_TO_JANUS,          //发送process请求给Janus服务器
 		SEND_SDP_TO_PEER,               //发送offer/answer sdp给对端
 		SEND_ICE_TO_PEER,               //发送ice candidate给对端
 		SEND_ICE_COMPLETE_TO_PEER,      //发送ice candidate收集完毕消息给对端
@@ -87,14 +87,18 @@ namespace alllink {
 		static const std::unordered_map<MessageType, std::string> enumMap = {
 				{MessageType::SWITCH_AUDIO_INPUT, "SWITCH_AUDIO_INPUT"},
 				{MessageType::SWITCH_AUDIO_INPUT_STR, "SWITCH_AUDIO_INPUT_STR"},
-				{MessageType::SET_REMOTE_DESC, "SET_REMOTE_DESC"},
-				{MessageType::SEND_JSEP_SDP_TO_PEER, "SEND_JSEP_SDP_TO_PEER"},
-				{MessageType::SEND_PROCESS_TO_JANUS, "SEND_PROCESS_TO_JANUS"},
+				{MessageType::SWITCH_MIC_VOLUME, "SWITCH_MIC_VOLUME"},
+				{MessageType::SET_MIC_PHONE, "SET_MIC_PHONE"},
+				{MessageType::SET_CAMERA, "SET_CAMERA"},
+				{MessageType::SET_SHARE, "SET_SHARE"},
 				{MessageType::SEND_SDP_TO_PEER, "SEND_SDP_TO_PEER"},
 				{MessageType::SEND_ICE_TO_PEER, "SEND_ICE_TO_PEER"},
 				{MessageType::SEND_ICE_COMPLETE_TO_PEER, "SEND_ICE_COMPLETE_TO_PEER"},
+				{MessageType::DISCONNECT_PEER, "DISCONNECT_PEER"},
 				{MessageType::RECONNECT_SERVER, "RECONNECT_SERVER"},
-				{MessageType::RECONNECT_PEER, "RECONNECT_PEER"}
+				{MessageType::RECONNECT_PEER, "RECONNECT_PEER"},
+				{MessageType::MEETING_OK, "MEETING_OK"},
+				{MessageType::PEER_RINGING, "PEER_RINGING"}
 		};
 		auto it = enumMap.find(e);
 		if (it != enumMap.end()) {

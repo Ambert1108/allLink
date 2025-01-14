@@ -143,10 +143,6 @@ namespace alllink {
       msg.set_cseq(cseq_);
       callId = userInfo.id_ + to + std::to_string(cseq_++);
       msg.set_call_id(callId);
-      int videoType = seeker::IniConfig::GetInteger("this", "video_type", 0);
-      if (videoType == 1) {
-        msg.set_signal("1");
-      }
       signalState = State::CALLING;
     }
     else{
@@ -160,6 +156,30 @@ namespace alllink {
     }
     hi::PostMsg({ msgTo(MessageType::CALL_MODE), mode });
     return ToSignaling(msg);
+  }
+
+  void SignlingInteractionSystem::sendTrickle(const std::string& to, const Candidate& ice) {
+    SignInfo msg;
+    msg.set_meth("TRICKLE");
+    msg.set_from(userInfo.id_);
+    msg.set_to(to);
+    msg.set_candidate(ice.candidate);
+    msg.set_sdpMid(ice.sdpMid);
+    msg.set_sdpMLineIndex(ice.sdpMLineIndex);
+    msg.set_cseq(cseq_++);
+    msg.set_call_id(callId);
+    if (!ToSignaling(msg)) E_LOG("send msg to Signaling failed {}", msg.js.dump(4));
+  }
+
+  void SignlingInteractionSystem::sendTrickleComplete(const std::string& to) {
+    SignInfo msg;
+    msg.set_meth("TRICKLE");
+    msg.set_from(userInfo.id_);
+    msg.set_to(to);
+    msg.set_completed(true);
+    msg.set_cseq(cseq_++);
+    msg.set_call_id(callId);
+    if (!ToSignaling(msg)) E_LOG("send msg to Signaling failed {}", msg.js.dump(4));
   }
 
   bool SignlingInteractionSystem::sendAck(const std::string& to) {
@@ -191,10 +211,6 @@ namespace alllink {
       msg.set_to(to);
       msg.set_cseq(cseq_++);
       msg.set_call_id(callId);
-      int videoType = seeker::IniConfig::GetInteger("this", "video_type", 0);
-      if (videoType == 1) {
-        msg.set_signal("1");
-      }
     }
     else {
       msg.set_meth("FORWARD");
@@ -224,12 +240,7 @@ namespace alllink {
     }
     else {
       I_LOG("on message from signling");
-      int callType = seeker::IniConfig::GetInteger("this", "call_type", 0);
-      // p2p流程收到对端的FORWARD信令，交给中控器设置远端会话描述或添加ICE候选
-      if (callType == 0) callback_->OnMessageFromSignling(info);
-
-      // c/s流程收到对端的FORWARD信令，交给中控器
-      else callback_->OnCSMessageFromSignling(info);
+      callback_->OnMessageFromSignling(info);
     }
     I_LOG("On FORWARD finish");
   }
@@ -260,11 +271,20 @@ namespace alllink {
       I_LOG("login success 1");
       hi::PostMsg({ msgTo(MessageType::LOGIN_SUCCESS), info.to() });
     }
-    else if (info.cmeth() == "INVITE" || info.cmeth() == "INVITE_SHARE") {
-      
+    else if (info.cmeth() == "INVITE") {
       hi::PostMsg({ msgTo(MessageType::MEETING_OK), nullptr });
-      callback_->OnCSMessageFromSignling(info);
-      signalState = State::CALLER;
+      SignInfo msg;
+      msg.set_from(info.from());
+      Jsep jsep;
+      jsep.sdp = info.sdp();
+      jsep.type = "answer";
+      std::string sdp = seeker::json::toJsonString(jsep);
+      msg.set_sdp(sdp);
+      callback_->OnMessageFromSignling(msg);
+      signalState = State::CALLER; 
+    }
+    else if (info.cmeth() == "INVITE_SHARE") {
+      I_LOG("open share success");
     }
   }
 
@@ -274,6 +294,7 @@ namespace alllink {
 
   void SignlingInteractionSystem::OnRinging(const SignInfo& info) {
     signalState = State::RINGING;
+    hi::PostMsg({ msgTo(MessageType::PEER_RINGING), nullptr });
   }
 
   void SignlingInteractionSystem::OnUnauthorized(const SignInfo& info) {
