@@ -242,9 +242,7 @@ namespace alllink {
 
   // ICE候选收集完成后触发此回调函数
   void Controller::OnIceGatheringChange(webrtc::PeerConnectionInterface::IceGatheringState new_state) {
-    int callType = seeker::IniConfig::GetInteger("this", "call_type", 0);
-    if (callType == 1 && 
-      new_state == webrtc::PeerConnectionInterface::IceGatheringState::kIceGatheringComplete) {
+    if (new_state == webrtc::PeerConnectionInterface::IceGatheringState::kIceGatheringComplete) {
       W_LOG("[Controller::OnIceGatheringChange] ICE Candidate gather finish");
       hi::PostMsg({ msgTo(MessageType::SEND_ICE_COMPLETE_TO_PEER), nullptr });
     }
@@ -384,6 +382,24 @@ namespace alllink {
     hi::PostMsg({ msgTo(MessageType::RECONNECT_SERVER), nullptr });
   }
 
+  void Controller::OnRinging() {
+    webrtc::SdpParseError error;
+    std::unique_ptr<webrtc::SessionDescriptionInterface> tdesc
+      = webrtc::CreateSessionDescription(type, sdpTmp, &error);
+
+    peerConnection_->SetLocalDescription(
+      DummySetSessionDescriptionObserver::Create().get(), tdesc.release());
+    I_LOG("[Controller::CustomMessageCallback] peerConnection setLocalDescription finish");
+  }
+
+  void Controller::OnInfoSuccess() {
+    if (needRequestIFrame) {
+      I_LOG("[Controller::OnInfoSuccess] request screen IFrame");
+      videoEngine.requestKeyFrame();
+      needRequestIFrame = false;
+    }
+  }
+
   //
   // VisionCnetralCallback implementation.
   //
@@ -440,158 +456,115 @@ namespace alllink {
 
 
   void Controller::CustomMessageCallback(const Message& msg) {
-    int callType = seeker::IniConfig::GetInteger("this", "call_type", 0);
-    if (callType == 0) {
-      switch (msg.id) {
-      case msgTo(MessageType::SEND_ICE_TO_PEER):
-      case msgTo(MessageType::SEND_SDP_TO_PEER): {
-        // p2p流程，通知信令交互系统处理 offer/answer sdp 或 ice candidate
-        if (!client_->sendToPeer(meetId_, std::any_cast<std::string>(msg.data))) {
-          hi::PostMsg({ msgTo(MessageType::SEND_MSG_FAILED), nullptr });
-        }
-        break;
-      }
-      case msgTo(MessageType::DISCONNECT_PEER): {
-        if (peerConnection_.get()) {
-          DeletePeerConnection();
-          I_LOG("delete callee peer connection");
-        }
-        break;
-      }
-      case msgTo(MessageType::RECONNECT_SERVER): {
-        break;
-      }
-      case msgTo(MessageType::LOGIN_SUCCESS): {
-        I_LOG("[Controller::CustomMessageCallback] login success");
-        break;
-      }
-      default:
-        break;
-      }
+    switch (msg.id) {
+    case msgTo(MessageType::LOGIN_SUCCESS): {
+      I_LOG("[Controller::CustomMessageCallback] login success");
+      break;
     }
-    else if (callType == 1) {
-      // nosip流程
-      switch (msg.id) {
-      case msgTo(MessageType::LOGIN_SUCCESS): {
-        I_LOG("[Controller::CustomMessageCallback] login success");
-        break;
+    case msgTo(MessageType::MEETING_OK): {
+      client_->sendAck(meetId_);
+      break;
+    }
+    case msgTo(MessageType::SEND_SDP_TO_PEER): {
+      std::string sdp = std::any_cast<std::string>(msg.data);
+      if (!client_->sendToPeer(meetId_, sdp)) {
+        hi::PostMsg({ msgTo(MessageType::SEND_MSG_FAILED), nullptr });
       }
-      case msgTo(MessageType::MEETING_OK): {
-        client_->sendAck(meetId_);
-        break;
-      }
-      case msgTo(MessageType::PEER_RINGING): {
-        webrtc::SdpParseError error;
-        std::unique_ptr<webrtc::SessionDescriptionInterface> tdesc
-          = webrtc::CreateSessionDescription(type, sdpTmp, &error);
-
-        peerConnection_->SetLocalDescription(
-          DummySetSessionDescriptionObserver::Create().get(), tdesc.release());
-        I_LOG("[Controller::CustomMessageCallback] peerConnection setLocalDescription finish");
-        break;
-      }
-      case msgTo(MessageType::SEND_SDP_TO_PEER): {
-        std::string sdp = std::any_cast<std::string>(msg.data);
-        if (!client_->sendToPeer(meetId_, sdp)) {
-          hi::PostMsg({ msgTo(MessageType::SEND_MSG_FAILED), nullptr });
+      break;
+    }
+    case msgTo(MessageType::SEND_ICE_TO_PEER): {
+      client_->sendTrickle(meetId_, std::any_cast<Candidate>(msg.data));
+      break;
+    }
+    case msgTo(MessageType::SEND_ICE_COMPLETE_TO_PEER): {
+      client_->sendTrickleComplete(meetId_); 
+      break;
+    }
+    case msgTo(MessageType::SWITCH_AUDIO_INPUT): {
+      int device = std::any_cast<int>(msg.data);
+      auto it = audioInputDevMap.find(device);
+      if (it != audioInputDevMap.end()) I_LOG("[Controller::CustomMessageCallback] pick mic input device:{}", it->second);
+      audioEngine.ReplaceRecordingDevices(device);
+      break;
+    }
+    case msgTo(MessageType::SWITCH_AUDIO_INPUT_STR): {
+      std::string device = std::any_cast<std::string>(msg.data);
+      for (const auto& [id, name] : audioInputDevMap) {
+        if (device == name) {
+          I_LOG("[Controller::CustomMessageCallback] pick mic input device:{}", name);
+          audioEngine.ReplaceRecordingDevices(id);
         }
-        break;
       }
-      case msgTo(MessageType::SEND_ICE_TO_PEER): {
-        client_->sendTrickle(meetId_, std::any_cast<Candidate>(msg.data));
-        break;
-      }
-      case msgTo(MessageType::SEND_ICE_COMPLETE_TO_PEER): {
-        client_->sendTrickleComplete(meetId_); 
-        break;
-      }
-      case msgTo(MessageType::SWITCH_AUDIO_INPUT): {
-        int device = std::any_cast<int>(msg.data);
-        auto it = audioInputDevMap.find(device);
-        if (it != audioInputDevMap.end()) I_LOG("[Controller::CustomMessageCallback] pick mic input device:{}", it->second);
-        audioEngine.ReplaceRecordingDevices(device);
-        break;
-      }
-      case msgTo(MessageType::SWITCH_AUDIO_INPUT_STR): {
-        std::string device = std::any_cast<std::string>(msg.data);
-        for (const auto& [id, name] : audioInputDevMap) {
-          if (device == name) {
-            I_LOG("[Controller::CustomMessageCallback] pick mic input device:{}", name);
-            audioEngine.ReplaceRecordingDevices(id);
-          }
+      break;
+    }
+    case msgTo(MessageType::SWITCH_MIC_VOLUME): {
+      int volume = std::any_cast<int>(msg.data);
+      I_LOG("[Controller::CustomMessageCallback] current mic volume={}", volume);
+      audioEngine.setMicrophoneVolume(volume);
+      break;
+    }
+    case msgTo(MessageType::SET_MIC_PHONE): {
+      bool state = std::any_cast<bool>(msg.data);
+      I_LOG("[Controller::CustomMessageCallback] set micphone state {}", state);
+      //audioEngine.setMicrophone(state);
+      if (state) client_->sendInfo(meetId_, 21);
+      else client_->sendInfo(meetId_, 20);
+      break;
+    }
+    case msgTo(MessageType::SET_CAMERA): {
+      bool state = std::any_cast<bool>(msg.data);
+      videoEngine.switchCamera(state);
+      if (state) videoEngine.requestKeyFrame();
+      break;
+    }
+    case msgTo(MessageType::SET_SHARE): {
+      bool state = std::any_cast<bool>(msg.data);
+      if (state) {
+        if (!client_->sendInfo(meetId_, 31)) {
+          W_LOG("[Controller::CustomMessageCallback] Open Share failed");
         }
-        break;
-      }
-      case msgTo(MessageType::SWITCH_MIC_VOLUME): {
-        int volume = std::any_cast<int>(msg.data);
-        I_LOG("[Controller::CustomMessageCallback] current mic volume={}", volume);
-        audioEngine.setMicrophoneVolume(volume);
-        break;
-      }
-      case msgTo(MessageType::SET_MIC_PHONE): {
-        bool state = std::any_cast<bool>(msg.data);
-        I_LOG("[Controller::CustomMessageCallback] set micphone state {}", state);
-        //audioEngine.setMicrophone(state);
-        if (state) client_->sendInfo(meetId_, 21);
-        else client_->sendInfo(meetId_, 20);
-        break;
-      }
-      case msgTo(MessageType::SET_CAMERA): {
-        bool state = std::any_cast<bool>(msg.data);
-        videoEngine.switchCamera(state);
-        if (state) videoEngine.requestKeyFrame();
-        break;
-      }
-      case msgTo(MessageType::SET_SHARE): {
-        bool state = std::any_cast<bool>(msg.data);
-        if (state) {
-          if (!client_->sendInfo(meetId_, 31)) {
-            W_LOG("[Controller::CustomMessageCallback] Open Share failed");
-          }
-          videoEngine.switchScreen(true);
-          videoEngine.requestKeyFrame();
-        }
-        else {
-          if (!client_->sendInfo(meetId_, 30)) {
-            W_LOG("[Controller::CustomMessageCallback] Close Share failed");
-          }
-          videoEngine.switchScreen(false);
-        }
-        break;
-      }
-      case msgTo(MessageType::REQUEST_IFRAME): {
-        //videoEngine.switchScreen(false);
-        //videoEngine.switchScreen(true);
+        videoEngine.switchScreen(true);
         videoEngine.requestKeyFrame();
-        break;
+        needRequestIFrame = true;
       }
-      case msgTo(MessageType::DISCONNECT_PEER): {
-        if (peerConnection_.get()) {
-          DeletePeerConnection();
-          I_LOG("delete callee peer connection");
+      else {
+        if (!client_->sendInfo(meetId_, 30)) {
+          W_LOG("[Controller::CustomMessageCallback] Close Share failed");
         }
-        break;
+        videoEngine.switchScreen(false);
+        needRequestIFrame = false;
       }
-      case msgTo(MessageType::RECONNECT_SERVER): {
-        if (!client_->reLogin()) {
-          hi::PostMsg({ msgTo(MessageType::RECONNECT_SERVER_FAILED), nullptr });
-        }
-        break;
-      }
-      case msgTo(MessageType::RECONNECT_PEER): {
-        if (peerConnection_.get()) {
-          DeletePeerConnection(false);
-          I_LOG("renegotiation peer connection");
-        }
-        if (!meetId_.empty()) ConnectToPeer(meetId_);
-        break;
-      }
-      default:
-        break;
-      }
+      break;
     }
-    else {
-      W_LOG("[Controller::CustomMessageCallback] undefine call type:{}", callType);
+    case msgTo(MessageType::REQUEST_IFRAME): {
+      //videoEngine.switchScreen(false);
+      //videoEngine.switchScreen(true);
+      videoEngine.requestKeyFrame();
+      break;
+    }
+    case msgTo(MessageType::DISCONNECT_PEER): {
+      if (peerConnection_.get()) {
+        DeletePeerConnection();
+        I_LOG("delete callee peer connection");
+      }
+      break;
+    }
+    case msgTo(MessageType::RECONNECT_SERVER): {
+      if (!client_->reLogin()) {
+        hi::PostMsg({ msgTo(MessageType::RECONNECT_SERVER_FAILED), nullptr });
+      }
+      break;
+    }
+    case msgTo(MessageType::RECONNECT_PEER): {
+      if (peerConnection_.get()) {
+        DeletePeerConnection(false);
+        I_LOG("renegotiation peer connection");
+      }
+      if (!meetId_.empty()) ConnectToPeer(meetId_);
+      break;
+    }
+    default:
+      break;
     }
   }
 

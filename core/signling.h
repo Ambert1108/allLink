@@ -93,6 +93,10 @@ namespace alllink {
 
     virtual void OnSignlingDisconnect() = 0;
 
+    virtual void OnRinging() = 0;
+
+    virtual void OnInfoSuccess() = 0;
+
   protected:
     virtual ~SignlingInteractionObserver() {}
   };

@@ -71,6 +71,10 @@ namespace alllink {
 
     void OnSignlingDisconnect() override;
 
+    void OnRinging() override;
+
+    void OnInfoSuccess() override;
+
     //
     // VisionCnetralCallback implementation.
     //
@@ -108,5 +112,6 @@ namespace alllink {
     std::unique_ptr<webrtc::SessionDescriptionInterface> localDesc;
     std::string sdpTmp;
     webrtc::SdpType type;
+    bool needRequestIFrame = false;
   };
 }

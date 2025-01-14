@@ -65,14 +65,17 @@ namespace rtcengine {
 			}
 			// 获取当前的 RTP 参数
 			webrtc::RtpParameters parameters = c->GetParameters();
-			I_LOG("id = {} -- {}", parameters.mid, parameters.transaction_id);
-			// 遍历所有编码设置并请求关键帧
-			for (auto& encoding : parameters.encodings) {
-				encoding.request_key_frame = true; // 请求关键帧
-			}
+			I_LOG("current sender id {}", c->id());
+			if (c->id() == "screen") {
+				// 遍历所有编码设置并请求关键帧
+				for (auto& encoding : parameters.encodings) {
+					encoding.request_key_frame = true; // 请求关键帧
+				}
 		
-			// 设置修改后的参数
-			c->SetParameters(parameters);
+				// 设置修改后的参数
+				c->SetParameters(parameters);
+				break;
+			}
 		}
 
 		screen_track_->RequestRefreshFrame();

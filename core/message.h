@@ -64,7 +64,6 @@ namespace alllink {
 		LOGIN_SUCCESS,
 		MEETING_OK,
 		CALL_MODE,
-		PEER_RINGING,
 
 		/* 中控器消息 */
 
@@ -97,8 +96,7 @@ namespace alllink {
 				{MessageType::DISCONNECT_PEER, "DISCONNECT_PEER"},
 				{MessageType::RECONNECT_SERVER, "RECONNECT_SERVER"},
 				{MessageType::RECONNECT_PEER, "RECONNECT_PEER"},
-				{MessageType::MEETING_OK, "MEETING_OK"},
-				{MessageType::PEER_RINGING, "PEER_RINGING"}
+				{MessageType::MEETING_OK, "MEETING_OK"}
 		};
 		auto it = enumMap.find(e);
 		if (it != enumMap.end()) {

@@ -286,6 +286,9 @@ namespace alllink {
     else if (info.cmeth() == "INVITE_SHARE") {
       I_LOG("open share success");
     }
+    else if (info.cmeth() == "INFO") {
+      callback_->OnInfoSuccess();
+    }
   }
 
   void SignlingInteractionSystem::OnTrying(const SignInfo& info) {
@@ -294,7 +297,7 @@ namespace alllink {
 
   void SignlingInteractionSystem::OnRinging(const SignInfo& info) {
     signalState = State::RINGING;
-    hi::PostMsg({ msgTo(MessageType::PEER_RINGING), nullptr });
+    callback_->OnRinging();
   }
 
   void SignlingInteractionSystem::OnUnauthorized(const SignInfo& info) {
