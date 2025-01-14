@@ -38,23 +38,44 @@ namespace rtcengine {
 
 	void RTCVideoEngine::requestKeyFrame() {
 		// 获取第一个 RTP 发送器
-		rtc::scoped_refptr<webrtc::RtpSenderInterface> sender = peer_connection_->GetSenders().at(0);
-		I_LOG("VideoEngine::requestKeyFrame");
-		if (!sender) {
-			std::cerr << "No RTP sender available." << std::endl;
-			return;
+		//rtc::scoped_refptr<webrtc::RtpSenderInterface> sender = peer_connection_->GetSenders().at(0);
+		//I_LOG("VideoEngine::requestKeyFrame");
+		//if (!sender) {
+		//	std::cerr << "No RTP sender available." << std::endl;
+		//	return;
+		//}
+		//
+		//// 获取当前的 RTP 参数
+		//webrtc::RtpParameters parameters = sender->GetParameters();
+		//I_LOG("id = {} -- {}", parameters.mid, parameters.transaction_id);
+		//// 遍历所有编码设置并请求关键帧
+		//for (auto& encoding : parameters.encodings) {
+		//	encoding.request_key_frame = true; // 请求关键帧
+		//}
+		//
+		//// 设置修改后的参数
+		//sender->SetParameters(parameters);
+
+
+		auto senders = peer_connection_->GetSenders();
+		for (auto& c : senders) {
+			if (!c) {
+				std::cerr << "No RTP sender available." << std::endl;
+				continue;
+			}
+			// 获取当前的 RTP 参数
+			webrtc::RtpParameters parameters = c->GetParameters();
+			I_LOG("id = {} -- {}", parameters.mid, parameters.transaction_id);
+			// 遍历所有编码设置并请求关键帧
+			for (auto& encoding : parameters.encodings) {
+				encoding.request_key_frame = true; // 请求关键帧
+			}
+		
+			// 设置修改后的参数
+			c->SetParameters(parameters);
 		}
 
-		// 获取当前的 RTP 参数
-		webrtc::RtpParameters parameters = sender->GetParameters();
-		I_LOG("id = {} -- {}", parameters.mid, parameters.transaction_id);
-		// 遍历所有编码设置并请求关键帧
-		for (auto& encoding : parameters.encodings) {
-			encoding.request_key_frame = true; // 请求关键帧
-		}
-
-		// 设置修改后的参数
-		sender->SetParameters(parameters);
+		screen_track_->RequestRefreshFrame();
 	}
 
 
@@ -224,7 +245,6 @@ namespace rtcengine {
 				RTC_LOG(LS_ERROR) << "Failed to add video track to PeerConnection: "
 					<< result_or_error.error().message();
 			}
-			auto encr = result_or_error.value()->GetFrameEncryptor();
 
 		}
 		else {

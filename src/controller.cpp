@@ -562,7 +562,7 @@ namespace alllink {
       case msgTo(MessageType::REQUEST_IFRAME): {
         //videoEngine.switchScreen(false);
         //videoEngine.switchScreen(true);
-        //videoEngine.requestKeyFrame();
+        videoEngine.requestKeyFrame();
         break;
       }
       case msgTo(MessageType::DISCONNECT_PEER): {
