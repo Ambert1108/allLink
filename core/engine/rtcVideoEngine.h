@@ -127,7 +127,7 @@ namespace rtcengine {
     int setCamera(const int index, rtc::scoped_refptr<webrtc::VideoTrackInterface>& video_track);
 
     void switchTrack(rtc::scoped_refptr<webrtc::VideoTrackInterface>& new_video_track);
-
+		std::string RTCVideoEngine::modifySdp(const std::string& sdp);
     void close();
 
     rtc::scoped_refptr<webrtc::PeerConnectionInterface> peer_connection_;

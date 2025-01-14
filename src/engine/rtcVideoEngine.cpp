@@ -21,12 +21,12 @@ namespace rtcengine {
 		I_LOG("[VideoEngine::init] add track done");
 
 		////set frameRate...
-		rtc::scoped_refptr<webrtc::RtpSenderInterface> sender = peer_connection_->GetSenders().at(0);
-		webrtc::RtpParameters parameters = sender->GetParameters();
-		for (auto& encoding : parameters.encodings) {
-			encoding.request_key_frame = true;
-		}
-		sender->SetParameters(parameters);
+		//rtc::scoped_refptr<webrtc::RtpSenderInterface> sender = peer_connection_->GetSenders().at(0);
+		//webrtc::RtpParameters parameters = sender->GetParameters();
+		//for (auto& encoding : parameters.encodings) {
+		//	encoding.request_key_frame = true;
+		//}
+		//sender->SetParameters(parameters);
 
 		if (!result_or_error.ok()) {
 			RTC_LOG(LS_ERROR) << "Failed to add video track to PeerConnection: "
@@ -47,7 +47,7 @@ namespace rtcengine {
 
 		// 获取当前的 RTP 参数
 		webrtc::RtpParameters parameters = sender->GetParameters();
-
+		I_LOG("id = {} -- {}", parameters.mid, parameters.transaction_id);
 		// 遍历所有编码设置并请求关键帧
 		for (auto& encoding : parameters.encodings) {
 			encoding.request_key_frame = true; // 请求关键帧
@@ -224,7 +224,7 @@ namespace rtcengine {
 				RTC_LOG(LS_ERROR) << "Failed to add video track to PeerConnection: "
 					<< result_or_error.error().message();
 			}
-
+			auto encr = result_or_error.value()->GetFrameEncryptor();
 
 		}
 		else {
@@ -253,4 +253,23 @@ namespace rtcengine {
 		screen_track_ = nullptr;
 	}
 
+	std::string RTCVideoEngine::modifySdp(const std::string& sdp) {
+		std::istringstream sdpStream(sdp);
+		std::ostringstream filteredSDP;
+		std::string line;
+		bool findScreen = false;
+		// 逐行读取原始SDP内容
+		while (std::getline(sdpStream, line)) {
+			if (line.find("a=msid:000 camera") != std::string::npos) {
+				findScreen = true;
+			}
+			if (line.find("a=fmtp:96") != std::string::npos && findScreen) {
+				filteredSDP << "a=fmtp:96 level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=42001f;gop=90" << std::endl;
+				findScreen = false;
+				continue;
+			}
+			filteredSDP << line << std::endl;
+		}
+		return filteredSDP.str();
+	}
 }

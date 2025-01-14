@@ -130,6 +130,7 @@ namespace alllink {
   : client_(client), vision_(vcb) {
     client_->registerObserver(this);
     vision_->registerObserver(this);
+    rtc::LogMessage::ConfigureLogging("info info");
   }
 
   void Controller::Close() {
@@ -558,6 +559,12 @@ namespace alllink {
         }
         break;
       }
+      case msgTo(MessageType::REQUEST_IFRAME): {
+        //videoEngine.switchScreen(false);
+        //videoEngine.switchScreen(true);
+        //videoEngine.requestKeyFrame();
+        break;
+      }
       case msgTo(MessageType::DISCONNECT_PEER): {
         if (peerConnection_.get()) {
           DeletePeerConnection();
@@ -596,7 +603,8 @@ namespace alllink {
     std::string sdp;
     desc->ToString(&sdp);
     sdpTmp = audioEngine.modifySdp(sdp);
-
+    //auto sdp1 = audioEngine.modifySdp(sdp);
+    //sdpTmp = videoEngine.modifySdp(sdp1);
     I_LOG("LOG SDP\n{}", sdpTmp);
     type = desc->GetType();
     /*webrtc::SdpParseError error;

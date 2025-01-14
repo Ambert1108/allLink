@@ -27,6 +27,8 @@ public:
 
   void setScreen(uint8_t id);
 
+  void setWindow(uint8_t id);
+
   void CaptureFrame();
 
   bool is_screencast() const override;

@@ -57,6 +57,7 @@ namespace alllink {
 		SET_MIC_PHONE,                  //通知中控器设置麦克风状态
 		SET_CAMERA,                     //通知中控器设置摄像头状态
 		SET_SHARE,                      //通知中控器设置屏幕共享状态
+		REQUEST_IFRAME,                 //通知中控器请求I帧
 
 		/* 信令消息 */
 

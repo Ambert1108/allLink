@@ -258,6 +258,13 @@ namespace alllink {
         // 通知视觉控制器会议画面被关闭
         hi::PostMsg({ msgTo(MessageType::MEETING_END), nullptr });
       }
+      switch (event.type) {
+      case sf::Event::KeyPressed:
+        if (event.key.code == sf::Keyboard::F) {
+          hi::PostMsg({ msgTo(MessageType::REQUEST_IFRAME), nullptr });
+        }
+        break;
+      }
       sf::Vector2i mousePosWin = sf::Mouse::getPosition(*this);
       // 检查鼠标是否在窗口内
       if (mousePosWin.x >= 0 && mousePosWin.x < this->getSize().x &&
