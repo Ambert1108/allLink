@@ -10,11 +10,9 @@ void ScreenCapturer::startCapturer() {
   capturer_ = webrtc::DesktopCapturer::CreateScreenCapturer(options);
   //capturer_ = webrtc::DesktopCapturer::CreateWindowCapturer(options);
   capturer_->Start(this);
+  capturer_->SelectSource(0);
   I_LOG("startCapturer");
   working = true;
-  if (!capturer_->SelectSource(0)) {
-    W_LOG("select source failed");
-  }
   std::thread captureTh(&ScreenCapturer::captureThread, this);
   captureTh.detach();
 }
@@ -26,11 +24,8 @@ void ScreenCapturer::setScreen(uint8_t id) {
   for (const auto& source : sources) {
     I_LOG("Source ID:{}, Title:{}", source.id, source.title);
   }
-  capturer_->SelectSource(sources[appNum].id);
-  I_LOG("sources.size={}, appNum={},Source ID:{}, Title:{}", sources.size(), appNum, sources[appNum].id, sources[appNum].id);
-  if (appNum < sources.size()-1)
-    appNum++;
-  else appNum = 0;
+  capturer_->SelectSource(id);
+  I_LOG("sources.size={}, select id = {}", sources.size(), id);
 }
 
 void ScreenCapturer::setWindow(uint8_t id) {

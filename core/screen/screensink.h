@@ -236,7 +236,10 @@ namespace alllink {
 
 		void setSessionId(std::string id);
 
-		void setAudioDev(const std::map<int16_t, std::string>& list);
+		/*
+		* type: audio:1 video:2 share:3
+		*/
+		void setDevList(const std::map<int16_t, std::string>& list, int type);
 
 		struct ImageData {
 			BITMAPINFO bmi;
@@ -327,9 +330,9 @@ namespace alllink {
 		std::unique_ptr<TextFillRectangle> leaveMeeting;
 		std::unique_ptr<BaseText> meetingDescribe;
 		std::unique_ptr<SeekBarModule> volumeBar;
-		std::unique_ptr<VariableStateVertxModule> audioDevArrow;
-		std::unique_ptr<DropListModule> audioDevList;
-		std::unique_ptr<VariableStateFillModule> audioDevBackground;
+		std::unique_ptr<VariableStateVertxModule> audioDevArrow, camDevArrow, shareScreenArrow;
+		std::unique_ptr<DropListModule> audioDevList, videoDevList, shareDevList;
+		std::unique_ptr<VariableStateFillModule> settingBackground;
 		sf::RectangleShape bottom, top;
 
 		std::unique_ptr<VideoRenderer> local_renderer_;
@@ -347,7 +350,13 @@ namespace alllink {
 		bool camState = false;
 		bool shareState = false;
 		bool isFull = true;
-		bool micSettingPop = false;
+		bool settingPop = false;
+		bool micArrowClick = false;
+		bool camArrowClick = false;
+		bool shareArrowClick = false;
+		sf::Vector2f micPos{ 5, 600 };
+		sf::Vector2f camPos{ 50, 600 };
+		sf::Vector2f sharePos{ 190, 600 };
 		int micVolume = 50;
 		int mode = 0; //1v1通话:0, 会议流程:1
 		int64_t timePoint = 0;

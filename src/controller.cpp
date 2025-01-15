@@ -173,6 +173,8 @@ namespace alllink {
     D_LOG("init PeerConnection");
     AddTracks();
     I_LOG("Current audio input device:");
+    videoEngine.getCameraMap(videoInputDevMap);
+    videoEngine.getScreenMap(shareScreenMap);
     audioEngine.GetRecordingDevices(audioInputDevMap);
     audioEngine.setMicrophoneVolume(50);
     videoEngine.switchCamera(false);
@@ -431,6 +433,11 @@ namespace alllink {
       E_LOG("[Controller::ConnectToPeer] Only one call can be established at a time");
       return false;
     }
+    std::regex pattern("^\\d{3}-\\d{3}$");
+    if (!std::regex_match(to, pattern)) {
+      E_LOG("[Controller::ConnectToPeer] meetingId {} error, example 123-456", to);
+      return false;
+    }
     if (!InitializePeerConnection()) {
       E_LOG("[Controller::ConnectToPeer] init peer connection failed");
       return false;
@@ -442,6 +449,8 @@ namespace alllink {
     peerConnection_->CreateOffer(this, webrtc::PeerConnectionInterface::RTCOfferAnswerOptions());
     I_LOG("create offer done");
     hi::PostMsg({ msgTo(MessageType::AUDIO_DEV_INFO), audioInputDevMap });
+    hi::PostMsg({ msgTo(MessageType::VIDEO_DEV_INFO), videoInputDevMap });
+    hi::PostMsg({ msgTo(MessageType::SHARE_SCREEN_INFO), shareScreenMap });
     return true;
   }
 
@@ -497,6 +506,16 @@ namespace alllink {
       }
       break;
     }
+    case msgTo(MessageType::SWITCH_SHARE_SCREEN): {
+      std::string deviceId = std::any_cast<std::string>(msg.data);
+      for (const auto& [id, name] : shareScreenMap) {
+        if (std::atoi(deviceId.c_str()) == id) {
+          I_LOG("[Controller::CustomMessageCallback] pick share screen:{}", id);
+          videoEngine.setScreenCapture(id);
+        }
+      }
+      break;
+    }
     case msgTo(MessageType::SWITCH_MIC_VOLUME): {
       int volume = std::any_cast<int>(msg.data);
       I_LOG("[Controller::CustomMessageCallback] current mic volume={}", volume);
@@ -514,7 +533,6 @@ namespace alllink {
     case msgTo(MessageType::SET_CAMERA): {
       bool state = std::any_cast<bool>(msg.data);
       videoEngine.switchCamera(state);
-      if (state) videoEngine.requestKeyFrame();
       break;
     }
     case msgTo(MessageType::SET_SHARE): {
@@ -524,7 +542,6 @@ namespace alllink {
           W_LOG("[Controller::CustomMessageCallback] Open Share failed");
         }
         videoEngine.switchScreen(true);
-        videoEngine.requestKeyFrame();
         needRequestIFrame = true;
       }
       else {

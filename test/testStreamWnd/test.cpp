@@ -113,31 +113,69 @@ int main() {
   seekbar.init(sf::Vector2f(210, 9), 13, sf::Vector2f(35, 622), sf::Color::White, sf::Color(68, 118, 235));
   seekbar.setText(fontFile, 0, 21, sf::Color::Black);
 
-  VariableStateVertxModule arrow;
-  arrow.set(10, 50, 101, 1020);
-  arrow.setVer({
+  VariableStateVertxModule micArrow;
+  micArrow.set(14, 50, 101, 1020);
+  micArrow.setVer({
     sf::Vertex(sf::Vector2f(101, 1050), sf::Color::Black),
-    sf::Vertex(sf::Vector2f(101 + 4, 1040), sf::Color::Black),
-    sf::Vertex(sf::Vector2f(101 + 4, 1040), sf::Color::Black),
-    sf::Vertex(sf::Vector2f(101 + 8, 1050), sf::Color::Black) });
-  arrow.setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225, 200));
+    sf::Vertex(sf::Vector2f(101 + 7, 1040), sf::Color::Black),
+    sf::Vertex(sf::Vector2f(101 + 7, 1040), sf::Color::Black),
+    sf::Vertex(sf::Vector2f(101 + 14, 1050), sf::Color::Black) });
+  micArrow.setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225, 200));
 
-  DropListModule drop;
-  drop.init(280, 150, 15, 650, 45, fontFile);
-  drop.addLabel(L"麦克风阵列", sf::Color(225, 225, 225), sf::Color(230, 230, 230), sf::Color(240, 240, 240));
-  drop.addLabel(L"logic microphone", sf::Color(225, 225, 225), sf::Color(230, 230, 230), sf::Color(240, 240, 240));
-  drop.addLabel(L"麦克风", sf::Color(225, 225, 225), sf::Color(230, 230, 230), sf::Color(240, 240, 240));
-  drop.setShow(true);
+  VariableStateVertxModule camArrow;
+  camArrow.set(14, 50, 221, 1020);
+  camArrow.setVer({
+    sf::Vertex(sf::Vector2f(221, 1050), sf::Color::Black),
+    sf::Vertex(sf::Vector2f(221 + 7, 1040), sf::Color::Black),
+    sf::Vertex(sf::Vector2f(221 + 7, 1040), sf::Color::Black),
+    sf::Vertex(sf::Vector2f(221 + 14, 1050), sf::Color::Black) });
+  camArrow.setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225, 200));
+
+  VariableStateVertxModule shareArrow;
+  shareArrow.set(14, 50, 361, 1020);
+  shareArrow.setVer({
+    sf::Vertex(sf::Vector2f(361, 1050), sf::Color::Black),
+    sf::Vertex(sf::Vector2f(361 + 7, 1040), sf::Color::Black),
+    sf::Vertex(sf::Vector2f(361 + 7, 1040), sf::Color::Black),
+    sf::Vertex(sf::Vector2f(361 + 14, 1050), sf::Color::Black) });
+  shareArrow.setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225, 200));
+
+  DropListModule micDrop;
+  micDrop.init(280, 150, 15, 650, 45, fontFile);
+  micDrop.addLabel(L"麦克风阵列", sf::Color(225, 225, 225), sf::Color(230, 230, 230), sf::Color(240, 240, 240));
+  micDrop.addLabel(L"logic microphone", sf::Color(225, 225, 225), sf::Color(230, 230, 230), sf::Color(240, 240, 240));
+  micDrop.addLabel(L"麦克风", sf::Color(225, 225, 225), sf::Color(230, 230, 230), sf::Color(240, 240, 240));
+  micDrop.setShow(true);
+
+  DropListModule camDrop;
+  camDrop.init(280, 150, 60, 650, 45, fontFile);
+  camDrop.addLabel(L"Logic C270 HD Webcam", sf::Color(225, 225, 225), sf::Color(230, 230, 230), sf::Color(240, 240, 240));
+  camDrop.addLabel(L"USB camera", sf::Color(225, 225, 225), sf::Color(230, 230, 230), sf::Color(240, 240, 240));
+  camDrop.setShow(true);
+
+  DropListModule shareDrop;
+  shareDrop.init(280, 150, 200, 650, 45, fontFile);
+  shareDrop.addLabel(L"1", sf::Color(225, 225, 225), sf::Color(230, 230, 230), sf::Color(240, 240, 240));
+  shareDrop.addLabel(L"2", sf::Color(225, 225, 225), sf::Color(230, 230, 230), sf::Color(240, 240, 240));
+  shareDrop.setShow(true);
+
+  sf::Vector2f micPos{ 5, 600 };
+  sf::Vector2f camPos{ 50, 600 };
+  sf::Vector2f sharePos{ 190, 600 };
 
   VariableStateFillModule background(sf::Color::Transparent, 2);
   background.setSize(sf::Vector2f(300, 400), 5);
-  background.setPosition(5, 600);
+  background.setPosition(micPos.x, micPos.y);
   background.setFillColor(sf::Color(220, 220, 220));
 
-  bool micSettingPop = false;
+  bool settingPop = false;
 
   wnd->setSize(sf::Vector2u(1280, 720));
   int64_t timePoint = seeker::time::currentTime();
+
+  bool micArrowClick = false;
+  bool camArrowClick = false;
+  bool shareArrowClick = false;
   while (wnd->isOpen()) {
     sf::Vector2f mousePosView;
     while (wnd->pollEvent(event)) {
@@ -193,25 +231,56 @@ int main() {
       }
       else isFull = true;
 
-      bool arrowClick = false;
       mousePosView = wnd->mapPixelToCoords(mousePosWin);
-      if (arrow.onClick(event, mousePosView, wnd)) {
-        arrowClick = true;
-        micSettingPop = !micSettingPop;
+      if (micArrow.onClick(event, mousePosView, wnd)) {
+        micArrowClick = true;
+        camArrowClick = false;
+        shareArrowClick = false;
+        settingPop = true;
+        background.setPosition(micPos.x, micPos.y);
+        I_LOG("mic arrow click");
+      }
+      else if (camArrow.onClick(event, mousePosView, wnd)) {
+        camArrowClick = true;
+        micArrowClick = false;
+        shareArrowClick = false;
+        settingPop = true;
+        background.setPosition(camPos.x, camPos.y);
+        I_LOG("cam arrow click");
+      }
+      else if (shareArrow.onClick(event, mousePosView, wnd)) {
+        shareArrowClick = true;
+        micArrowClick = false;
+        camArrowClick = false;
+        settingPop = true;
+        background.setPosition(sharePos.x, sharePos.y);
+        I_LOG("share arrow click");
       }
       if (background.getGlobalBounds().contains(mousePosView)) {
         seekbar.eventProcess(event, wnd);
-        if (drop.eventProcess(event, mousePosView, wnd, false)) {
-          I_LOG("labal is {}", WstrConv.to_bytes(drop.getSelectedLabel()));
+        if (micArrowClick) {
+          if (micDrop.eventProcess(event, mousePosView, wnd, false)) {
+            I_LOG("mic labal is {}", WstrConv.to_bytes(micDrop.getSelectedLabel()));
+          }
+        }
+        if (camArrowClick) {
+          if(camDrop.eventProcess(event, mousePosView, wnd, false)) {
+            I_LOG("cam labal is {}", WstrConv.to_bytes(camDrop.getSelectedLabel()));
+          }
+        }
+        if (shareArrowClick) {
+          if (shareDrop.eventProcess(event, mousePosView, wnd, false)) {
+            I_LOG("share labal is {}", WstrConv.to_bytes(shareDrop.getSelectedLabel()));
+          }
         }
       }
       else {
         if (event.type == sf::Event::MouseButtonReleased
           && event.mouseButton.button == sf::Mouse::Left
-          && !arrowClick) {
-          if (micSettingPop) micSettingPop = false;
+          && !micArrowClick && !camArrowClick && !shareArrowClick) {
+          if (settingPop) settingPop = false;
         }
-        if (isFull && micSettingPop) micSettingPop = false;
+        if (isFull && settingPop) settingPop = false;
       }
     }
     std::wstring time = L"会议时长 " + 
@@ -236,12 +305,22 @@ int main() {
       else closeShare.render(wnd);
       meetingTime.render(wnd);
       wnd->draw(meetingDescribe);
-      if (micSettingPop) {
+      if (settingPop) {
         wnd->draw(background);
-        seekbar.render(wnd);
-        drop.render(wnd);
+        if (micArrowClick) {
+          seekbar.render(wnd);
+          micDrop.render(wnd);
+        }
+        else if (camArrowClick) {
+          camDrop.render(wnd);
+        }
+        else if (shareArrowClick) {
+          shareDrop.render(wnd);
+        }
       }
-      arrow.render(wnd);
+      micArrow.render(wnd);
+      camArrow.render(wnd);
+      shareArrow.render(wnd);
     }
     wnd->display();
   }

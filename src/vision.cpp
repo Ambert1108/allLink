@@ -214,7 +214,19 @@ namespace alllink {
         case msgTo(MessageType::AUDIO_DEV_INFO): {
           std::shared_ptr<StreamScreen> point = std::dynamic_pointer_cast<StreamScreen>(streamWnd);
           if (!point) return;
-          point->setAudioDev(std::any_cast<std::map<int16_t, std::string>>(msg.data));
+          point->setDevList(std::any_cast<std::map<int16_t, std::string>>(msg.data), 1);
+          break;
+        }
+        case msgTo(MessageType::VIDEO_DEV_INFO): {
+          std::shared_ptr<StreamScreen> point = std::dynamic_pointer_cast<StreamScreen>(streamWnd);
+          if (!point) return;
+          point->setDevList(std::any_cast<std::map<int16_t, std::string>>(msg.data), 2);
+          break;
+        }
+        case msgTo(MessageType::SHARE_SCREEN_INFO): {
+          std::shared_ptr<StreamScreen> point = std::dynamic_pointer_cast<StreamScreen>(streamWnd);
+          if (!point) return;
+          point->setDevList(std::any_cast<std::map<int16_t, std::string>>(msg.data), 3);
           break;
         }
         case msgTo(MessageType::RECONNECT_SERVER): {
@@ -228,6 +240,8 @@ namespace alllink {
         case msgTo(MessageType::MEETING_OK):
         case msgTo(MessageType::SWITCH_AUDIO_INPUT_STR):
         case msgTo(MessageType::SWITCH_AUDIO_INPUT):
+        case msgTo(MessageType::SWITCH_VIDEO_INPUT):
+        case msgTo(MessageType::SWITCH_SHARE_SCREEN):
         case msgTo(MessageType::SWITCH_MIC_VOLUME):
         case msgTo(MessageType::SET_MIC_PHONE):
         case msgTo(MessageType::SET_CAMERA):

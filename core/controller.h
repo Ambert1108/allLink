@@ -105,6 +105,8 @@ namespace alllink {
     rtc::scoped_refptr<webrtc::VideoTrackInterface> screenTrackInterface;
     rtcengine::rtcAudioEngine audioEngine;
     std::map<int16_t, std::string> audioInputDevMap;
+    std::map<int16_t, std::string> videoInputDevMap;
+    std::map<int16_t, std::string> shareScreenMap;
     rtcengine::RTCVideoEngine videoEngine;
     //VideoEngine videoEngine;
     std::shared_ptr<rtcengine::Janitor> janusEngine;

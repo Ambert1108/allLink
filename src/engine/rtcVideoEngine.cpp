@@ -27,7 +27,6 @@ namespace rtcengine {
 		//	encoding.request_key_frame = true;
 		//}
 		//sender->SetParameters(parameters);
-
 		if (!result_or_error.ok()) {
 			RTC_LOG(LS_ERROR) << "Failed to add video track to PeerConnection: "
 				<< result_or_error.error().message();
@@ -37,26 +36,6 @@ namespace rtcengine {
 	}
 
 	void RTCVideoEngine::requestKeyFrame() {
-		// 获取第一个 RTP 发送器
-		//rtc::scoped_refptr<webrtc::RtpSenderInterface> sender = peer_connection_->GetSenders().at(0);
-		//I_LOG("VideoEngine::requestKeyFrame");
-		//if (!sender) {
-		//	std::cerr << "No RTP sender available." << std::endl;
-		//	return;
-		//}
-		//
-		//// 获取当前的 RTP 参数
-		//webrtc::RtpParameters parameters = sender->GetParameters();
-		//I_LOG("id = {} -- {}", parameters.mid, parameters.transaction_id);
-		//// 遍历所有编码设置并请求关键帧
-		//for (auto& encoding : parameters.encodings) {
-		//	encoding.request_key_frame = true; // 请求关键帧
-		//}
-		//
-		//// 设置修改后的参数
-		//sender->SetParameters(parameters);
-
-
 		auto senders = peer_connection_->GetSenders();
 		for (auto& c : senders) {
 			if (!c) {
@@ -71,7 +50,7 @@ namespace rtcengine {
 				for (auto& encoding : parameters.encodings) {
 					encoding.request_key_frame = true; // 请求关键帧
 				}
-		
+
 				// 设置修改后的参数
 				c->SetParameters(parameters);
 				break;
@@ -92,30 +71,6 @@ namespace rtcengine {
 		return cameraState;
 	}
 
-	std::map<int, std::string> RTCVideoEngine::getCameraMap() {
-		std::map<int, std::string> cameraMap{};
-		std::unique_ptr<webrtc::VideoCaptureModule::DeviceInfo> info(
-			webrtc::VideoCaptureFactory::CreateDeviceInfo());
-		if (!info) {
-			return {};
-		}
-
-		int num_devices = info->NumberOfDevices();
-		I_LOG("num_devices:{}", num_devices);
-		for (int i = 0; i < num_devices; ++i) {
-			char devName[256] = { 0 };
-			char uniqueName[256] = { 0 };
-			if (info->GetDeviceName(i, devName, 256, uniqueName, 256) != -1)
-			{
-				std::string devNameStr = devName;
-				std::string devNameUniq = uniqueName;
-				I_LOG("devName = {}, uniqueName = {}", devName, uniqueName);
-				cameraMap.emplace(i, devName);
-			}
-		}
-
-		return cameraMap;
-	}
 	int RTCVideoEngine::setCamera(const int index, rtc::scoped_refptr<webrtc::VideoTrackInterface>& video_track) {
 		// 停止当前的视频轨道
 		if (video_track_) {
@@ -197,17 +152,37 @@ namespace rtcengine {
 		I_LOG("[VideoEngine::init] add new track done");
 	}
 
-	const std::string RTCVideoEngine::GetSourceListString() {
-		std::ostringstream oss;
+	void RTCVideoEngine::getScreenMap(std::map<int16_t, std::string>& screenMap) {
 		webrtc::DesktopCapturer::SourceList sources;
 		if (GetSourceList(&sources)) {
 			int i = 0;
 			for (webrtc::DesktopCapturer::Source& source : sources) {
-				oss << std::to_string(i++) << " : " << source.title << std::endl;
-				I_LOG("screen[{}]: title = {}", i, source.title);
+				I_LOG("screen: dis_id = {}, id ={}, title = {}", source.display_id, source.id, source.title);
+				screenMap.emplace(source.id, source.title);
 			}
 		}
-		return oss.str();
+	}
+
+	void RTCVideoEngine::getCameraMap(std::map<int16_t, std::string>& cameraMap) {
+		std::unique_ptr<webrtc::VideoCaptureModule::DeviceInfo> info(
+			webrtc::VideoCaptureFactory::CreateDeviceInfo());
+		if (!info) {
+			return;
+		}
+
+		int num_devices = info->NumberOfDevices();
+		I_LOG("num_devices:{}", num_devices);
+		for (int i = 0; i < num_devices; ++i) {
+			char devName[256] = { 0 };
+			char uniqueName[256] = { 0 };
+			if (info->GetDeviceName(i, devName, 256, uniqueName, 256) != -1)
+			{
+				std::string devNameStr = devName;
+				std::string devNameUniq = uniqueName;
+				I_LOG("devName = {}, uniqueName = {}", devName, uniqueName);
+				cameraMap.emplace(i, devName);
+			}
+		}
 	}
 
 	bool RTCVideoEngine::GetSourceList(
@@ -237,7 +212,8 @@ namespace rtcengine {
 		peer_connection_ = peer_connection;
 		
 		screen_device = rtc::make_ref_counted<ScreenCapturer>();
-		GetSourceListString();
+		std::map<int16_t, std::string> screen_map;
+		getScreenMap(screen_map);
 		if (screen_device) {
 			screen_device->startCapturer();
 			screen_track_ = peer_connection_factory_->CreateVideoTrack(screen_device, "screen");
@@ -248,7 +224,6 @@ namespace rtcengine {
 				RTC_LOG(LS_ERROR) << "Failed to add video track to PeerConnection: "
 					<< result_or_error.error().message();
 			}
-
 		}
 		else {
 			RTC_LOG(LS_ERROR) << "OpenVideoCaptureDevice failed";
@@ -276,23 +251,4 @@ namespace rtcengine {
 		screen_track_ = nullptr;
 	}
 
-	std::string RTCVideoEngine::modifySdp(const std::string& sdp) {
-		std::istringstream sdpStream(sdp);
-		std::ostringstream filteredSDP;
-		std::string line;
-		bool findScreen = false;
-		// 逐行读取原始SDP内容
-		while (std::getline(sdpStream, line)) {
-			if (line.find("a=msid:000 camera") != std::string::npos) {
-				findScreen = true;
-			}
-			if (line.find("a=fmtp:96") != std::string::npos && findScreen) {
-				filteredSDP << "a=fmtp:96 level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=42001f;gop=90" << std::endl;
-				findScreen = false;
-				continue;
-			}
-			filteredSDP << line << std::endl;
-		}
-		return filteredSDP.str();
-	}
 }
