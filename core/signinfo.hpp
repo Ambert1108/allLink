@@ -229,6 +229,17 @@ namespace alllink {
 		void set_sdpMid(std::string val) {
 			js["sdpMid"] = val;
 		}
+		int64_t timePoint() const {
+			if (js["timePoint"].is_null()) {
+				E_LOG("timePoint is null");
+				return -1;
+			}
+			if (!js["timePoint"].is_number()) {
+				E_LOG("timePoint is not number");
+				return -1;
+			}
+			return js["timePoint"];
+		}
 		json js;
 	};
 

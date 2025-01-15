@@ -176,9 +176,10 @@ namespace alllink {
     videoEngine.getCameraMap(videoInputDevMap);
     videoEngine.getScreenMap(shareScreenMap);
     audioEngine.GetRecordingDevices(audioInputDevMap);
+    audioEngine.GetPlayoutDevices(audioOutputDevMap);
     audioEngine.setMicrophoneVolume(50);
     videoEngine.switchCamera(false);
-    videoEngine.switchScreen(false);
+    //videoEngine.switchScreen(false);
     I_LOG("init finish");
 
     return true;
@@ -212,10 +213,6 @@ namespace alllink {
     if(clear) meetId_.clear();
   }
 
-  void Controller::EnsureStreamingUI() {
-
-  }
-
   void Controller::AddTracks() {
     if (!peerConnection_->GetSenders().empty()) {
       return;  // 轨道已添加
@@ -223,12 +220,11 @@ namespace alllink {
     rtc::scoped_refptr<webrtc::VideoTrackInterface> video_track_, screen_track_;
     audioEngine.AddAudioTracks(peerConnectionFactory_, peerConnection_);
     videoEngine.addVideoTrack(peerConnectionFactory_, peerConnection_, video_track_);
-    videoEngine.addScreenTrack(peerConnectionFactory_, peerConnection_, screen_track_);
+    //videoEngine.addScreenTrack(peerConnectionFactory_, peerConnection_, screen_track_);
     // 向视觉控制器添加本地渲染器
     vision_->startLocalRenderer(video_track_.get());
     screenTrackInterface = screen_track_;
   }
-
 
   //
   // PeerConnectionObserver implementation.
@@ -448,7 +444,8 @@ namespace alllink {
     // 在OnSuccess函数中触发信令流程
     peerConnection_->CreateOffer(this, webrtc::PeerConnectionInterface::RTCOfferAnswerOptions());
     I_LOG("create offer done");
-    hi::PostMsg({ msgTo(MessageType::AUDIO_DEV_INFO), audioInputDevMap });
+    hi::PostMsg({ msgTo(MessageType::AUDIO_INPUT_DEV_INFO), audioInputDevMap });
+    hi::PostMsg({ msgTo(MessageType::AUDIO_OUTPUT_DEV_INFO), audioOutputDevMap });
     hi::PostMsg({ msgTo(MessageType::VIDEO_DEV_INFO), videoInputDevMap });
     hi::PostMsg({ msgTo(MessageType::SHARE_SCREEN_INFO), shareScreenMap });
     return true;
@@ -506,6 +503,16 @@ namespace alllink {
       }
       break;
     }
+    case msgTo(MessageType::SWITCH_AUDIO_OUTPUT_STR): {
+      std::string device = std::any_cast<std::string>(msg.data);
+      for (const auto& [id, name] : audioOutputDevMap) {
+        if (device == name) {
+          I_LOG("[Controller::CustomMessageCallback] pick mic output device:{}", name);
+          audioEngine.ReplacePlayoutDevices(id);
+        }
+      }
+      break;
+    }
     case msgTo(MessageType::SWITCH_SHARE_SCREEN): {
       std::string deviceId = std::any_cast<std::string>(msg.data);
       for (const auto& [id, name] : shareScreenMap) {
@@ -525,7 +532,6 @@ namespace alllink {
     case msgTo(MessageType::SET_MIC_PHONE): {
       bool state = std::any_cast<bool>(msg.data);
       I_LOG("[Controller::CustomMessageCallback] set micphone state {}", state);
-      //audioEngine.setMicrophone(state);
       if (state) client_->sendInfo(meetId_, 21);
       else client_->sendInfo(meetId_, 20);
       break;
@@ -593,16 +599,8 @@ namespace alllink {
     std::string sdp;
     desc->ToString(&sdp);
     sdpTmp = audioEngine.modifySdp(sdp);
-    //auto sdp1 = audioEngine.modifySdp(sdp);
-    //sdpTmp = videoEngine.modifySdp(sdp1);
     I_LOG("LOG SDP\n{}", sdpTmp);
     type = desc->GetType();
-    /*webrtc::SdpParseError error;
-    std::unique_ptr<webrtc::SessionDescriptionInterface> tdesc 
-      = webrtc::CreateSessionDescription(type, sdpTmp, &error);
-
-    peerConnection_->SetLocalDescription(
-      DummySetSessionDescriptionObserver::Create().get(), tdesc.release());*/
 
     Json::Value jmessage;
     jmessage["type"] = webrtc::SdpTypeToString(type);

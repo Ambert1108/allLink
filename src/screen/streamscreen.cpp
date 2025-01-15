@@ -45,7 +45,6 @@ namespace alllink {
 		// 设置界面可见
 		this->setVisible(true);
     this->setPosition(wndPosition);
-    timePoint = seeker::time::currentTime();
 		isActive = true;
 		return true;
 	}
@@ -57,9 +56,11 @@ namespace alllink {
     camState = false;
     micState = false;
     shareState = false;
-    timePoint = 0;
     volumeBar->reset();
-    audioDevList->reset();
+    audioInputDevList->reset();
+    audioOutputDevList->reset();
+    videoDevList->reset();
+    shareDevList->reset();
 		return true;
 	}
 
@@ -83,7 +84,8 @@ namespace alllink {
     audioDevArrow = std::make_unique<VariableStateVertxModule>();
     camDevArrow = std::make_unique<VariableStateVertxModule>();
     shareScreenArrow = std::make_unique<VariableStateVertxModule>();
-    audioDevList = std::make_unique<DropListModule>();
+    audioInputDevList = std::make_unique<DropListModule>();
+    audioOutputDevList = std::make_unique<DropListModule>();
     videoDevList = std::make_unique<DropListModule>();
     shareDevList = std::make_unique<DropListModule>();
     settingBackground = std::make_unique<VariableStateFillModule>(sf::Color::Transparent, 2);
@@ -180,8 +182,11 @@ namespace alllink {
     sf::Vertex(sf::Vector2f((361 + 14) * wr, 1050 * hr), sf::Color::Black) });
     shareScreenArrow->setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225, 200));
 
-    audioDevList->init(280 * wr, 150 * hr, 15 * wr, 655 * hr, 45 * hr, msyhFile);
-    audioDevList->setShow(true);
+    audioInputDevList->init(280 * wr, 150 * hr, 15 * wr, 655 * hr, 45 * hr, msyhFile);
+    audioInputDevList->setShow(true);
+
+    audioOutputDevList->init(280 * wr, 150 * hr, 15 * wr, 807 * hr, 45 * hr, msyhFile);
+    audioOutputDevList->setShow(true);
 
     videoDevList->init(280 * wr, 150 * hr, 60 * wr, 655 * hr, 45 * hr, msyhFile);
     videoDevList->setShow(true);
@@ -271,7 +276,8 @@ namespace alllink {
         this->draw(*settingBackground.get());
         if (micArrowClick) {
           volumeBar->render(this);
-          audioDevList->render(this);
+          audioInputDevList->render(this);
+          audioOutputDevList->render(this);
         }
         else if (camArrowClick) {
           videoDevList->render(this);
@@ -382,11 +388,17 @@ namespace alllink {
       if (settingBackground->getGlobalBounds().contains(mousePosView)) {
         if (micArrowClick) {
           volumeBar->eventProcess(event, this);
-          if (audioDevList->eventProcess(event, mousePosView, this, false)) {
-            std::string label = WstrConv.to_bytes(audioDevList->getSelectedLabel());
-            I_LOG("labal is {}", label);
+          if (audioInputDevList->eventProcess(event, mousePosView, this, false)) {
+            std::string label = WstrConv.to_bytes(audioInputDevList->getSelectedLabel());
+            I_LOG("video input labal is {}", label);
             // 向中控器发送消息，选择麦克风设备
             hi::PostMsg({ msgTo(MessageType::SWITCH_AUDIO_INPUT_STR), label });
+          }
+          if (audioOutputDevList->eventProcess(event, mousePosView, this, false)) {
+            std::string label = WstrConv.to_bytes(audioOutputDevList->getSelectedLabel());
+            I_LOG("video output labal is {}", label);
+            // 向中控器发送消息，选择扬声器设备
+            hi::PostMsg({ msgTo(MessageType::SWITCH_AUDIO_OUTPUT_STR), label });
           }
         }
         if (camArrowClick) {
@@ -452,10 +464,18 @@ namespace alllink {
     meetingDescribe->setString(s);
   }
 
+  void StreamScreen::setSessionTimepoint(int64_t timepoint) { timePoint = timepoint; }
+
   void StreamScreen::setDevList(const std::map<int16_t, std::string>& list, int type) {
+    if (type == 0) {
+      for (const auto& [id, name] : list) {
+        audioInputDevList->addLabel(WstrConv.from_bytes(name), sf::Color(225, 225, 225),
+          sf::Color(230, 230, 230), sf::Color(240, 240, 240));
+      }
+    }
     if (type == 1) {
       for (const auto& [id, name] : list) {
-        audioDevList->addLabel(WstrConv.from_bytes(name), sf::Color(225, 225, 225), 
+        audioOutputDevList->addLabel(WstrConv.from_bytes(name), sf::Color(225, 225, 225),
           sf::Color(230, 230, 230), sf::Color(240, 240, 240));
       }
     }

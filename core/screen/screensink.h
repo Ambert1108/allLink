@@ -236,8 +236,10 @@ namespace alllink {
 
 		void setSessionId(std::string id);
 
+		void setSessionTimepoint(int64_t timepoint);
+
 		/*
-		* type: audio:1 video:2 share:3
+		* type: audio input:0 audio output:1 video:2 share:3
 		*/
 		void setDevList(const std::map<int16_t, std::string>& list, int type);
 
@@ -331,7 +333,7 @@ namespace alllink {
 		std::unique_ptr<BaseText> meetingDescribe;
 		std::unique_ptr<SeekBarModule> volumeBar;
 		std::unique_ptr<VariableStateVertxModule> audioDevArrow, camDevArrow, shareScreenArrow;
-		std::unique_ptr<DropListModule> audioDevList, videoDevList, shareDevList;
+		std::unique_ptr<DropListModule> audioInputDevList, audioOutputDevList, videoDevList, shareDevList;
 		std::unique_ptr<VariableStateFillModule> settingBackground;
 		sf::RectangleShape bottom, top;
 

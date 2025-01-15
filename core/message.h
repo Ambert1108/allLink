@@ -53,6 +53,7 @@ namespace alllink {
 		MEETING_END,                    //通知中控器通话应该结束
 		SWITCH_AUDIO_INPUT,             //通知中控器切换音频输入设备
 		SWITCH_AUDIO_INPUT_STR,         //通知中控器切换音频输入设备字符版本
+		SWITCH_AUDIO_OUTPUT_STR,        //通知中控器切换音频输出设备字符版本
 		SWITCH_VIDEO_INPUT,             //通知中控器切换视频输入设备
 		SWITCH_SHARE_SCREEN,            //通知中控器切换共享屏幕
 		SWITCH_MIC_VOLUME,              //通知中控器修改麦克风输入音量
@@ -79,7 +80,8 @@ namespace alllink {
 		RECONNECT_SERVER,               //通知中控器重新连接信令服务器和Janus服务器
 		RECONNECT_SERVER_FAILED,        //通知视觉控制器重新连接信令服务器失败
 		RECONNECT_PEER,                 //通知中控器重新连接对端
-		AUDIO_DEV_INFO,                 //通知视觉控制器读取音频设备信息
+		AUDIO_INPUT_DEV_INFO,           //通知视觉控制器读取音频输入设备信息
+		AUDIO_OUTPUT_DEV_INFO,          //通知视觉控制器读取音频输出设备信息
 		VIDEO_DEV_INFO,                 //通知视觉控制器读取摄像头设备信息
 		SHARE_SCREEN_INFO               //通知视觉控制器读取可共享屏幕信息
 	};

@@ -36,7 +36,6 @@ namespace alllink {
     bool InitializePeerConnection();
     bool CreatePeerConnection();
     void DeletePeerConnection(bool clear = true);
-    void EnsureStreamingUI();
     void AddTracks();
 
     //
@@ -104,7 +103,7 @@ namespace alllink {
       peerConnectionFactory_;
     rtc::scoped_refptr<webrtc::VideoTrackInterface> screenTrackInterface;
     rtcengine::rtcAudioEngine audioEngine;
-    std::map<int16_t, std::string> audioInputDevMap;
+    std::map<int16_t, std::string> audioInputDevMap, audioOutputDevMap;
     std::map<int16_t, std::string> videoInputDevMap;
     std::map<int16_t, std::string> shareScreenMap;
     rtcengine::RTCVideoEngine videoEngine;

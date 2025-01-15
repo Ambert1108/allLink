@@ -211,7 +211,13 @@ namespace alllink {
           point->setUseId("");
           break;
         }
-        case msgTo(MessageType::AUDIO_DEV_INFO): {
+        case msgTo(MessageType::AUDIO_INPUT_DEV_INFO): {
+          std::shared_ptr<StreamScreen> point = std::dynamic_pointer_cast<StreamScreen>(streamWnd);
+          if (!point) return;
+          point->setDevList(std::any_cast<std::map<int16_t, std::string>>(msg.data), 0);
+          break;
+        }
+        case msgTo(MessageType::AUDIO_OUTPUT_DEV_INFO): {
           std::shared_ptr<StreamScreen> point = std::dynamic_pointer_cast<StreamScreen>(streamWnd);
           if (!point) return;
           point->setDevList(std::any_cast<std::map<int16_t, std::string>>(msg.data), 1);
@@ -237,8 +243,13 @@ namespace alllink {
           // 显示开始窗口
           //wnd->OnEnter();
         }
-        case msgTo(MessageType::MEETING_OK):
+        case msgTo(MessageType::MEETING_OK): {
+          std::shared_ptr<StreamScreen> point = std::dynamic_pointer_cast<StreamScreen>(streamWnd);
+          if (!point) return;
+          point->setSessionTimepoint(std::any_cast<int64_t>(msg.data));
+        }
         case msgTo(MessageType::SWITCH_AUDIO_INPUT_STR):
+        case msgTo(MessageType::SWITCH_AUDIO_OUTPUT_STR):
         case msgTo(MessageType::SWITCH_AUDIO_INPUT):
         case msgTo(MessageType::SWITCH_VIDEO_INPUT):
         case msgTo(MessageType::SWITCH_SHARE_SCREEN):

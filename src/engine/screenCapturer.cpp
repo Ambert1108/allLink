@@ -69,6 +69,7 @@ void ScreenCapturer::OnCaptureResult(webrtc::DesktopCapturer::Result result,
 
   if (!i420_buffer_.get() ||
     i420_buffer_->width() * i420_buffer_->height() < width * height) {
+    i420_buffer_.release();
     i420_buffer_ = webrtc::I420Buffer::Create(width, height);
   }
   libyuv::ConvertToI420(frame->data(), 0, i420_buffer_->MutableDataY(),
