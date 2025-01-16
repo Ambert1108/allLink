@@ -170,7 +170,7 @@ namespace alllink {
       DeletePeerConnection();
       return false;
     }
-    D_LOG("init PeerConnection");
+    I_LOG("init PeerConnection");
     AddTracks();
     I_LOG("Current audio input device:");
     videoEngine.getCameraMap(videoInputDevMap);
@@ -215,12 +215,13 @@ namespace alllink {
 
   void Controller::AddTracks() {
     if (!peerConnection_->GetSenders().empty()) {
+      I_LOG("pc senders is not empty");
       return;  // 轨道已添加
     }
     rtc::scoped_refptr<webrtc::VideoTrackInterface> video_track_, screen_track_;
-    audioEngine.AddAudioTracks(peerConnectionFactory_, peerConnection_);
     videoEngine.addVideoTrack(peerConnectionFactory_, peerConnection_, video_track_);
     videoEngine.addScreenTrack(peerConnectionFactory_, peerConnection_, screen_track_);
+    audioEngine.AddAudioTracks(peerConnectionFactory_, peerConnection_);
     // 向视觉控制器添加本地渲染器
     vision_->startLocalRenderer(video_track_.get());
     screenTrackInterface = screen_track_;

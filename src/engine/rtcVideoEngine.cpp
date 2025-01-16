@@ -13,24 +13,16 @@ namespace rtcengine {
 		rtc::scoped_refptr<webrtc::VideoTrackInterface>& video_track) {
 		peer_connection_factory_ = peer_connection_factory;
 		peer_connection_ = peer_connection;
-
-		//auto res = videoDevList.try_emplace(0, CapturerTrackSource::Create());
-		//if (!res.second) {
-		//	E_LOG("emplace video track failed");
-		//	return -1;
-		//}
-		//rtc::scoped_refptr<CapturerTrackSource> device = CapturerTrackSource::Create();
 		rtc::scoped_refptr<CapturerTrackSource> video_device = CapturerTrackSource::Create();
 		video_track_ = peer_connection_factory_->CreateVideoTrack(video_device, "camera");
 		video_track = video_track_;
 		auto result_or_error = peer_connection_->AddTrack(video_track_, { "000" });
 
 		if (!result_or_error.ok()) {
-			RTC_LOG(LS_ERROR) << "Failed to add video track to PeerConnection: "
-				<< result_or_error.error().message();
+			E_LOG("Failed to add video track to PeerConnection:{}", result_or_error.error().message());
 			return -1;
 		}
-		videoDevList.emplace(0, std::move(video_device));
+		//videoDevList.emplace(0, std::move(video_device));
 		return 0;
 	}
 
@@ -248,7 +240,7 @@ namespace rtcengine {
 			screen_track_ = peer_connection_factory_->CreateVideoTrack(screen_device, "screen");
 			video_track = screen_track_;
 			auto result_or_error = peer_connection_->AddTrack(screen_track_, { "111" });
-			I_LOG("[VideoEngine::init] add track done");
+			I_LOG("[VideoEngine::addScreenTrack] add track done");
 			if (!result_or_error.ok()) {
 				RTC_LOG(LS_ERROR) << "Failed to add video track to PeerConnection: "
 					<< result_or_error.error().message();
