@@ -65,13 +65,12 @@ void ScreenCapturer::OnCaptureResult(webrtc::DesktopCapturer::Result result,
     return;
   int width = frame->size().width();
   int height = frame->size().height();
-  //I_LOG("w:{} h:{}", width, height);
-
-  if (!i420_buffer_.get() ||
-    i420_buffer_->width() * i420_buffer_->height() < width * height) {
+  //D_LOG("w:{} h:{} xxx {}", width, height, width * height);
+  if (!i420_buffer_.get() || i420_buffer_->width() * i420_buffer_->height() != width * height) {
     i420_buffer_.release();
     i420_buffer_ = webrtc::I420Buffer::Create(width, height);
   }
+  //D_LOG("xxxxxxxxx w:{} h:{} xxx {}", i420_buffer_->width(), i420_buffer_->height(), i420_buffer_->width() * i420_buffer_->height());
   libyuv::ConvertToI420(frame->data(), 0, i420_buffer_->MutableDataY(),
     i420_buffer_->StrideY(), i420_buffer_->MutableDataU(),
     i420_buffer_->StrideU(), i420_buffer_->MutableDataV(),

@@ -14,24 +14,23 @@ namespace rtcengine {
 		peer_connection_factory_ = peer_connection_factory;
 		peer_connection_ = peer_connection;
 
+		//auto res = videoDevList.try_emplace(0, CapturerTrackSource::Create());
+		//if (!res.second) {
+		//	E_LOG("emplace video track failed");
+		//	return -1;
+		//}
+		//rtc::scoped_refptr<CapturerTrackSource> device = CapturerTrackSource::Create();
 		rtc::scoped_refptr<CapturerTrackSource> video_device = CapturerTrackSource::Create();
 		video_track_ = peer_connection_factory_->CreateVideoTrack(video_device, "camera");
 		video_track = video_track_;
 		auto result_or_error = peer_connection_->AddTrack(video_track_, { "000" });
-		I_LOG("[VideoEngine::init] add track done");
 
-		////set frameRate...
-		//rtc::scoped_refptr<webrtc::RtpSenderInterface> sender = peer_connection_->GetSenders().at(0);
-		//webrtc::RtpParameters parameters = sender->GetParameters();
-		//for (auto& encoding : parameters.encodings) {
-		//	encoding.request_key_frame = true;
-		//}
-		//sender->SetParameters(parameters);
 		if (!result_or_error.ok()) {
 			RTC_LOG(LS_ERROR) << "Failed to add video track to PeerConnection: "
 				<< result_or_error.error().message();
 			return -1;
 		}
+		videoDevList.emplace(0, std::move(video_device));
 		return 0;
 	}
 
@@ -104,52 +103,82 @@ namespace rtcengine {
 		return 0;
 	}
 
-	void RTCVideoEngine::switchTrack(rtc::scoped_refptr<webrtc::VideoTrackInterface>& new_video_track) {
-		std::vector<rtc::scoped_refptr<webrtc::RtpSenderInterface>> senders = peer_connection_->GetSenders();
+	void RTCVideoEngine::switchTrack(rtc::scoped_refptr<webrtc::VideoTrackInterface>& new_video_track, int index) {
+		/*std::vector<rtc::scoped_refptr<webrtc::RtpSenderInterface>> senders = peer_connection_->GetSenders();
 		rtc::scoped_refptr<webrtc::RtpSenderInterface> video_sender;
+		if (video_device1 == nullptr) {
+			video_device1 =
+				CapturerTrackSource::Create(1);
+			if (!video_device1)
+				I_LOG("nullptr");
+			else {
+				I_LOG("!nullptr");
+			}
+		}
 
+		I_LOG("index:{}", index);
+			
 
 		for (const auto& sender : senders) {
 			if (sender->track()->kind() == "video") {
-				video_sender = sender;
-				sender->track()->Release();
-				//ender->SetTrack()
-				//peer_connection_factory_->
 
-				sender->Release();
-				peer_connection_->RemoveTrackOrError(sender);
-				video_device->Release();
-				video_device = nullptr;
+				if (index == 0) {
+					new_video_track_
+						= peer_connection_factory_->CreateVideoTrack(video_device0, "video_label_new");
+
+
+					new_video_track = new_video_track_;
+					auto* track = reinterpret_cast<webrtc::MediaStreamTrackInterface*>(new_video_track_.release());
+					sender->SetTrack(track);
+				}
+				if (index == 1) {
+					new_video_track_
+						= peer_connection_factory_->CreateVideoTrack(video_device1, "video_label_new");
+
+
+					new_video_track = new_video_track_;
+					auto* track = reinterpret_cast<webrtc::MediaStreamTrackInterface*>(new_video_track_.release());
+					sender->SetTrack(track);
+				}
 
 				break;
 			}
+		}*/
+	}
+
+	void RTCVideoEngine::setCamera(int id) {
+		std::vector<rtc::scoped_refptr<webrtc::RtpSenderInterface>> senders = peer_connection_->GetSenders();
+		rtc::scoped_refptr<webrtc::RtpSenderInterface> sender = nullptr;
+		for (const auto& c : senders) {
+			I_LOG("id {}", c->track()->id());
+			if (c->track()->id() == "camera") {
+				sender = c;
+				break;
+			}
 		}
-		if (!video_sender) {
-			RTC_LOG(LS_WARNING) << "No video sender found!";
+		if (!sender) {
+			E_LOG("find camera sender failed");
 			return;
 		}
-		I_LOG("[VideoEngine::init] remove track done");
 
-
-
-		video_device =
-			CapturerTrackSource::Create(1);
-		I_LOG("aa");
-		if (!video_device)
-			I_LOG("nullptr");
+		auto it = videoDevList.find(id);
+		if (it != videoDevList.end()) {
+			video_track_ = peer_connection_factory_->CreateVideoTrack(it->second, "camera");
+			auto* track = reinterpret_cast<webrtc::MediaStreamTrackInterface*>(video_track_.get());
+			sender->SetTrack(track);
+		}
 		else {
-			I_LOG("!nullptr");
+			rtc::scoped_refptr<CapturerTrackSource> device = CapturerTrackSource::Create(id);
+			if (!device) {
+				E_LOG("create device {} failed", id);
+				return;
+			}
+			video_track_ = peer_connection_factory_->CreateVideoTrack(device, "camera");
+			auto* track = reinterpret_cast<webrtc::MediaStreamTrackInterface*>(video_track_.get());
+			sender->SetTrack(track);
+			videoDevList.emplace(id, device);
 		}
 
-		new_video_track_
-			= peer_connection_factory_->CreateVideoTrack(video_device, "video_label_new");
-		I_LOG("bb");
-
-
-		new_video_track = new_video_track_;
-		I_LOG("cc");
-		auto result_or_error = peer_connection_->AddTrack(new_video_track_, { "video_label" });
-		I_LOG("[VideoEngine::init] add new track done");
 	}
 
 	void RTCVideoEngine::getScreenMap(std::map<int16_t, std::string>& screenMap) {
@@ -212,8 +241,8 @@ namespace rtcengine {
 		peer_connection_ = peer_connection;
 		
 		screen_device = rtc::make_ref_counted<ScreenCapturer>();
-		std::map<int16_t, std::string> screen_map;
-		getScreenMap(screen_map);
+		//std::map<int16_t, std::string> screen_map;
+		//getScreenMap(screen_map);
 		if (screen_device) {
 			screen_device->startCapturer();
 			screen_track_ = peer_connection_factory_->CreateVideoTrack(screen_device, "screen");
@@ -249,6 +278,9 @@ namespace rtcengine {
 		peer_connection_ = nullptr;
 		video_track_ = nullptr;
 		screen_track_ = nullptr;
+		cameraDevice = nullptr;
+		video_device1 = nullptr;
+		videoDevList.clear();
 	}
 
 }

@@ -70,15 +70,15 @@ namespace rtcengine {
 					I_LOG("devName = {}, uniqueName = {}", devName, uniqueName);
 				}
 			}
-			for (int i = 0; i < num_devices; ++i) {
-				capturer = absl::WrapUnique(
-					webrtc::test::VcmCapturer::Create(kWidth, kHeight, kFps, i));
-				if (capturer && i == deviceId) {
-					I_LOG("open index = {}", deviceId);
-					return rtc::make_ref_counted<CapturerTrackSource>(std::move(capturer));
-				}
+			capturer = absl::WrapUnique(
+				webrtc::test::VcmCapturer::Create(kWidth, kHeight, kFps, deviceId));
+			if (capturer) {
+				I_LOG("open index = {}", deviceId);
+				return rtc::make_ref_counted<CapturerTrackSource>(std::move(capturer));
 			}
+			E_LOG("Failed to create index = {}", deviceId);
 			return nullptr;
+
 		}
 
 	protected:
@@ -126,8 +126,9 @@ namespace rtcengine {
 		void getScreenMap(std::map<int16_t, std::string>& screenMap);
 
     int setCamera(const int index, rtc::scoped_refptr<webrtc::VideoTrackInterface>& video_track);
-
-    void switchTrack(rtc::scoped_refptr<webrtc::VideoTrackInterface>& new_video_track);
+		void setCamera(int id);
+    void switchTrack(rtc::scoped_refptr<webrtc::VideoTrackInterface>& new_video_track, int index);
+    
 
     void close();
 
@@ -138,7 +139,9 @@ namespace rtcengine {
     rtc::scoped_refptr<webrtc::VideoTrackInterface> screen_track_;
     rtc::scoped_refptr<webrtc::VideoTrackInterface> new_video_track_;
     rtc::scoped_refptr<ScreenCapturer> screen_device = nullptr;
-    rtc::scoped_refptr<CapturerTrackSource> video_device = nullptr;
+    rtc::scoped_refptr<CapturerTrackSource> cameraDevice = nullptr;
+    rtc::scoped_refptr<CapturerTrackSource> video_device1 = nullptr;
+		std::map<int, rtc::scoped_refptr<CapturerTrackSource>> videoDevList{};
     bool cameraState = true;
     bool screenState = true;
   };

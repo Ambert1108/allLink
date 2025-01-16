@@ -179,7 +179,7 @@ namespace alllink {
     audioEngine.GetPlayoutDevices(audioOutputDevMap);
     audioEngine.setMicrophoneVolume(50);
     videoEngine.switchCamera(false);
-    //videoEngine.switchScreen(false);
+    videoEngine.switchScreen(false);
     I_LOG("init finish");
 
     return true;
@@ -220,7 +220,7 @@ namespace alllink {
     rtc::scoped_refptr<webrtc::VideoTrackInterface> video_track_, screen_track_;
     audioEngine.AddAudioTracks(peerConnectionFactory_, peerConnection_);
     videoEngine.addVideoTrack(peerConnectionFactory_, peerConnection_, video_track_);
-    //videoEngine.addScreenTrack(peerConnectionFactory_, peerConnection_, screen_track_);
+    videoEngine.addScreenTrack(peerConnectionFactory_, peerConnection_, screen_track_);
     // 向视觉控制器添加本地渲染器
     vision_->startLocalRenderer(video_track_.get());
     screenTrackInterface = screen_track_;
@@ -509,6 +509,16 @@ namespace alllink {
         if (device == name) {
           I_LOG("[Controller::CustomMessageCallback] pick mic output device:{}", name);
           audioEngine.ReplacePlayoutDevices(id);
+        }
+      }
+      break;
+    }
+    case msgTo(MessageType::SWITCH_VIDEO_INPUT): {
+      std::string device = std::any_cast<std::string>(msg.data);
+      for (const auto& [id, name] : videoInputDevMap) {
+        if (device == name) {
+          I_LOG("[Controller::CustomMessageCallback] pick mic output device:{}", name);
+          videoEngine.setCamera(id);
         }
       }
       break;
