@@ -154,7 +154,7 @@ namespace alllink {
     top.setSize(sf::Vector2f(1920 * wr, 40 * hr));
     top.setFillColor(sf::Color(255, 255, 255));
 
-    volumeBar->init(sf::Vector2f(210 * wr, 9 * hr), 13 * wr, sf::Vector2f(35 * wr, 622 * hr), 
+    volumeBar->init(sf::Vector2f(210 * wr, 9 * hr), 13 * wr, sf::Vector2f(35 * wr, 422 * hr), 
       sf::Color::White, sf::Color(68, 118, 235));
     volumeBar->setText(msyhFile, 0, 21 * hr, sf::Color::Black);
 
@@ -182,10 +182,10 @@ namespace alllink {
     sf::Vertex(sf::Vector2f((361 + 14) * wr, 1050 * hr), sf::Color::Black) });
     shareScreenArrow->setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225, 200));
 
-    audioInputDevList->init(280 * wr, 150 * hr, 15 * wr, 655 * hr, 45 * hr, msyhFile);
+    audioInputDevList->init(280 * wr, 150 * hr, 15 * wr, 455 * hr, 45 * hr, msyhFile);
     audioInputDevList->setShow(true);
 
-    audioOutputDevList->init(280 * wr, 150 * hr, 15 * wr, 807 * hr, 45 * hr, msyhFile);
+    audioOutputDevList->init(280 * wr, 150 * hr, 15 * wr, 707 * hr, 45 * hr, msyhFile);
     audioOutputDevList->setShow(true);
 
     videoDevList->init(280 * wr, 150 * hr, 60 * wr, 655 * hr, 45 * hr, msyhFile);
@@ -194,7 +194,7 @@ namespace alllink {
     shareDevList->init(280 * wr, 150 * hr, 200 * wr, 655 * hr, 45 * hr, msyhFile);
     shareDevList->setShow(true);
 
-    settingBackground->setSize(sf::Vector2f(300 * wr, 400 * hr), 5 * wr);
+    settingBackground->setSize(sf::Vector2f(300 * wr, 600 * hr), 5 * wr);
     settingBackground->setPosition(micPos.x * wr, micPos.y * hr);
     settingBackground->setFillColor(sf::Color(220, 220, 220));
 
@@ -403,7 +403,9 @@ namespace alllink {
         }
         if (camArrowClick) {
           if (videoDevList->eventProcess(event, mousePosView, this, false)) {
-            I_LOG("cam labal is {}", WstrConv.to_bytes(videoDevList->getSelectedLabel()));
+            std::string label = WstrConv.to_bytes(videoDevList->getSelectedLabel());
+            I_LOG("cam labal is {}", label);
+            hi::PostMsg({ msgTo(MessageType::SWITCH_VIDEO_INPUT), label });
           }
         }
         if (shareArrowClick) {

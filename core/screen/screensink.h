@@ -356,9 +356,9 @@ namespace alllink {
 		bool micArrowClick = false;
 		bool camArrowClick = false;
 		bool shareArrowClick = false;
-		sf::Vector2f micPos{ 5, 600 };
-		sf::Vector2f camPos{ 50, 600 };
-		sf::Vector2f sharePos{ 190, 600 };
+		sf::Vector2f micPos{ 5, 400 };
+		sf::Vector2f camPos{ 50, 400 };
+		sf::Vector2f sharePos{ 190, 400 };
 		int micVolume = 50;
 		int mode = 0; //1v1通话:0, 会议流程:1
 		int64_t timePoint = 0;

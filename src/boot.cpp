@@ -21,7 +21,7 @@
 
 int main(int argc, char* argv[]) {
   std::string logPattern = "%^[%d %H:%M:%S.%e %s:%#] [%L]:%$ %v";
-  std::string logFilename = "webrtc.log";
+  std::string logFilename = "allLink.log";
   int level = 1;
   seeker::Logger::init(logFilename, false, true, true, logPattern, level);
   using namespace alllink;

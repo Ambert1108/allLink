@@ -280,8 +280,11 @@ namespace alllink {
       std::string sdp = seeker::json::toJsonString(jsep);
       msg.set_sdp(sdp);
       callback_->OnMessageFromSignling(msg);
-      signalState = State::CALLER; 
-      hi::PostMsg({ msgTo(MessageType::MEETING_OK), info.timePoint()});
+      signalState = State::CALLER;
+      if (info.timePoint() == -1) {
+        hi::PostMsg({ msgTo(MessageType::MEETING_OK), seeker::time::currentTime()});
+      }
+      else hi::PostMsg({ msgTo(MessageType::MEETING_OK), info.timePoint() });
     }
     else if (info.cmeth() == "INVITE_SHARE") {
       I_LOG("open share success");
