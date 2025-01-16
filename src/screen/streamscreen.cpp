@@ -369,21 +369,21 @@ namespace alllink {
         camArrowClick = false;
         shareArrowClick = false;
         settingPop = true;
-        settingBackground->setPosition(micPos.x, micPos.y);
+        settingBackground->setPosition(micPos.x * wr, micPos.y * hr);
       }
       else if (camDevArrow->onClick(event, mousePosView, this)) {
         camArrowClick = true;
         micArrowClick = false;
         shareArrowClick = false;
         settingPop = true;
-        settingBackground->setPosition(camPos.x, camPos.y);
+        settingBackground->setPosition(camPos.x * wr, camPos.y * hr);
       }
       else if (shareScreenArrow->onClick(event, mousePosView, this)) {
         shareArrowClick = true;
         micArrowClick = false;
         camArrowClick = false;
         settingPop = true;
-        settingBackground->setPosition(sharePos.x, sharePos.y);
+        settingBackground->setPosition(sharePos.x * wr, sharePos.y * hr);
       }
       if (settingBackground->getGlobalBounds().contains(mousePosView)) {
         if (micArrowClick) {
