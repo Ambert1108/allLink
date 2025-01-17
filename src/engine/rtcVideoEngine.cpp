@@ -22,7 +22,7 @@ namespace rtcengine {
 			E_LOG("Failed to add video track to PeerConnection:{}", result_or_error.error().message());
 			return -1;
 		}
-		//videoDevList.emplace(0, std::move(video_device));
+		videoDevList.emplace(0, std::move(video_device));
 		return 0;
 	}
 

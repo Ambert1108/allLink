@@ -109,10 +109,6 @@ int main() {
   top.setSize(sf::Vector2f(1920, 40));
   top.setFillColor(sf::Color(255, 255, 255));
 
-  SeekBarModule seekbar;
-  seekbar.init(sf::Vector2f(210, 9), 13, sf::Vector2f(35, 622), sf::Color::White, sf::Color(68, 118, 235));
-  seekbar.setText(fontFile, 0, 21, sf::Color::Black);
-
   VariableStateVertxModule micArrow;
   micArrow.set(14, 50, 101, 1020);
   micArrow.setVer({
@@ -140,33 +136,110 @@ int main() {
     sf::Vertex(sf::Vector2f(361 + 14, 1050), sf::Color::Black) });
   shareArrow.setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225, 200));
 
+
+  sf::Vector2f micPos{ 5, 400 };
+  sf::Vector2f camPos{ 50, 400 };
+  sf::Vector2f sharePos{ 190, 400 };
+
+  BaseText seekbarDescribe;
+  seekbarDescribe.init(fontFile);
+  seekbarDescribe.setCharacterSize(15);
+  seekbarDescribe.setString(L"调节麦克风音量");
+  seekbarDescribe.setPosition(micPos.x + 7, 415);
+  seekbarDescribe.setFillColor(sf::Color::Black);
+
+  SeekBarModule seekbar;
+  seekbar.init(sf::Vector2f(210, 9), 13, sf::Vector2f(micPos.x + 30, 445), sf::Color::White, sf::Color(68, 118, 235));
+  seekbar.setText(fontFile, 0, 21, sf::Color::Black);
+
+  BaseText micDescribe;
+  micDescribe.init(fontFile);
+  micDescribe.setCharacterSize(15);
+  micDescribe.setString(L"选择麦克风");
+  micDescribe.setPosition(micPos.x + 7, 485);
+  micDescribe.setFillColor(sf::Color::Black);
+
   DropListModule micDrop;
-  micDrop.init(280, 150, 15, 650, 45, fontFile);
+  micDrop.init(280, 150, micPos.x + 10, 510, 40, fontFile);
   micDrop.addLabel(L"麦克风阵列", sf::Color(225, 225, 225), sf::Color(230, 230, 230), sf::Color(240, 240, 240));
   micDrop.addLabel(L"logic microphone", sf::Color(225, 225, 225), sf::Color(230, 230, 230), sf::Color(240, 240, 240));
   micDrop.addLabel(L"麦克风", sf::Color(225, 225, 225), sf::Color(230, 230, 230), sf::Color(240, 240, 240));
+  micDrop.addLabel(L"麦克风2", sf::Color(225, 225, 225), sf::Color(230, 230, 230), sf::Color(240, 240, 240));
+  micDrop.addLabel(L"麦克风3", sf::Color(225, 225, 225), sf::Color(230, 230, 230), sf::Color(240, 240, 240));
   micDrop.setShow(true);
 
+  BaseText spDescribe;
+  spDescribe.init(fontFile);
+  spDescribe.setCharacterSize(15);
+  spDescribe.setString(L"选择扬声器");
+  spDescribe.setPosition(micPos.x + 7, 755);
+  spDescribe.setFillColor(sf::Color::Black);
+
+  DropListModule spDrop;
+  spDrop.init(280, 150, micPos.x + 10, 780, 40, fontFile);
+  spDrop.addLabel(L"Arctis 5 Chat", sf::Color(225, 225, 225), sf::Color(230, 230, 230), sf::Color(240, 240, 240));
+  spDrop.addLabel(L"EDIFIER M30", sf::Color(225, 225, 225), sf::Color(230, 230, 230), sf::Color(240, 240, 240));
+  spDrop.addLabel(L"扬声器1", sf::Color(225, 225, 225), sf::Color(230, 230, 230), sf::Color(240, 240, 240));
+  spDrop.addLabel(L"扬声器2", sf::Color(225, 225, 225), sf::Color(230, 230, 230), sf::Color(240, 240, 240));
+  spDrop.addLabel(L"扬声器3", sf::Color(225, 225, 225), sf::Color(230, 230, 230), sf::Color(240, 240, 240));
+  spDrop.setShow(true);
+
+  BaseText camDescribe;
+  camDescribe.init(fontFile);
+  camDescribe.setCharacterSize(15);
+  camDescribe.setString(L"选择摄像头");
+  camDescribe.setPosition(camPos.x + 7, 630);
+  camDescribe.setFillColor(sf::Color::Black);
+
   DropListModule camDrop;
-  camDrop.init(280, 150, 60, 650, 45, fontFile);
+  camDrop.init(280, 150, camPos.x + 10, 655, 40, fontFile);
   camDrop.addLabel(L"Logic C270 HD Webcam", sf::Color(225, 225, 225), sf::Color(230, 230, 230), sf::Color(240, 240, 240));
   camDrop.addLabel(L"USB camera", sf::Color(225, 225, 225), sf::Color(230, 230, 230), sf::Color(240, 240, 240));
   camDrop.setShow(true);
 
-  DropListModule shareDrop;
-  shareDrop.init(280, 150, 200, 650, 45, fontFile);
-  shareDrop.addLabel(L"1", sf::Color(225, 225, 225), sf::Color(230, 230, 230), sf::Color(240, 240, 240));
-  shareDrop.addLabel(L"2", sf::Color(225, 225, 225), sf::Color(230, 230, 230), sf::Color(240, 240, 240));
-  shareDrop.setShow(true);
+  BaseText screenDescribe;
+  screenDescribe.init(fontFile);
+  screenDescribe.setCharacterSize(15);
+  screenDescribe.setString(L"选择屏幕");
+  screenDescribe.setPosition(sharePos.x + 7, 410);
+  screenDescribe.setFillColor(sf::Color::Black);
 
-  sf::Vector2f micPos{ 5, 600 };
-  sf::Vector2f camPos{ 50, 600 };
-  sf::Vector2f sharePos{ 190, 600 };
+  DropListModule screenDrop;
+  screenDrop.init(280, 150, sharePos.x + 10, 430, 40, fontFile);
+  screenDrop.addLabel(L"1", sf::Color(225, 225, 225), sf::Color(230, 230, 230), sf::Color(240, 240, 240));
+  screenDrop.addLabel(L"2", sf::Color(225, 225, 225), sf::Color(230, 230, 230), sf::Color(240, 240, 240));
+  screenDrop.addLabel(L"3", sf::Color(225, 225, 225), sf::Color(230, 230, 230), sf::Color(240, 240, 240));
+  screenDrop.setShow(true);
+
+  BaseText windowDescribe;
+  windowDescribe.init(fontFile);
+  windowDescribe.setCharacterSize(15);
+  windowDescribe.setString(L"选择窗口");
+  windowDescribe.setPosition(sharePos.x + 7, 582);
+  windowDescribe.setFillColor(sf::Color::Black);
+
+  DropListModule windowDrop;
+  windowDrop.init(280, 150, sharePos.x + 10, 602, 40, fontFile, 9);
+  windowDrop.addLabel(L"窗口1", sf::Color(225, 225, 225), sf::Color(230, 230, 230), sf::Color(240, 240, 240));
+  windowDrop.addLabel(L"窗口2", sf::Color(225, 225, 225), sf::Color(230, 230, 230), sf::Color(240, 240, 240));
+  windowDrop.addLabel(L"窗口3", sf::Color(225, 225, 225), sf::Color(230, 230, 230), sf::Color(240, 240, 240));
+  windowDrop.addLabel(L"窗口4", sf::Color(225, 225, 225), sf::Color(230, 230, 230), sf::Color(240, 240, 240));
+  windowDrop.addLabel(L"窗口5", sf::Color(225, 225, 225), sf::Color(230, 230, 230), sf::Color(240, 240, 240));
+  windowDrop.addLabel(L"窗口6", sf::Color(225, 225, 225), sf::Color(230, 230, 230), sf::Color(240, 240, 240));
+  windowDrop.addLabel(L"窗口7", sf::Color(225, 225, 225), sf::Color(230, 230, 230), sf::Color(240, 240, 240));
+  windowDrop.addLabel(L"窗口8", sf::Color(225, 225, 225), sf::Color(230, 230, 230), sf::Color(240, 240, 240));
+  windowDrop.addLabel(L"窗口9", sf::Color(225, 225, 225), sf::Color(230, 230, 230), sf::Color(240, 240, 240));
+  windowDrop.setShow(true);
 
   VariableStateFillModule background(sf::Color::Transparent, 2);
-  background.setSize(sf::Vector2f(300, 400), 5);
+  background.setSize(sf::Vector2f(300, 600), 5);
   background.setPosition(micPos.x, micPos.y);
   background.setFillColor(sf::Color(220, 220, 220));
+
+  sf::RectangleShape sense;
+  sense.setSize(sf::Vector2f(480, 80));
+  sense.setPosition(sf::Vector2f(15, 1000));
+  sense.setFillColor(sf::Color::Transparent);
 
   bool settingPop = false;
 
@@ -176,6 +249,7 @@ int main() {
   bool micArrowClick = false;
   bool camArrowClick = false;
   bool shareArrowClick = false;
+
   while (wnd->isOpen()) {
     sf::Vector2f mousePosView;
     while (wnd->pollEvent(event)) {
@@ -231,11 +305,13 @@ int main() {
       }
       else isFull = true;
 
+      bool arrowClick = false;
       mousePosView = wnd->mapPixelToCoords(mousePosWin);
       if (micArrow.onClick(event, mousePosView, wnd)) {
         micArrowClick = true;
         camArrowClick = false;
         shareArrowClick = false;
+        arrowClick = true;
         settingPop = true;
         background.setPosition(micPos.x, micPos.y);
         I_LOG("mic arrow click");
@@ -244,6 +320,7 @@ int main() {
         camArrowClick = true;
         micArrowClick = false;
         shareArrowClick = false;
+        arrowClick = true;
         settingPop = true;
         background.setPosition(camPos.x, camPos.y);
         I_LOG("cam arrow click");
@@ -252,6 +329,7 @@ int main() {
         shareArrowClick = true;
         micArrowClick = false;
         camArrowClick = false;
+        arrowClick = true;
         settingPop = true;
         background.setPosition(sharePos.x, sharePos.y);
         I_LOG("share arrow click");
@@ -262,6 +340,9 @@ int main() {
           if (micDrop.eventProcess(event, mousePosView, wnd, false)) {
             I_LOG("mic labal is {}", WstrConv.to_bytes(micDrop.getSelectedLabel()));
           }
+          if (spDrop.eventProcess(event, mousePosView, wnd, false)) {
+            I_LOG("speaker labal is {}", WstrConv.to_bytes(spDrop.getSelectedLabel()));
+          }
         }
         if (camArrowClick) {
           if(camDrop.eventProcess(event, mousePosView, wnd, false)) {
@@ -269,15 +350,19 @@ int main() {
           }
         }
         if (shareArrowClick) {
-          if (shareDrop.eventProcess(event, mousePosView, wnd, false)) {
-            I_LOG("share labal is {}", WstrConv.to_bytes(shareDrop.getSelectedLabel()));
+          if (screenDrop.eventProcess(event, mousePosView, wnd, false)) {
+            I_LOG("screen labal is {}", WstrConv.to_bytes(screenDrop.getSelectedLabel()));
+          }
+          if (windowDrop.eventProcess(event, mousePosView, wnd, false)) {
+            I_LOG("window labal is {}", WstrConv.to_bytes(windowDrop.getSelectedLabel()));
           }
         }
       }
+      else if (sense.getGlobalBounds().contains(mousePosView)) {
+        //do nothing
+      }
       else {
-        if (event.type == sf::Event::MouseButtonReleased
-          && event.mouseButton.button == sf::Mouse::Left
-          && !micArrowClick && !camArrowClick && !shareArrowClick) {
+        if (!arrowClick) {
           if (settingPop) settingPop = false;
         }
         if (isFull && settingPop) settingPop = false;
@@ -308,14 +393,22 @@ int main() {
       if (settingPop) {
         wnd->draw(background);
         if (micArrowClick) {
+          wnd->draw(seekbarDescribe);
+          wnd->draw(micDescribe);
+          wnd->draw(spDescribe);
           seekbar.render(wnd);
           micDrop.render(wnd);
+          spDrop.render(wnd);
         }
         else if (camArrowClick) {
+          wnd->draw(camDescribe);
           camDrop.render(wnd);
         }
         else if (shareArrowClick) {
-          shareDrop.render(wnd);
+          wnd->draw(screenDescribe);
+          wnd->draw(windowDescribe);
+          screenDrop.render(wnd);
+          windowDrop.render(wnd);
         }
       }
       micArrow.render(wnd);

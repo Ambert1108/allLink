@@ -333,10 +333,10 @@ namespace alllink {
 		std::unique_ptr<BaseText> meetingDescribe;
 		std::unique_ptr<SeekBarModule> volumeBar;
 		std::unique_ptr<VariableStateVertxModule> audioDevArrow, camDevArrow, shareScreenArrow;
-		std::unique_ptr<DropListModule> audioInputDevList, audioOutputDevList, videoDevList, shareDevList;
+		std::unique_ptr<DropListModule> audioInputDevList, audioOutputDevList, videoDevList, screenList, windowList;
 		std::unique_ptr<VariableStateFillModule> settingBackground;
-		sf::RectangleShape bottom, top;
-
+		sf::RectangleShape bottom, top, sense;
+		BaseText seekbarDescribe, micDescribe, spDescribe, camDescribe, screenDescribe, windowDescribe;
 		std::unique_ptr<VideoRenderer> local_renderer_;
 		std::unique_ptr<VideoRenderer> remote_renderer_;
 		sf::Texture* localSrc = nullptr;

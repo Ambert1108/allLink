@@ -60,7 +60,8 @@ namespace alllink {
     audioInputDevList->reset();
     audioOutputDevList->reset();
     videoDevList->reset();
-    shareDevList->reset();
+    screenList->reset();
+    windowList->reset();
 		return true;
 	}
 
@@ -87,7 +88,8 @@ namespace alllink {
     audioInputDevList = std::make_unique<DropListModule>();
     audioOutputDevList = std::make_unique<DropListModule>();
     videoDevList = std::make_unique<DropListModule>();
-    shareDevList = std::make_unique<DropListModule>();
+    screenList = std::make_unique<DropListModule>();
+    windowList = std::make_unique<DropListModule>();
     settingBackground = std::make_unique<VariableStateFillModule>(sf::Color::Transparent, 2);
 
     closeMic->init(80 * wr, 50 * hr, 20 * wr, 1020 * hr);
@@ -154,9 +156,9 @@ namespace alllink {
     top.setSize(sf::Vector2f(1920 * wr, 40 * hr));
     top.setFillColor(sf::Color(255, 255, 255));
 
-    volumeBar->init(sf::Vector2f(210 * wr, 9 * hr), 13 * wr, sf::Vector2f(35 * wr, 422 * hr), 
-      sf::Color::White, sf::Color(68, 118, 235));
-    volumeBar->setText(msyhFile, 0, 21 * hr, sf::Color::Black);
+    sense.setPosition(sf::Vector2f(15 * wr, 1000 * hr));
+    sense.setSize(sf::Vector2f(480 * wr, 80 * hr));
+    sense.setFillColor(sf::Color::Transparent);
 
     audioDevArrow->set(14 * wr, 50 * hr, 101 * wr, 1020 * hr);
     audioDevArrow->setVer({
@@ -182,17 +184,60 @@ namespace alllink {
     sf::Vertex(sf::Vector2f((361 + 14) * wr, 1050 * hr), sf::Color::Black) });
     shareScreenArrow->setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225, 200));
 
-    audioInputDevList->init(280 * wr, 150 * hr, 15 * wr, 455 * hr, 45 * hr, msyhFile);
+    seekbarDescribe.init(fzchFile);
+    seekbarDescribe.setCharacterSize(15 * hr);
+    seekbarDescribe.setString(L"调节麦克风音量");
+    seekbarDescribe.setPosition((micPos.x + 7) * wr, (micPos.y + 15) * hr);
+    seekbarDescribe.setFillColor(sf::Color::Black);
+
+    volumeBar->init(sf::Vector2f(210 * wr, 9 * hr), 13 * wr, sf::Vector2f((micPos.x + 30) * wr, (micPos.y + 55) * hr),
+      sf::Color::White, sf::Color(68, 118, 235));
+    volumeBar->setText(msyhFile, 0, 21 * hr, sf::Color::Black);
+
+    micDescribe.init(fzchFile);
+    micDescribe.setCharacterSize(15 * hr);
+    micDescribe.setString(L"选择麦克风");
+    micDescribe.setPosition((micPos.x + 7)* wr, (micPos.y + 85) * hr);
+    micDescribe.setFillColor(sf::Color::Black);
+
+    audioInputDevList->init(280 * wr, 150 * hr, (micPos.x + 10) * wr, (micPos.y + 110) * hr, 40 * hr, msyhFile);
     audioInputDevList->setShow(true);
 
-    audioOutputDevList->init(280 * wr, 150 * hr, 15 * wr, 707 * hr, 45 * hr, msyhFile);
+    spDescribe.init(fzchFile);
+    spDescribe.setCharacterSize(15 * hr);
+    spDescribe.setString(L"选择扬声器");
+    spDescribe.setPosition((micPos.x + 7) * wr, (micPos.y + 355) * hr);
+    spDescribe.setFillColor(sf::Color::Black);
+
+    audioOutputDevList->init(280 * wr, 150 * hr, (micPos.x + 10) * wr, (micPos.y + 380) * hr, 40 * hr, msyhFile);
     audioOutputDevList->setShow(true);
 
-    videoDevList->init(280 * wr, 150 * hr, 60 * wr, 655 * hr, 45 * hr, msyhFile);
+    camDescribe.init(fzchFile);
+    camDescribe.setCharacterSize(15 * hr);
+    camDescribe.setString(L"选择摄像头");
+    camDescribe.setPosition((camPos.x + 7) * wr, (camPos.y + 230) * hr);
+    camDescribe.setFillColor(sf::Color::Black);
+
+    videoDevList->init(280 * wr, 150 * hr, (camPos.x + 10) * wr, (camPos.y + 255)* hr, 45 * hr, msyhFile);
     videoDevList->setShow(true);
 
-    shareDevList->init(280 * wr, 150 * hr, 200 * wr, 655 * hr, 45 * hr, msyhFile);
-    shareDevList->setShow(true);
+    screenDescribe.init(fzchFile);
+    screenDescribe.setCharacterSize(15 * hr);
+    screenDescribe.setString(L"选择屏幕");
+    screenDescribe.setPosition((sharePos.x + 7) * wr, (sharePos.y + 10) * hr);
+    screenDescribe.setFillColor(sf::Color::Black);
+
+    screenList->init(280 * wr, 150 * hr, (sharePos.x + 10) * wr, (sharePos.y + 30) * hr, 45 * hr, msyhFile, 3);
+    screenList->setShow(true);
+
+    windowDescribe.init(fzchFile);
+    windowDescribe.setCharacterSize(15 * hr);
+    windowDescribe.setString(L"选择窗口");
+    windowDescribe.setPosition((sharePos.x + 7) * wr, (sharePos.y + 182) * hr);
+    windowDescribe.setFillColor(sf::Color::Black);
+
+    windowList->init(280 * wr, 150 * hr, (sharePos.x + 10) * wr, (sharePos.y + 202) * hr, 45 * hr, msyhFile, 9);
+    windowList->setShow(true);
 
     settingBackground->setSize(sf::Vector2f(300 * wr, 600 * hr), 5 * wr);
     settingBackground->setPosition(micPos.x * wr, micPos.y * hr);
@@ -275,15 +320,22 @@ namespace alllink {
       if (settingPop) {
         this->draw(*settingBackground.get());
         if (micArrowClick) {
+          this->draw(seekbarDescribe);
+          this->draw(micDescribe);
+          this->draw(spDescribe);
           volumeBar->render(this);
           audioInputDevList->render(this);
           audioOutputDevList->render(this);
         }
         else if (camArrowClick) {
+          this->draw(camDescribe);
           videoDevList->render(this);
         }
         else if (shareArrowClick) {
-          shareDevList->render(this);
+          this->draw(screenDescribe);
+          this->draw(windowDescribe);
+          screenList->render(this);
+          windowList->render(this);
         }
       }
       audioDevArrow->render(this);
@@ -362,12 +414,14 @@ namespace alllink {
       }
       else isFull = true;
 
+      bool arrowClick = false;
       // 处理音频设备设置事件
       sf::Vector2f mousePosView = this->mapPixelToCoords(mousePosWin);
       if (audioDevArrow->onClick(event, mousePosView, this)) {
         micArrowClick = true;
         camArrowClick = false;
         shareArrowClick = false;
+        arrowClick = true;
         settingPop = true;
         settingBackground->setPosition(micPos.x * wr, micPos.y * hr);
       }
@@ -375,6 +429,7 @@ namespace alllink {
         camArrowClick = true;
         micArrowClick = false;
         shareArrowClick = false;
+        arrowClick = true;
         settingPop = true;
         settingBackground->setPosition(camPos.x * wr, camPos.y * hr);
       }
@@ -382,6 +437,7 @@ namespace alllink {
         shareArrowClick = true;
         micArrowClick = false;
         camArrowClick = false;
+        arrowClick = true;
         settingPop = true;
         settingBackground->setPosition(sharePos.x * wr, sharePos.y * hr);
       }
@@ -409,17 +465,18 @@ namespace alllink {
           }
         }
         if (shareArrowClick) {
-          if (shareDevList->eventProcess(event, mousePosView, this, false)) {
-            std::string label = WstrConv.to_bytes(shareDevList->getSelectedLabel());
+          if (screenList->eventProcess(event, mousePosView, this, false)) {
+            std::string label = WstrConv.to_bytes(screenList->getSelectedLabel());
             I_LOG("share labal is {}", label);
             hi::PostMsg({ msgTo(MessageType::SWITCH_SHARE_SCREEN), label });
           }
         }
       }
+      else if (sense.getGlobalBounds().contains(mousePosView)) {
+        //do nothing
+      }
       else {
-        if (event.type == sf::Event::MouseButtonReleased
-          && event.mouseButton.button == sf::Mouse::Left
-          && !micArrowClick && !camArrowClick && !shareArrowClick) {
+        if (!arrowClick) {
           if (settingPop) settingPop = false;
         }
         if (isFull && settingPop) settingPop = false;
@@ -489,7 +546,7 @@ namespace alllink {
     }
     else if (type == 3) {
       for (const auto& [id, name] : list) {
-        shareDevList->addLabel(WstrConv.from_bytes(std::to_string(id)), sf::Color(225, 225, 225),
+        screenList->addLabel(WstrConv.from_bytes(std::to_string(id)), sf::Color(225, 225, 225),
           sf::Color(230, 230, 230), sf::Color(240, 240, 240));
       }
     }
