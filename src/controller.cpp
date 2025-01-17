@@ -1,13 +1,3 @@
-/*
- *  Copyright 2012 The WebRTC Project Authors. All rights reserved.
- *
- *  Use of this source code is governed by a BSD-style license
- *  that can be found in the LICENSE file in the root of the source
- *  tree. An additional intellectual property rights grant can be found
- *  in the file PATENTS.  All contributing project authors may
- *  be found in the AUTHORS file in the root of the source tree.
- */
-
 #include "controller.h"
 
 #include <stddef.h>
@@ -249,13 +239,6 @@ namespace alllink {
 
   // 生成offer/answer后PeerConnectionObserver会通过此函数上传生成的candidate
   void Controller::OnIceCandidate(const webrtc::IceCandidateInterface* candidate) {
-    //if (loopback_) {
-    //  if (!peerConnection_->AddIceCandidate(candidate)) {
-    //    W_LOG("Failed to apply the received candidate");
-    //  }
-    //  return;
-    //}
-
     Json::Value jmessage;
     jmessage["sdpMid"] = candidate->sdp_mid();
     jmessage["sdpMLineIndex"] = candidate->sdp_mline_index();
@@ -571,8 +554,6 @@ namespace alllink {
       break;
     }
     case msgTo(MessageType::REQUEST_IFRAME): {
-      //videoEngine.switchScreen(false);
-      //videoEngine.switchScreen(true);
       videoEngine.requestKeyFrame();
       break;
     }
