@@ -8,6 +8,7 @@ void ScreenCapturer::startCapturer() {
   std::lock_guard<std::mutex> lock(mutex_);
   auto options = webrtc::DesktopCaptureOptions::CreateDefault();
   options.set_allow_directx_capturer(true);
+  options.set_prefer_cursor_embedded(true);
   screen_capturer_ = webrtc::DesktopCapturer::CreateScreenCapturer(options);
   //window_capturer_ = webrtc::DesktopCapturer::CreateWindowCapturer(options);
   //current_capturer_ = screen_capturer_.get();

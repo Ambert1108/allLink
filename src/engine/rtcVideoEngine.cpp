@@ -337,27 +337,6 @@ namespace rtcengine {
 					encoding.max_framerate = 30;
 				}
 				c->SetParameters(parameters);
-				//break;
-			}
-		}
-	}
-
-	void RTCVideoEngine::setScreenBitrate(float bitrateKbps) {
-		std::vector<rtc::scoped_refptr<webrtc::RtpSenderInterface>> senders = peer_connection_->GetSenders();
-		for (auto& c : senders) {
-			if (!c) {
-				E_LOG("find sender is nullptr");
-				continue;
-			}
-			if (c->id() == "screen") {
-				I_LOG("current sender id {}", c->id());
-				webrtc::RtpParameters parameters = c->GetParameters();
-				for (auto& encoding : parameters.encodings) {
-					encoding.max_bitrate_bps = bitrateKbps * 1000 * 1000;
-					encoding.max_framerate = 30;
-				}
-				c->SetParameters(parameters);
-				//break;
 			}
 		}
 	}

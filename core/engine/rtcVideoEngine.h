@@ -131,7 +131,6 @@ namespace rtcengine {
 		void setCamera(int id);
 		void switchTrack(rtc::scoped_refptr<webrtc::VideoTrackInterface>& new_video_track, int index);
 		void setVideoBitrate(float bitrateKbps);
-		void setScreenBitrate(float bitrateKbps);
 
 
 		void close();
