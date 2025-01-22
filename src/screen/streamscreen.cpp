@@ -497,6 +497,10 @@ namespace alllink {
       // 向中控器发送消息，调整麦克风音量
       hi::PostMsg({ msgTo(MessageType::SWITCH_MIC_VOLUME), volume });
     }
+    if (seeker::time::currentTime() - tp > 2000) {
+      hi::PostMsg({ msgTo(MessageType::REQUEST_WINDOW_LIST), nullptr });
+      tp = seeker::time::currentTime();
+    }
 	}
 
   void StreamScreen::startLocalRenderer(webrtc::VideoTrackInterface* local_video) {
@@ -565,6 +569,10 @@ namespace alllink {
         else if (name.find("NVIDIA") != std::string::npos) continue;
         else if (name.find("WeMail") != std::string::npos) continue;
         else if (name.find("As") != std::string::npos) continue;
+        else if (name.find("微信") != std::string::npos) continue;
+        else if (name.find("QQ") != std::string::npos) continue;
+        else if (name.find("腾讯") != std::string::npos) continue;
+        else if (name.find("LetsVPN") != std::string::npos) continue;
 
         size_t lastDashIndex = name.find_last_of('-');
         if (lastDashIndex != std::string::npos) {
@@ -576,6 +584,7 @@ namespace alllink {
             sf::Color(230, 230, 230), sf::Color(240, 240, 240));
         }
       }
+      tp = seeker::time::currentTime();
     }
   }
 

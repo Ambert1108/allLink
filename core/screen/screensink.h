@@ -364,5 +364,6 @@ namespace alllink {
 		int micVolume = 50;
 		int mode = 0; //1v1通话:0, 会议流程:1
 		int64_t timePoint = 0;
+		int64_t tp = 0;
 	};
 }

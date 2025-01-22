@@ -1456,7 +1456,7 @@ namespace alllink {
 		void addLabel(sf::String labelText, sf::Color fillColor, sf::Color hoverColor, 
 			sf::Color pressColor, bool activate = true) {
 			if (labelList.size() >= labelLimit) {
-				E_LOG("label size is more than limit {}", labelLimit);
+				D_LOG("label size is more than limit {}", labelLimit);
 				return;
 			}
 			if (labelList.find(labelText) != labelList.end()) {

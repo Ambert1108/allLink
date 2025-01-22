@@ -62,6 +62,7 @@ namespace alllink {
 		SET_CAMERA,                     //通知中控器设置摄像头状态
 		SET_SHARE,                      //通知中控器设置屏幕共享状态
 		REQUEST_IFRAME,                 //通知中控器请求I帧
+		REQUEST_WINDOW_LIST,            //通知中控器请求窗口列表
 
 		/* 信令消息 */
 
@@ -100,6 +101,8 @@ namespace alllink {
 				{MessageType::SWITCH_SHARE_WINDOW, "SWITCH_SHARE_WINDOW"},
 				{MessageType::SET_CAMERA, "SET_CAMERA"},
 				{MessageType::SET_SHARE, "SET_SHARE"},
+				{MessageType::REQUEST_IFRAME, "REQUEST_IFRAME"},
+				{MessageType::REQUEST_WINDOW_LIST, "REQUEST_WINDOW_LIST"},
 				{MessageType::SEND_SDP_TO_PEER, "SEND_SDP_TO_PEER"},
 				{MessageType::SEND_ICE_TO_PEER, "SEND_ICE_TO_PEER"},
 				{MessageType::SEND_ICE_COMPLETE_TO_PEER, "SEND_ICE_COMPLETE_TO_PEER"},

@@ -22,7 +22,7 @@
 int main(int argc, char* argv[]) {
   std::string logPattern = "%^[%d %H:%M:%S.%e %s:%#] [%L]:%$ %v";
   std::string logFilename = "allLink.log";
-  int level = 1;
+  int level = 2;
   seeker::Logger::init(logFilename, false, true, true, logPattern, level);
   using namespace alllink;
   seeker::IniConfig::init("./resources/config.ini");

@@ -196,7 +196,7 @@ namespace rtcengine {
 		if (GetWinSourceList(&sources)) {
 			int i = 0;
 			for (webrtc::DesktopCapturer::Source& source : sources) {
-				I_LOG("screen: dis_id = {}, id ={}, title = {}", source.display_id, source.id, source.title);
+				D_LOG("screen: dis_id = {}, id ={}, title = {}", source.display_id, source.id, source.title);
 				winMap.emplace(source.id, source.title);
 			}
 		}

@@ -265,6 +265,7 @@ namespace alllink {
         case msgTo(MessageType::SET_CAMERA):
         case msgTo(MessageType::SET_SHARE):
         case msgTo(MessageType::REQUEST_IFRAME):
+        case msgTo(MessageType::REQUEST_WINDOW_LIST):
         case msgTo(MessageType::SEND_SDP_TO_PEER): 
         case msgTo(MessageType::SEND_ICE_COMPLETE_TO_PEER):
         case msgTo(MessageType::SEND_ICE_TO_PEER):

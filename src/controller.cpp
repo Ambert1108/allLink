@@ -591,6 +591,13 @@ namespace alllink {
       videoEngine.requestKeyFrame();
       break;
     }
+    case msgTo(MessageType::REQUEST_WINDOW_LIST): {
+      std::map<int, std::string> tmp = shareWindowMap;
+      videoEngine.getWinMap(shareWindowMap);
+      if(tmp.size() != shareWindowMap.size())
+        hi::PostMsg({ msgTo(MessageType::SHARE_WINDOW_INFO), shareWindowMap });
+      break;
+    }
     case msgTo(MessageType::DISCONNECT_PEER): {
       if (peerConnection_.get()) {
         DeletePeerConnection();
