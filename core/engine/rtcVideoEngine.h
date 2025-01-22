@@ -94,14 +94,14 @@ namespace rtcengine {
 		std::unique_ptr<webrtc::test::VcmCapturer> capturer_;
 	};
 
-  class RTCVideoEngine {
-  public:
-    RTCVideoEngine();
-    ~RTCVideoEngine();
+	class RTCVideoEngine {
+	public:
+		RTCVideoEngine();
+		~RTCVideoEngine();
 
-    int addVideoTrack(rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface>& peer_connection_factory,
-      rtc::scoped_refptr<webrtc::PeerConnectionInterface>& peer_connection,
-      rtc::scoped_refptr<webrtc::VideoTrackInterface>& video_track);
+		int addVideoTrack(rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface>& peer_connection_factory,
+			rtc::scoped_refptr<webrtc::PeerConnectionInterface>& peer_connection,
+			rtc::scoped_refptr<webrtc::VideoTrackInterface>& video_track);
 
 		void addScreenTrack(rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface>& peer_connection_factory,
 			rtc::scoped_refptr<webrtc::PeerConnectionInterface>& peer_connection,
@@ -109,40 +109,47 @@ namespace rtcengine {
 
 		void setScreenCapture(uint8_t id);
 
+		void setWindowCapture(int id);
+
 		bool GetSourceList(webrtc::DesktopCapturer::SourceList* sources);
+		bool GetWinSourceList(webrtc::DesktopCapturer::SourceList* sources);
 		webrtc::DesktopCaptureOptions CreateDesktopCaptureOptions();
 
 		void requestKeyFrame();
 
-    int switchCamera(bool flag);
-    int switchScreen(bool flag);
-    int openVideoMirror() {};
-    int closeVideoMirror() {};
-    bool getCameraState();
-    bool getScreenState();
+		int switchCamera(bool flag);
+		int switchScreen(bool flag);
+		int openVideoMirror() {};
+		int closeVideoMirror() {};
+		bool getCameraState();
+		bool getScreenState();
 
-    void getCameraMap(std::map<int16_t, std::string>& cameraMap);
+		void getCameraMap(std::map<int16_t, std::string>& cameraMap);
 
-		void getScreenMap(std::map<int16_t, std::string>& screenMap);
-
-    int setCamera(const int index, rtc::scoped_refptr<webrtc::VideoTrackInterface>& video_track);
+		void getScreenMap(std::map<int, std::string>& screenMap);
+		void getWinMap(std::map<int, std::string>& screenMap);
 		void setCamera(int id);
-    void switchTrack(rtc::scoped_refptr<webrtc::VideoTrackInterface>& new_video_track, int index);
-    
+		void switchTrack(rtc::scoped_refptr<webrtc::VideoTrackInterface>& new_video_track, int index);
+		void setVideoBitrate(float bitrateKbps);
+		void setScreenBitrate(float bitrateKbps);
 
-    void close();
 
-    rtc::scoped_refptr<webrtc::PeerConnectionInterface> peer_connection_;
-    rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface>
-      peer_connection_factory_;
-    rtc::scoped_refptr<webrtc::VideoTrackInterface> video_track_;
-    rtc::scoped_refptr<webrtc::VideoTrackInterface> screen_track_;
-    rtc::scoped_refptr<webrtc::VideoTrackInterface> new_video_track_;
-    rtc::scoped_refptr<ScreenCapturer> screen_device = nullptr;
-    rtc::scoped_refptr<CapturerTrackSource> cameraDevice = nullptr;
-    rtc::scoped_refptr<CapturerTrackSource> video_device1 = nullptr;
+		void close();
+
+		rtc::scoped_refptr<webrtc::PeerConnectionInterface> peer_connection_;
+		rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface>
+			peer_connection_factory_;
+		rtc::scoped_refptr<webrtc::VideoTrackInterface> video_track_;
+		rtc::scoped_refptr<webrtc::VideoTrackInterface> screen_track_;
+		rtc::scoped_refptr<webrtc::VideoTrackInterface> new_video_track_;
+		rtc::scoped_refptr<ScreenCapturer> screen_device = nullptr;
+		rtc::scoped_refptr<ScreenCapturer> window_device = nullptr;
+		rtc::scoped_refptr<CapturerTrackSource> cameraDevice = nullptr;
+		rtc::scoped_refptr<CapturerTrackSource> video_device1 = nullptr;
 		std::map<int, rtc::scoped_refptr<CapturerTrackSource>> videoDevList{};
-    bool cameraState = true;
-    bool screenState = true;
-  };
+		bool cameraState = true;
+		bool screenState = true;
+		bool isWinfirst = true;
+		bool isScreenfirst = false;
+	};
 }

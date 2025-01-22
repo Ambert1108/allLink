@@ -239,9 +239,11 @@ namespace alllink {
 		void setSessionTimepoint(int64_t timepoint);
 
 		/*
-		* type: audio input:0 audio output:1 video:2 share:3
+		* type: audio input:0 audio output:1 video:2
 		*/
 		void setDevList(const std::map<int16_t, std::string>& list, int type);
+
+		void setShareList(const std::map<int, std::string>& list, int type);
 
 		struct ImageData {
 			BITMAPINFO bmi;

@@ -22,7 +22,27 @@ namespace rtcengine {
 			E_LOG("Failed to add video track to PeerConnection:{}", result_or_error.error().message());
 			return -1;
 		}
-		videoDevList.emplace(0, std::move(video_device));
+
+		auto receivers = peer_connection_->GetReceivers();
+		for (auto& c : receivers) {
+			if (!c) {
+				std::cerr << "No RTP sender available." << std::endl;
+				continue;
+			}
+			I_LOG("current sender id {}", c->id());
+			if (c->id() != "audio_label") {
+				// 获取当前的 RTP 参数
+				webrtc::RtpParameters parameters = c->GetParameters();
+				// 遍历所有编码设置并请求关键帧
+				for (auto& encoding : parameters.encodings) {
+					encoding.max_framerate = 30;
+				}
+
+				// 设置修改后的参数
+				c->SetParameters(parameters);
+			}
+		}
+
 		return 0;
 	}
 
@@ -62,39 +82,6 @@ namespace rtcengine {
 		return cameraState;
 	}
 
-	int RTCVideoEngine::setCamera(const int index, rtc::scoped_refptr<webrtc::VideoTrackInterface>& video_track) {
-		// 停止当前的视频轨道
-		if (video_track_) {
-			I_LOG("Stopping current video track.");
-			video_track_->set_enabled(false);
-			video_track_ = nullptr;
-		}
-		// 创建新的视频设备
-		rtc::scoped_refptr<CapturerTrackSource> video_device = CapturerTrackSource::Create(index);
-		if (!video_device) {
-			I_LOG("Failed to create video device for index: {}", index);
-			return -1;
-		}
-
-		// 创建视频轨道
-		video_track_ = peer_connection_factory_->CreateVideoTrack(video_device, "video_label");
-		if (!video_track_) {
-			I_LOG("Failed to create video track.");
-			return -1;
-		}
-		video_track = video_track_;
-
-		// 添加视频轨道到 PeerConnection
-		auto result_or_error = peer_connection_->AddTrack(video_track_, { "stream_id" });
-		if (!result_or_error.ok()) {
-			I_LOG("Failed to add video track to PeerConnection: ");
-			return -1;
-		}
-
-		I_LOG("Successfully added video track to PeerConnection.");
-		return 0;
-	}
-
 	void RTCVideoEngine::switchTrack(rtc::scoped_refptr<webrtc::VideoTrackInterface>& new_video_track, int index) {
 		/*std::vector<rtc::scoped_refptr<webrtc::RtpSenderInterface>> senders = peer_connection_->GetSenders();
 		rtc::scoped_refptr<webrtc::RtpSenderInterface> video_sender;
@@ -109,7 +96,7 @@ namespace rtcengine {
 		}
 
 		I_LOG("index:{}", index);
-			
+
 
 		for (const auto& sender : senders) {
 			if (sender->track()->kind() == "video") {
@@ -154,6 +141,7 @@ namespace rtcengine {
 		}
 
 		auto it = videoDevList.find(id);
+
 		if (it != videoDevList.end()) {
 			video_track_ = peer_connection_factory_->CreateVideoTrack(it->second, "camera");
 			auto* track = reinterpret_cast<webrtc::MediaStreamTrackInterface*>(video_track_.get());
@@ -173,13 +161,43 @@ namespace rtcengine {
 
 	}
 
-	void RTCVideoEngine::getScreenMap(std::map<int16_t, std::string>& screenMap) {
+	bool RTCVideoEngine::GetSourceList(
+		webrtc::DesktopCapturer::SourceList* sources) {
+		std::unique_ptr<webrtc::DesktopCapturer> screen_capturer(
+			//webrtc::DesktopCapturer::CreateWindowCapturer(CreateDesktopCaptureOptions()));
+			webrtc::DesktopCapturer::CreateScreenCapturer(
+				CreateDesktopCaptureOptions()));
+		return screen_capturer->GetSourceList(sources);
+	}
+
+	void RTCVideoEngine::getScreenMap(std::map<int, std::string>& screenMap) {
 		webrtc::DesktopCapturer::SourceList sources;
 		if (GetSourceList(&sources)) {
 			int i = 0;
 			for (webrtc::DesktopCapturer::Source& source : sources) {
 				I_LOG("screen: dis_id = {}, id ={}, title = {}", source.display_id, source.id, source.title);
 				screenMap.emplace(source.id, source.title);
+			}
+		}
+	}
+
+	bool RTCVideoEngine::GetWinSourceList(
+		webrtc::DesktopCapturer::SourceList* sources) {
+		std::unique_ptr<webrtc::DesktopCapturer> screen_capturer(
+			webrtc::DesktopCapturer::CreateWindowCapturer(
+				CreateDesktopCaptureOptions()));
+			//webrtc::DesktopCapturer::CreateScreenCapturer(
+			//	CreateDesktopCaptureOptions()));
+		return screen_capturer->GetSourceList(sources);
+	}
+
+	void RTCVideoEngine::getWinMap(std::map<int, std::string>& winMap) {
+		webrtc::DesktopCapturer::SourceList sources;
+		if (GetWinSourceList(&sources)) {
+			int i = 0;
+			for (webrtc::DesktopCapturer::Source& source : sources) {
+				I_LOG("screen: dis_id = {}, id ={}, title = {}", source.display_id, source.id, source.title);
+				winMap.emplace(source.id, source.title);
 			}
 		}
 	}
@@ -206,14 +224,7 @@ namespace rtcengine {
 		}
 	}
 
-	bool RTCVideoEngine::GetSourceList(
-		webrtc::DesktopCapturer::SourceList* sources) {
-		std::unique_ptr<webrtc::DesktopCapturer> screen_capturer(
-			//webrtc::DesktopCapturer::CreateWindowCapturer(CreateDesktopCaptureOptions()));
-			webrtc::DesktopCapturer::CreateScreenCapturer(
-				CreateDesktopCaptureOptions()));
-		return screen_capturer->GetSourceList(sources);
-	}
+	
 
 	webrtc::DesktopCaptureOptions
 		RTCVideoEngine::CreateDesktopCaptureOptions() {
@@ -231,13 +242,15 @@ namespace rtcengine {
 
 		peer_connection_factory_ = peer_connection_factory;
 		peer_connection_ = peer_connection;
-		
 		screen_device = rtc::make_ref_counted<ScreenCapturer>();
-		//std::map<int16_t, std::string> screen_map;
-		//getScreenMap(screen_map);
+
+		window_device = rtc::make_ref_counted<ScreenCapturer>();
+		window_device->startWindowCapturer();
+
 		if (screen_device) {
 			screen_device->startCapturer();
 			screen_track_ = peer_connection_factory_->CreateVideoTrack(screen_device, "screen");
+			
 			video_track = screen_track_;
 			auto result_or_error = peer_connection_->AddTrack(screen_track_, { "111" });
 			I_LOG("[VideoEngine::addScreenTrack] add track done");
@@ -252,7 +265,51 @@ namespace rtcengine {
 	}
 
 	void RTCVideoEngine::setScreenCapture(uint8_t id) {
+		if (isScreenfirst) {
+			std::vector<rtc::scoped_refptr<webrtc::RtpSenderInterface>> senders = peer_connection_->GetSenders();
+			rtc::scoped_refptr<webrtc::RtpSenderInterface> sender = nullptr;
+			for (const auto& c : senders) {
+				I_LOG("id {}", c->track()->id());
+				if (c->track()->id() == "screen") {
+					sender = c;
+					break;
+				}
+			}
+			if (!sender) {
+				E_LOG("find camera sender failed");
+				return;
+			}
+			screen_track_ = peer_connection_factory_->CreateVideoTrack(screen_device, "screen");
+			auto* track = reinterpret_cast<webrtc::MediaStreamTrackInterface*>(screen_track_.get());
+			sender->SetTrack(track);
+			isWinfirst = false;
+			isWinfirst = true;
+		}
 		screen_device->setScreen(id);
+	}
+
+	void RTCVideoEngine::setWindowCapture(int id) {
+		if (isWinfirst) {
+			std::vector<rtc::scoped_refptr<webrtc::RtpSenderInterface>> senders = peer_connection_->GetSenders();
+			rtc::scoped_refptr<webrtc::RtpSenderInterface> sender = nullptr;
+			for (const auto& c : senders) {
+				I_LOG("id {}", c->track()->id());
+				if (c->track()->id() == "screen") {
+					sender = c;
+					break;
+				}
+			}
+			if (!sender) {
+				E_LOG("find camera sender failed");
+				return;
+			}
+			screen_track_ = peer_connection_factory_->CreateVideoTrack(window_device, "screen");
+			auto* track = reinterpret_cast<webrtc::MediaStreamTrackInterface*>(screen_track_.get());
+			sender->SetTrack(track);
+			isWinfirst = false;
+			isScreenfirst = true;
+		}
+		window_device->setWindow(id);
 	}
 
 	int RTCVideoEngine::switchScreen(bool flag) {
@@ -265,6 +322,46 @@ namespace rtcengine {
 		return screenState;
 	}
 
+	void RTCVideoEngine::setVideoBitrate(float bitrateKbps) {
+		std::vector<rtc::scoped_refptr<webrtc::RtpSenderInterface>> senders = peer_connection_->GetSenders();
+		for (auto& c : senders) {
+			if (!c) {
+				E_LOG("find sender is nullptr");
+				continue;
+			}
+			if (c->id() == "camera") {
+				I_LOG("current sender id {}", c->id());
+				webrtc::RtpParameters parameters = c->GetParameters();
+				for (auto& encoding : parameters.encodings) {
+					encoding.max_bitrate_bps = bitrateKbps * 1000 * 1000;
+					encoding.max_framerate = 30;
+				}
+				c->SetParameters(parameters);
+				//break;
+			}
+		}
+	}
+
+	void RTCVideoEngine::setScreenBitrate(float bitrateKbps) {
+		std::vector<rtc::scoped_refptr<webrtc::RtpSenderInterface>> senders = peer_connection_->GetSenders();
+		for (auto& c : senders) {
+			if (!c) {
+				E_LOG("find sender is nullptr");
+				continue;
+			}
+			if (c->id() == "screen") {
+				I_LOG("current sender id {}", c->id());
+				webrtc::RtpParameters parameters = c->GetParameters();
+				for (auto& encoding : parameters.encodings) {
+					encoding.max_bitrate_bps = bitrateKbps * 1000 * 1000;
+					encoding.max_framerate = 30;
+				}
+				c->SetParameters(parameters);
+				//break;
+			}
+		}
+	}
+
 	void RTCVideoEngine::close() {
 		peer_connection_factory_ = nullptr;
 		peer_connection_ = nullptr;
@@ -272,6 +369,14 @@ namespace rtcengine {
 		screen_track_ = nullptr;
 		cameraDevice = nullptr;
 		video_device1 = nullptr;
+		if (screen_device) {
+			screen_device->stopCapturer();
+			screen_device = nullptr;
+		}
+		if (window_device) {
+			window_device->stopCapturer();
+			window_device = nullptr;
+		}
 		videoDevList.clear();
 	}
 

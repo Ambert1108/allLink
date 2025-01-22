@@ -236,7 +236,7 @@ namespace alllink {
     windowDescribe.setPosition((sharePos.x + 7) * wr, (sharePos.y + 182) * hr);
     windowDescribe.setFillColor(sf::Color::Black);
 
-    windowList->init(280 * wr, 150 * hr, (sharePos.x + 10) * wr, (sharePos.y + 202) * hr, 45 * hr, msyhFile, 9);
+    windowList->init(280 * wr, 150 * hr, (sharePos.x + 10) * wr, (sharePos.y + 202) * hr, 45 * hr, msyhFile, 8);
     windowList->setShow(true);
 
     settingBackground->setSize(sf::Vector2f(300 * wr, 600 * hr), 5 * wr);
@@ -467,8 +467,13 @@ namespace alllink {
         if (shareArrowClick) {
           if (screenList->eventProcess(event, mousePosView, this, false)) {
             std::string label = WstrConv.to_bytes(screenList->getSelectedLabel());
-            I_LOG("share labal is {}", label);
+            I_LOG("screen labal is {}", label);
             hi::PostMsg({ msgTo(MessageType::SWITCH_SHARE_SCREEN), label });
+          }
+          else if (windowList->eventProcess(event, mousePosView, this, false)) {
+            std::string label = WstrConv.to_bytes(windowList->getSelectedLabel());
+            I_LOG("window labal is {}", label);
+            hi::PostMsg({ msgTo(MessageType::SWITCH_SHARE_WINDOW), label });
           }
         }
       }
@@ -544,10 +549,32 @@ namespace alllink {
           sf::Color(230, 230, 230), sf::Color(240, 240, 240));
       }
     }
-    else if (type == 3) {
+  }
+
+  void StreamScreen::setShareList(const std::map<int, std::string>& list, int type) {
+    if (type == 1) {
       for (const auto& [id, name] : list) {
         screenList->addLabel(WstrConv.from_bytes(std::to_string(id)), sf::Color(225, 225, 225),
           sf::Color(230, 230, 230), sf::Color(240, 240, 240));
+      }
+    }
+    else if (type == 2) {
+      for (const auto& [id, name] : list) {
+        if (name.find("allLink") != std::string::npos) continue;
+        else if (name.find("AllLink") != std::string::npos) continue;
+        else if (name.find("NVIDIA") != std::string::npos) continue;
+        else if (name.find("WeMail") != std::string::npos) continue;
+        else if (name.find("As") != std::string::npos) continue;
+
+        size_t lastDashIndex = name.find_last_of('-');
+        if (lastDashIndex != std::string::npos) {
+          windowList->addLabel(WstrConv.from_bytes(name.substr(lastDashIndex + 1)), sf::Color(225, 225, 225),
+            sf::Color(230, 230, 230), sf::Color(240, 240, 240));
+        }
+        else {
+          windowList->addLabel(WstrConv.from_bytes(name), sf::Color(225, 225, 225),
+            sf::Color(230, 230, 230), sf::Color(240, 240, 240));
+        }
       }
     }
   }

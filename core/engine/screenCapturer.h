@@ -25,11 +25,15 @@ public:
 
   void startCapturer();
 
+  void startWindowCapturer();
+
   void setScreen(uint8_t id);
 
-  void setWindow(uint8_t id);
+  void setWindow(int id);
 
   void CaptureFrame();
+
+  void CaptureWindowFrame();
 
   bool is_screencast() const override;
 
@@ -45,12 +49,18 @@ public:
 
   void captureThread();
 
+  void captureWindowThread();
+
+  void stopCapturer();
+
   bool working = false;
 
 private:
-  std::unique_ptr<webrtc::DesktopCapturer> capturer_;
+  std::unique_ptr<webrtc::DesktopCapturer> screen_capturer_;
+  std::unique_ptr<webrtc::DesktopCapturer> window_capturer_;
   rtc::scoped_refptr<webrtc::I420Buffer> i420_buffer_;
   bool isOnResult = false;
-  int appNum = 0;
+  std::mutex mutex_;
+  std::thread screenThread_;
   //mutable volatile int ref_count_;
 };

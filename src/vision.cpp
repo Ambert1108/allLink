@@ -232,7 +232,13 @@ namespace alllink {
         case msgTo(MessageType::SHARE_SCREEN_INFO): {
           std::shared_ptr<StreamScreen> point = std::dynamic_pointer_cast<StreamScreen>(streamWnd);
           if (!point) return;
-          point->setDevList(std::any_cast<std::map<int16_t, std::string>>(msg.data), 3);
+          point->setShareList(std::any_cast<std::map<int, std::string>>(msg.data), 1);
+          break;
+        }
+        case msgTo(MessageType::SHARE_WINDOW_INFO): {
+          std::shared_ptr<StreamScreen> point = std::dynamic_pointer_cast<StreamScreen>(streamWnd);
+          if (!point) return;
+          point->setShareList(std::any_cast<std::map<int, std::string>>(msg.data), 2);
           break;
         }
         case msgTo(MessageType::RECONNECT_SERVER): {
@@ -253,6 +259,7 @@ namespace alllink {
         case msgTo(MessageType::SWITCH_AUDIO_INPUT):
         case msgTo(MessageType::SWITCH_VIDEO_INPUT):
         case msgTo(MessageType::SWITCH_SHARE_SCREEN):
+        case msgTo(MessageType::SWITCH_SHARE_WINDOW):
         case msgTo(MessageType::SWITCH_MIC_VOLUME):
         case msgTo(MessageType::SET_MIC_PHONE):
         case msgTo(MessageType::SET_CAMERA):

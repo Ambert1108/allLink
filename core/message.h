@@ -56,6 +56,7 @@ namespace alllink {
 		SWITCH_AUDIO_OUTPUT_STR,        //通知中控器切换音频输出设备字符版本
 		SWITCH_VIDEO_INPUT,             //通知中控器切换视频输入设备
 		SWITCH_SHARE_SCREEN,            //通知中控器切换共享屏幕
+		SWITCH_SHARE_WINDOW,            //通知中控器切换共享窗口
 		SWITCH_MIC_VOLUME,              //通知中控器修改麦克风输入音量
 		SET_MIC_PHONE,                  //通知中控器设置麦克风状态
 		SET_CAMERA,                     //通知中控器设置摄像头状态
@@ -83,7 +84,8 @@ namespace alllink {
 		AUDIO_INPUT_DEV_INFO,           //通知视觉控制器读取音频输入设备信息
 		AUDIO_OUTPUT_DEV_INFO,          //通知视觉控制器读取音频输出设备信息
 		VIDEO_DEV_INFO,                 //通知视觉控制器读取摄像头设备信息
-		SHARE_SCREEN_INFO               //通知视觉控制器读取可共享屏幕信息
+		SHARE_SCREEN_INFO,              //通知视觉控制器读取可共享屏幕信息
+		SHARE_WINDOW_INFO               //通知视觉控制器读取可共享窗口信息
 	};
 
 	static constexpr int msgTo(MessageType msg) { return static_cast<int>(msg); }
@@ -94,6 +96,8 @@ namespace alllink {
 				{MessageType::SWITCH_AUDIO_INPUT_STR, "SWITCH_AUDIO_INPUT_STR"},
 				{MessageType::SWITCH_MIC_VOLUME, "SWITCH_MIC_VOLUME"},
 				{MessageType::SET_MIC_PHONE, "SET_MIC_PHONE"},
+				{MessageType::SWITCH_SHARE_SCREEN, "SWITCH_SHARE_SCREEN"},
+				{MessageType::SWITCH_SHARE_WINDOW, "SWITCH_SHARE_WINDOW"},
 				{MessageType::SET_CAMERA, "SET_CAMERA"},
 				{MessageType::SET_SHARE, "SET_SHARE"},
 				{MessageType::SEND_SDP_TO_PEER, "SEND_SDP_TO_PEER"},

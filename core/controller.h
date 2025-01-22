@@ -105,7 +105,7 @@ namespace alllink {
     rtcengine::rtcAudioEngine audioEngine;
     std::map<int16_t, std::string> audioInputDevMap, audioOutputDevMap;
     std::map<int16_t, std::string> videoInputDevMap;
-    std::map<int16_t, std::string> shareScreenMap;
+    std::map<int, std::string> shareScreenMap, shareWindowMap;
     rtcengine::RTCVideoEngine videoEngine;
     //VideoEngine videoEngine;
     std::shared_ptr<rtcengine::Janitor> janusEngine;

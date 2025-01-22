@@ -165,6 +165,10 @@ namespace alllink {
     I_LOG("Current audio input device:");
     videoEngine.getCameraMap(videoInputDevMap);
     videoEngine.getScreenMap(shareScreenMap);
+    videoEngine.getWinMap(shareWindowMap);
+    for (const auto& [id, name] : shareWindowMap) {
+      I_LOG("window list {}:{}", id, name);
+    }
     audioEngine.GetRecordingDevices(audioInputDevMap);
     audioEngine.GetPlayoutDevices(audioOutputDevMap);
     audioEngine.setMicrophoneVolume(50);
@@ -432,6 +436,7 @@ namespace alllink {
     hi::PostMsg({ msgTo(MessageType::AUDIO_OUTPUT_DEV_INFO), audioOutputDevMap });
     hi::PostMsg({ msgTo(MessageType::VIDEO_DEV_INFO), videoInputDevMap });
     hi::PostMsg({ msgTo(MessageType::SHARE_SCREEN_INFO), shareScreenMap });
+    hi::PostMsg({ msgTo(MessageType::SHARE_WINDOW_INFO), shareWindowMap });
     return true;
   }
 
@@ -483,6 +488,7 @@ namespace alllink {
         if (device == name) {
           I_LOG("[Controller::CustomMessageCallback] pick mic input device:{}", name);
           audioEngine.ReplaceRecordingDevices(id);
+          break;
         }
       }
       break;
@@ -493,6 +499,7 @@ namespace alllink {
         if (device == name) {
           I_LOG("[Controller::CustomMessageCallback] pick mic output device:{}", name);
           audioEngine.ReplacePlayoutDevices(id);
+          break;
         }
       }
       break;
@@ -503,6 +510,7 @@ namespace alllink {
         if (device == name) {
           I_LOG("[Controller::CustomMessageCallback] pick mic output device:{}", name);
           videoEngine.setCamera(id);
+          break;
         }
       }
       break;
@@ -513,6 +521,28 @@ namespace alllink {
         if (std::atoi(deviceId.c_str()) == id) {
           I_LOG("[Controller::CustomMessageCallback] pick share screen:{}", id);
           videoEngine.setScreenCapture(id);
+          break;
+        }
+      }
+      break;
+    }
+    case msgTo(MessageType::SWITCH_SHARE_WINDOW): {
+      std::string label = std::any_cast<std::string>(msg.data);
+      for (const auto& [id, name] : shareWindowMap) {
+        size_t lastDashIndex = name.find_last_of('-');
+        if (lastDashIndex != std::string::npos) {
+          if (label == name.substr(lastDashIndex + 1)) {
+            I_LOG("[Controller::CustomMessageCallback] pick share window {}:{}", id, name);
+            videoEngine.setWindowCapture(id);
+            break;
+          }
+        }
+        else {
+          if (label == name) {
+            I_LOG("[Controller::CustomMessageCallback] pick share window {}:{}", id, name);
+            videoEngine.setWindowCapture(id);
+            break;
+          }
         }
       }
       break;
@@ -533,6 +563,8 @@ namespace alllink {
     case msgTo(MessageType::SET_CAMERA): {
       bool state = std::any_cast<bool>(msg.data);
       videoEngine.switchCamera(state);
+      if (state) videoEngine.setVideoBitrate(0.9);
+      else videoEngine.setVideoBitrate(0.2);
       break;
     }
     case msgTo(MessageType::SET_SHARE): {
@@ -542,6 +574,7 @@ namespace alllink {
           W_LOG("[Controller::CustomMessageCallback] Open Share failed");
         }
         videoEngine.switchScreen(true);
+        videoEngine.setVideoBitrate(1.6);
         needRequestIFrame = true;
       }
       else {
@@ -549,6 +582,7 @@ namespace alllink {
           W_LOG("[Controller::CustomMessageCallback] Close Share failed");
         }
         videoEngine.switchScreen(false);
+        videoEngine.setVideoBitrate(0.9);
         needRequestIFrame = false;
       }
       break;
