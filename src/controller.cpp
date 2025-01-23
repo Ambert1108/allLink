@@ -364,8 +364,12 @@ namespace alllink {
   }
 
   void Controller::OnSignlingDisconnect() {
-    W_LOG("[Controller::OnSignlingDisconnect] Signling disconnection detected, start reconnect");
-    hi::PostMsg({ msgTo(MessageType::RECONNECT_SERVER), nullptr });
+    W_LOG("[Controller::OnSignlingDisconnect] Signling disconnection detected");
+    if (peerConnection_.get()) {
+      // 会议中断开连接
+      hi::PostMsg({ msgTo(MessageType::DISCONNECT_PEER), nullptr });
+    }
+    else hi::PostMsg({ msgTo(MessageType::RECONNECT_SERVER_FAILED), nullptr });
   }
 
   void Controller::OnRinging() {
@@ -602,12 +606,6 @@ namespace alllink {
       if (peerConnection_.get()) {
         DeletePeerConnection();
         I_LOG("delete callee peer connection");
-      }
-      break;
-    }
-    case msgTo(MessageType::RECONNECT_SERVER): {
-      if (!client_->reLogin()) {
-        hi::PostMsg({ msgTo(MessageType::RECONNECT_SERVER_FAILED), nullptr });
       }
       break;
     }

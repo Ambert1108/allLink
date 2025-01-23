@@ -34,10 +34,14 @@ namespace alllink {
           if(lastBeatPoint == 0) lastBeatPoint = seeker::time::currentTime();
           if (seeker::time::currentTime() - lastBeatPoint > 3000) {
             W_LOG("[Signling::keepBody] heartbeat timeout 3s");
-            logout();
+            client->stopListening();
+            client = nullptr;
             lastBeatPoint = 0;
             signalState = State::NONE;
-            callback_->OnSignlingDisconnect();
+            W_LOG("[Signling::keepBody] try reconnect {}:{}", serverInfo.serverIp_, serverInfo.serverPort_);
+            if (reconnectThread.joinable()) reconnectThread.join();
+            std::thread loop{ &SignlingInteractionSystem::reLogin, this };
+            reconnectThread = std::move(loop);
           }
           else {
             SignInfo msg;
@@ -71,6 +75,7 @@ namespace alllink {
   }
 
   SignlingInteractionSystem::~SignlingInteractionSystem() {
+    if (reconnectThread.joinable()) reconnectThread.join();
     if(keepBody) keepBody->Cancel();
     if(client) logout();
     if(listenBody) listenBody->Cancel();
@@ -117,16 +122,23 @@ namespace alllink {
     std::this_thread::sleep_for(std::chrono::seconds(1));
   }
 
-  bool SignlingInteractionSystem::reLogin() {
-    if (!connect(serverInfo)) {
+  void SignlingInteractionSystem::reLogin() {
+    I_LOG("try connect");
+    if (!reconnect(serverInfo)) {
       serverInfo.clear();
-      return false;
+      callback_->OnSignlingDisconnect();
+      return;
     }
+    I_LOG("try login");
     if (!login(userInfo)) {
       userInfo.clear();
-      return false;
+      return;
     }
-    return true;
+    I_LOG("relogin success");
+    if (lastState == State::CALLER) {
+      I_LOG("start reconnect peer");
+      hi::PostMsg({ msgTo(MessageType::RECONNECT_PEER), nullptr });
+    }
   }
 
   bool SignlingInteractionSystem::sendToPeer(const std::string& to, const std::string& message) {
@@ -211,6 +223,7 @@ namespace alllink {
       msg.set_to(to);
       msg.set_cseq(cseq_++);
       msg.set_call_id(callId);
+      lastState == State::LOGIN_ON;
     }
     else {
       msg.set_meth("FORWARD");
@@ -224,11 +237,13 @@ namespace alllink {
   }
 
   void SignlingInteractionSystem::logout() {
+    I_LOG("[SignlingInteractionSystem::logout] login out");
     client->sendClose();
     client->stopListening();
     client = nullptr;
     lastBeatPoint = 0;
     signalState = State::NONE;
+    I_LOG("[SignlingInteractionSystem::logout] login out finish");
   }
 
   void SignlingInteractionSystem::OnFORWARD(const SignInfo& info) {
@@ -281,6 +296,7 @@ namespace alllink {
       msg.set_sdp(sdp);
       callback_->OnMessageFromSignling(msg);
       signalState = State::CALLER;
+      lastState = signalState;
       if (info.timePoint() == -1) {
         hi::PostMsg({ msgTo(MessageType::MEETING_OK), seeker::time::currentTime()});
       }
@@ -316,8 +332,6 @@ namespace alllink {
     try {
       if (client) {
         logout();
-        I_LOG("[SignlingInteractionSystem::connectServer] login out! new server is {}:{}",
-          info.serverIp_, info.serverPort_);
       }
       I_LOG("signling link 1");
       auto connectionProvider =
@@ -341,6 +355,39 @@ namespace alllink {
       E_LOG("[SignlingInteractionSystem::connectServer] connect sever failed");
       return false;
     }
+    return true;
+  }
+
+  bool SignlingInteractionSystem::reconnect(const ServerInfo& info) {
+    if (client) {
+      logout();
+    }
+    I_LOG("signling link 1");
+    auto connectionProvider =
+      oatpp::network::tcp::client::ConnectionProvider::createShared({ info.serverIp_, info.serverPort_ });
+    I_LOG("signling link 2");
+    auto connector = oatpp::websocket::Connector::createShared(connectionProvider);
+    int64_t timepoint = seeker::time::currentTime();
+    while (seeker::time::currentTime() - timepoint <= 30000 && signalState == State::NONE) {
+      try {
+        I_LOG("signling link 3");
+        auto connection = connector->connect("/connectWS");
+        I_LOG("signling link 4");
+        client = oatpp::websocket::WebSocket::createShared(connection, true);
+        I_LOG("signling link 5");
+        client->setListener(listener);
+        I_LOG("signling link 6");
+        signalState = State::CONNECT_ON;
+      }
+      catch (std::exception& ex) {
+        E_LOG("[SignlingInteractionSystem::connectServer] connect sever failed:{}", ex.what());
+      }
+      catch (...) {
+        E_LOG("[SignlingInteractionSystem::connectServer] connect sever failed");
+      }
+      std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+    if (signalState == State::NONE) return false;
     return true;
   }
 

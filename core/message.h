@@ -79,7 +79,6 @@ namespace alllink {
 		ADD_TRACK,                      //添加新轨道
 		REMOVE_TRACK,                   //移除轨道
 		DISCONNECT_PEER,                //通知中控器断开连接
-		RECONNECT_SERVER,               //通知中控器重新连接信令服务器和Janus服务器
 		RECONNECT_SERVER_FAILED,        //通知视觉控制器重新连接信令服务器失败
 		RECONNECT_PEER,                 //通知中控器重新连接对端
 		AUDIO_INPUT_DEV_INFO,           //通知视觉控制器读取音频输入设备信息
@@ -107,7 +106,6 @@ namespace alllink {
 				{MessageType::SEND_ICE_TO_PEER, "SEND_ICE_TO_PEER"},
 				{MessageType::SEND_ICE_COMPLETE_TO_PEER, "SEND_ICE_COMPLETE_TO_PEER"},
 				{MessageType::DISCONNECT_PEER, "DISCONNECT_PEER"},
-				{MessageType::RECONNECT_SERVER, "RECONNECT_SERVER"},
 				{MessageType::RECONNECT_PEER, "RECONNECT_PEER"},
 				{MessageType::MEETING_OK, "MEETING_OK"}
 		};

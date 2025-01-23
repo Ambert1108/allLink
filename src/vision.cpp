@@ -241,18 +241,15 @@ namespace alllink {
           point->setShareList(std::any_cast<std::map<int, std::string>>(msg.data), 2);
           break;
         }
-        case msgTo(MessageType::RECONNECT_SERVER): {
-          type_ = VisionType::RECONNECT;
-          I_LOG("network disconnection, close stream screen");
-          // 隐藏会议窗口
-          //streamWnd->OnExit();
-          // 显示开始窗口
-          //wnd->OnEnter();
-        }
         case msgTo(MessageType::MEETING_OK): {
           std::shared_ptr<StreamScreen> point = std::dynamic_pointer_cast<StreamScreen>(streamWnd);
           if (!point) return;
           point->setSessionTimepoint(std::any_cast<int64_t>(msg.data));
+          I_LOG("[test] send {} to peer", msg.id);
+          I_LOG("[Controller::CustomMessageCallback] {} msg send to peer", enumToString(MessageType(msg.id)));
+          // 通知中控器处理消息数据
+          callback_->CustomMessageCallback(msg);
+          break;
         }
         case msgTo(MessageType::SWITCH_AUDIO_INPUT_STR):
         case msgTo(MessageType::SWITCH_AUDIO_OUTPUT_STR):
@@ -269,6 +266,7 @@ namespace alllink {
         case msgTo(MessageType::SEND_SDP_TO_PEER): 
         case msgTo(MessageType::SEND_ICE_COMPLETE_TO_PEER):
         case msgTo(MessageType::SEND_ICE_TO_PEER):
+        case msgTo(MessageType::RECONNECT_PEER):
           // 中控器需要发送sdp/ice消息
           I_LOG("[test] send {} to peer", msg.id);
           I_LOG("[Controller::CustomMessageCallback] {} msg send to peer", enumToString(MessageType(msg.id)));

@@ -4,6 +4,7 @@
 #include <memory>
 #include <string>
 #include <mutex>
+#include <thread>
 #include <regex>
 
 #include "api/async_dns_resolver.h"
@@ -150,8 +151,6 @@ namespace alllink {
 
     void disConnectServer();
 
-    bool reLogin();
-
     bool sendToPeer(const std::string& to, const std::string& message);
 
     void sendTrickle(const std::string& to, const Candidate& ice);
@@ -183,6 +182,8 @@ namespace alllink {
 
   private:
     bool connect(const ServerInfo&);
+    bool reconnect(const ServerInfo&);
+    void reLogin();
     bool ToSignaling(const SignInfo& info);
 
     SignlingInteractionObserver* callback_;
@@ -192,8 +193,10 @@ namespace alllink {
     std::shared_ptr<WSListener> listener;
     aom::InvokeTimerPtr listenBody;
     aom::InvokeTimerPtr keepBody;
+    std::thread reconnectThread;
     ServerInfo serverInfo;
     UserInfo userInfo;
+    State lastState{ NONE };
     State signalState{ NONE };
     int64_t lastBeatPoint = 0;
     int64_t cseq_ = 0;
