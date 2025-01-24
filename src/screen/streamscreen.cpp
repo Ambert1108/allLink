@@ -434,6 +434,7 @@ namespace alllink {
         settingBackground->setPosition(camPos.x * wr, camPos.y * hr);
       }
       else if (shareScreenArrow->onClick(event, mousePosView, this)) {
+        hi::PostMsg({ msgTo(MessageType::REQUEST_WINDOW_LIST), nullptr });
         shareArrowClick = true;
         micArrowClick = false;
         camArrowClick = false;
@@ -496,10 +497,6 @@ namespace alllink {
       I_LOG("volume data is {}", volume);
       // 向中控器发送消息，调整麦克风音量
       hi::PostMsg({ msgTo(MessageType::SWITCH_MIC_VOLUME), volume });
-    }
-    if (seeker::time::currentTime() - tp > 2000) {
-      hi::PostMsg({ msgTo(MessageType::REQUEST_WINDOW_LIST), nullptr });
-      tp = seeker::time::currentTime();
     }
 	}
 
