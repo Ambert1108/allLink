@@ -75,54 +75,54 @@ namespace alllink {
     localVideo.init(640, 480, 1180, 590);
 
 
-    closeMic = std::make_unique<VariableStateGraphicModule>();
-    openMic = std::make_unique<VariableStateGraphicModule>();
-    closeCam = std::make_unique<VariableStateGraphicModule>();
-    openCam = std::make_unique<VariableStateGraphicModule>();
-    closeShare = std::make_unique<VariableStateGraphicModule>();
-    openShare = std::make_unique<VariableStateGraphicModule>();
+    closeMic = std::make_unique<VariableStateGraphicRoundModule>();
+    openMic = std::make_unique<VariableStateGraphicRoundModule>();
+    closeCam = std::make_unique<VariableStateGraphicRoundModule>();
+    openCam = std::make_unique<VariableStateGraphicRoundModule>();
+    closeShare = std::make_unique<VariableStateGraphicRoundModule>();
+    openShare = std::make_unique<VariableStateGraphicRoundModule>();
     volumeBar = std::make_unique<SeekBarModule>();
-    audioDevArrow = std::make_unique<VariableStateVertxModule>();
-    camDevArrow = std::make_unique<VariableStateVertxModule>();
-    shareScreenArrow = std::make_unique<VariableStateVertxModule>();
+    audioDevArrow = std::make_unique<VariableStateVertxRoundModule>();
+    camDevArrow = std::make_unique<VariableStateVertxRoundModule>();
+    shareScreenArrow = std::make_unique<VariableStateVertxRoundModule>();
     audioInputDevList = std::make_unique<DropListModule>();
     audioOutputDevList = std::make_unique<DropListModule>();
     videoDevList = std::make_unique<DropListModule>();
     screenList = std::make_unique<DropListModule>();
     windowList = std::make_unique<DropListModule>();
-    settingBackground = std::make_unique<VariableStateFillModule>(sf::Color::Transparent, 2);
+    settingBackground = std::make_unique<VariableStateRoundModule>(sf::Color::Transparent, 2);
 
-    closeMic->init(80 * wr, 50 * hr, 20 * wr, 1020 * hr);
+    closeMic->init(80 * wr, 50 * hr, 20 * wr, 1020 * hr, 6.f);
     closeMic->setTexture(closeMicFile);
     closeMic->setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225, 200));
     closeMic->setImageSize(40 * wr, 40 * wr);
     closeMic->setImageColor(sf::Color::Black);
 
-    openMic->init(80 * wr, 50 * hr, 20 * wr, 1020 * hr);
+    openMic->init(80 * wr, 50 * hr, 20 * wr, 1020 * hr, 6.f);
     openMic->setTexture(openMicFile);
     openMic->setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225, 200));
     openMic->setImageSize(40 * wr, 40 * wr);
     openMic->setImageColor(sf::Color(117, 188, 255));
 
-    closeCam->init(80 * wr, 50 * hr, 140 * wr, 1020 * hr);
+    closeCam->init(80 * wr, 50 * hr, 140 * wr, 1020 * hr, 6.f);
     closeCam->setTexture(closeCamFile);
     closeCam->setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225, 200));
     closeCam->setImageSize(40 * wr, 40 * wr);
     closeCam->setImageColor(sf::Color::Black);
 
-    openCam->init(80 * wr, 50 * hr, 140 * wr, 1020 * hr);
+    openCam->init(80 * wr, 50 * hr, 140 * wr, 1020 * hr, 6.f);
     openCam->setTexture(openCamFile);
     openCam->setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225, 200));
     openCam->setImageSize(40 * wr, 40 * wr);
     openCam->setImageColor(sf::Color(74, 224, 84));
 
-    closeShare->init(80 * wr, 50 * hr, 280 * wr, 1020 * hr);
+    closeShare->init(80 * wr, 50 * hr, 280 * wr, 1020 * hr, 6.f);
     closeShare->setTexture(closeShareFile);
     closeShare->setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225, 200));
     closeShare->setImageSize(40 * wr, 40 * wr);
     closeShare->setImageColor(sf::Color::Black);
 
-    openShare->init(80 * wr, 50 * hr, 280 * wr, 1020 * hr);
+    openShare->init(80 * wr, 50 * hr, 280 * wr, 1020 * hr, 6.f);
     openShare->setTexture(openShareFile);
     openShare->setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225, 200));
     openShare->setImageSize(40 * wr, 40 * wr);
@@ -136,7 +136,7 @@ namespace alllink {
     meetingTime->setImageSize(24 * wr, 24 * wr);
     meetingTime->setImageColor(sf::Color(117, 188, 255));
 
-    leaveMeeting = std::make_unique<TextFillRectangle>(sf::Color::Red, 3 * wr);
+    leaveMeeting = std::make_unique<TextRoundRectangle>(sf::Color::Red, 3 * wr);
     leaveMeeting->init(190 * wr, 50 * hr, 1686 * wr, 1015 * hr, 8.0 * wr);
     leaveMeeting->setColor(sf::Color::White, sf::Color::Red, sf::Color(191, 23, 23));
     leaveMeeting->setText(msyhFile, L"离开会议", sf::Color::Black, sf::Color::White);
@@ -160,7 +160,7 @@ namespace alllink {
     sense.setSize(sf::Vector2f(480 * wr, 80 * hr));
     sense.setFillColor(sf::Color::Transparent);
 
-    audioDevArrow->set(14 * wr, 50 * hr, 101 * wr, 1020 * hr);
+    audioDevArrow->set(14 * wr, 50 * hr, 101 * wr, 1020 * hr, 5.f);
     audioDevArrow->setVer({
     sf::Vertex(sf::Vector2f(101 * wr, 1050 * hr), sf::Color::Black),
     sf::Vertex(sf::Vector2f((101 + 7) * wr, 1040 * hr), sf::Color::Black),
@@ -168,7 +168,7 @@ namespace alllink {
     sf::Vertex(sf::Vector2f((101 + 14) * wr, 1050 * hr), sf::Color::Black) });
     audioDevArrow->setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225, 200));
 
-    camDevArrow->set(14 * wr, 50 * hr, 221 * wr, 1020 * hr);
+    camDevArrow->set(14 * wr, 50 * hr, 221 * wr, 1020 * hr, 5.f);
     camDevArrow->setVer({
     sf::Vertex(sf::Vector2f(221 * wr, 1050 * hr), sf::Color::Black),
     sf::Vertex(sf::Vector2f((221 + 7) * wr, 1040 * hr), sf::Color::Black),
@@ -176,7 +176,7 @@ namespace alllink {
     sf::Vertex(sf::Vector2f((221 + 14) * wr, 1050 * hr), sf::Color::Black) });
     camDevArrow->setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225, 200));
 
-    shareScreenArrow->set(14 * wr, 50 * hr, 361 * wr, 1020 * hr);
+    shareScreenArrow->set(14 * wr, 50 * hr, 361 * wr, 1020 * hr, 5.f);
     shareScreenArrow->setVer({
     sf::Vertex(sf::Vector2f(361 * wr, 1050 * hr), sf::Color::Black),
     sf::Vertex(sf::Vector2f((361 + 7)  * wr, 1040 * hr), sf::Color::Black),
@@ -239,8 +239,8 @@ namespace alllink {
     windowList->init(280 * wr, 150 * hr, (sharePos.x + 10) * wr, (sharePos.y + 202) * hr, 45 * hr, msyhFile, 8);
     windowList->setShow(true);
 
-    settingBackground->setSize(sf::Vector2f(300 * wr, 600 * hr), 5 * wr);
-    settingBackground->setPosition(micPos.x * wr, micPos.y * hr);
+    settingBackground->setSize(sf::Vector2f(300 * wr, 600 * hr));
+    settingBackground->setPosition(sf::Vector2f(micPos.x * wr, micPos.y * hr));
     settingBackground->setFillColor(sf::Color(220, 220, 220));
 
     // 设置窗口大小为等比例720p
@@ -423,7 +423,7 @@ namespace alllink {
         shareArrowClick = false;
         arrowClick = true;
         settingPop = true;
-        settingBackground->setPosition(micPos.x * wr, micPos.y * hr);
+        settingBackground->setPosition(sf::Vector2f(micPos.x * wr, micPos.y * hr));
       }
       else if (camDevArrow->onClick(event, mousePosView, this)) {
         camArrowClick = true;
@@ -431,7 +431,7 @@ namespace alllink {
         shareArrowClick = false;
         arrowClick = true;
         settingPop = true;
-        settingBackground->setPosition(camPos.x * wr, camPos.y * hr);
+        settingBackground->setPosition(sf::Vector2f(camPos.x * wr, camPos.y * hr));
       }
       else if (shareScreenArrow->onClick(event, mousePosView, this)) {
         shareArrowClick = true;
@@ -439,7 +439,7 @@ namespace alllink {
         camArrowClick = false;
         arrowClick = true;
         settingPop = true;
-        settingBackground->setPosition(sharePos.x * wr, sharePos.y * hr);
+        settingBackground->setPosition(sf::Vector2f(sharePos.x * wr, sharePos.y * hr));
       }
       if (settingBackground->getGlobalBounds().contains(mousePosView)) {
         if (micArrowClick) {
@@ -485,6 +485,10 @@ namespace alllink {
           if (settingPop) settingPop = false;
         }
         if (isFull && settingPop) settingPop = false;
+        micArrowClick = false;
+        camArrowClick = false;
+        shareArrowClick = false;
+        setCursor(this, sf::Cursor::Arrow);
       }
     }
     std::wstring time = L"会议时长 " +

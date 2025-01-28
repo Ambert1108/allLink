@@ -36,38 +36,38 @@ int main() {
   std::string openShareFile = "./resources/comp/meeting/open_Share.png";
   std::string timeFile = "./resources/comp/meeting/16/meeting_time.png";
 
-  VariableStateGraphicModule closeMic, openMic, closeCam, openCam, closeShare, openShare;
-  closeMic.init(80, 50, 20, 1020);
+  VariableStateGraphicRoundModule closeMic, openMic, closeCam, openCam, closeShare, openShare;
+  closeMic.init(80, 50, 20, 1020, 6.f);
   closeMic.setTexture(closeMicFile);
   closeMic.setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225, 200));
   closeMic.setImageSize(40, 40);
   closeMic.setImageColor(sf::Color::Black);
 
-  openMic.init(80, 50, 20, 1020);
+  openMic.init(80, 50, 20, 1020, 6.f);
   openMic.setTexture(openMicFile);
   openMic.setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225, 200));
   openMic.setImageSize(40, 40);
   openMic.setImageColor(sf::Color(74, 224, 84));
 
-  closeCam.init(80, 50, 140, 1020);
+  closeCam.init(80, 50, 140, 1020, 6.f);
   closeCam.setTexture(closeCamFile);
   closeCam.setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225, 200));
   closeCam.setImageSize(40, 40);
   closeCam.setImageColor(sf::Color::Black);
 
-  openCam.init(80, 50, 140, 1020);
+  openCam.init(80, 50, 140, 1020, 6.f);
   openCam.setTexture(openCamFile);
   openCam.setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225, 200));
   openCam.setImageSize(40, 40);
   openCam.setImageColor(sf::Color(117, 188, 255));
 
-  closeShare.init(80, 50, 280, 1020);
+  closeShare.init(80, 50, 280, 1020, 6.f);
   closeShare.setTexture(closeShareFile);
   closeShare.setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225, 200));
   closeShare.setImageSize(40, 40);
   closeShare.setImageColor(sf::Color::Black);
 
-  openShare.init(80, 50, 280, 1020);
+  openShare.init(80, 50, 280, 1020, 6.f);
   openShare.setTexture(openShareFile);
   openShare.setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225, 200));
   openShare.setImageSize(40, 40);
@@ -82,7 +82,7 @@ int main() {
   meetingTime.setImageColor(sf::Color(117, 188, 255));
   std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
 
-  TextFillRectangle leaveMeeting(sf::Color::Red, 3);
+  TextRoundRectangle leaveMeeting(sf::Color::Red, 3);
   leaveMeeting.init(190, 50, 1686, 1015, 8.0);
   leaveMeeting.setColor(sf::Color::White, sf::Color::Red, sf::Color(191, 23, 23));
   leaveMeeting.setText(font2File, L"离开会议", sf::Color::Black, sf::Color::White);
@@ -109,8 +109,8 @@ int main() {
   top.setSize(sf::Vector2f(1920, 40));
   top.setFillColor(sf::Color(255, 255, 255));
 
-  VariableStateVertxModule micArrow;
-  micArrow.set(14, 50, 101, 1020);
+  VariableStateVertxRoundModule micArrow;
+  micArrow.set(14, 50, 101, 1020, 5.f);
   micArrow.setVer({
     sf::Vertex(sf::Vector2f(101, 1050), sf::Color::Black),
     sf::Vertex(sf::Vector2f(101 + 7, 1040), sf::Color::Black),
@@ -118,8 +118,8 @@ int main() {
     sf::Vertex(sf::Vector2f(101 + 14, 1050), sf::Color::Black) });
   micArrow.setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225, 200));
 
-  VariableStateVertxModule camArrow;
-  camArrow.set(14, 50, 221, 1020);
+  VariableStateVertxRoundModule camArrow;
+  camArrow.set(14, 50, 221, 1020, 5.f);
   camArrow.setVer({
     sf::Vertex(sf::Vector2f(221, 1050), sf::Color::Black),
     sf::Vertex(sf::Vector2f(221 + 7, 1040), sf::Color::Black),
@@ -127,8 +127,8 @@ int main() {
     sf::Vertex(sf::Vector2f(221 + 14, 1050), sf::Color::Black) });
   camArrow.setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225, 200));
 
-  VariableStateVertxModule shareArrow;
-  shareArrow.set(14, 50, 361, 1020);
+  VariableStateVertxRoundModule shareArrow;
+  shareArrow.set(14, 50, 361, 1020, 5.f);
   shareArrow.setVer({
     sf::Vertex(sf::Vector2f(361, 1050), sf::Color::Black),
     sf::Vertex(sf::Vector2f(361 + 7, 1040), sf::Color::Black),
@@ -231,9 +231,10 @@ int main() {
   windowDrop.addLabel(L"窗口9", sf::Color(225, 225, 225), sf::Color(230, 230, 230), sf::Color(240, 240, 240));
   windowDrop.setShow(true);
 
-  VariableStateFillModule background(sf::Color::Transparent, 2);
-  background.setSize(sf::Vector2f(300, 600), 5);
-  background.setPosition(micPos.x, micPos.y);
+  VariableStateRoundModule background(sf::Color::Transparent, 2);
+  background.setSize(sf::Vector2f(300, 600));
+  background.setCornerRadius(5);
+  background.setPosition(sf::Vector2f(micPos.x, micPos.y));
   background.setFillColor(sf::Color(220, 220, 220));
 
   sf::RectangleShape sense;
@@ -313,7 +314,7 @@ int main() {
         shareArrowClick = false;
         arrowClick = true;
         settingPop = true;
-        background.setPosition(micPos.x, micPos.y);
+        background.setPosition(sf::Vector2f(micPos.x, micPos.y));
         I_LOG("mic arrow click");
       }
       else if (camArrow.onClick(event, mousePosView, wnd)) {
@@ -322,7 +323,7 @@ int main() {
         shareArrowClick = false;
         arrowClick = true;
         settingPop = true;
-        background.setPosition(camPos.x, camPos.y);
+        background.setPosition(sf::Vector2f(camPos.x, camPos.y));
         I_LOG("cam arrow click");
       }
       else if (shareArrow.onClick(event, mousePosView, wnd)) {
@@ -331,7 +332,7 @@ int main() {
         camArrowClick = false;
         arrowClick = true;
         settingPop = true;
-        background.setPosition(sharePos.x, sharePos.y);
+        background.setPosition(sf::Vector2f(sharePos.x, sharePos.y));
         I_LOG("share arrow click");
       }
       if (background.getGlobalBounds().contains(mousePosView)) {
@@ -366,6 +367,10 @@ int main() {
           if (settingPop) settingPop = false;
         }
         if (isFull && settingPop) settingPop = false;
+        micArrowClick = false;
+        camArrowClick = false;
+        shareArrowClick = false;
+        setCursor(wnd, sf::Cursor::Arrow);
       }
     }
     std::wstring time = L"会议时长 " + 

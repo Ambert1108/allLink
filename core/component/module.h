@@ -259,6 +259,309 @@ namespace alllink {
 		RoundedRectangle fill;
 	};
 
+	class AdvancedRoundedRectangle : public sf::Drawable {
+	public:
+		AdvancedRoundedRectangle() {};
+
+		explicit AdvancedRoundedRectangle(const sf::Vector2f& size, float radius,
+			unsigned int cornerPoints) 
+			: m_size(size), m_cornerPoints(cornerPoints) {
+			setCornerRadius(radius); // 通过setter初始化以保证约束
+			updateGeometry();
+		}
+
+		void setSize(const sf::Vector2f& size) {
+			m_size = size;
+			m_radius = getValidRadius(); // 自动更新有效半径
+			updateGeometry();
+		}
+
+		void setCornerRadius(float radius) {
+			m_radius = std::clamp(radius, 0.f, getMaxRadius());
+			updateGeometry();
+		}
+
+		void setPosition(const sf::Vector2f& position) {
+			m_position = position;
+			updateGeometry();
+		}
+
+		void setFillColor(const sf::Color& color) {
+			m_fillColor = color;
+			updateColors();
+		}
+
+		void setOutlineColor(const sf::Color& color) {
+			m_outlineColor = color;
+			updateColors();
+		}
+
+		void setOutlineThickness(float thickness) {
+			m_outlineThickness = std::max(0.f, thickness);
+			updateGeometry();
+		}
+
+
+		sf::FloatRect getGlobalBounds() const {
+			return {
+					m_position.x - m_outlineThickness,
+					m_position.y - m_outlineThickness,
+					m_size.x + 2 * m_outlineThickness,
+					m_size.y + 2 * m_outlineThickness
+			};
+		}
+		
+		sf::Vector2f getSize() const {
+			return m_size;
+		}
+
+		sf::Vector2f getPosition() const {
+			return m_position;
+		}
+
+	private:
+		void draw(sf::RenderTarget& target, sf::RenderStates states) const override {
+			target.draw(m_fillVertices, states);
+			if (m_outlineThickness > 0) {
+				target.draw(m_outlineVertices, states);
+			}
+		}
+
+		float getMaxRadius() const {
+			return std::min(m_size.x, m_size.y) / 2;
+		}
+
+		float getValidRadius() const {
+			return std::min(m_radius, getMaxRadius());
+		}
+
+		void updateGeometry() {
+			m_fillVertices.clear();
+			m_outlineVertices.clear();
+
+			createFillGeometry();
+			if (m_outlineThickness > 0) {
+				createOutlineGeometry();
+			}
+			updateColors();
+		}
+
+		void createFillGeometry() {
+			const float radius = getValidRadius();
+			const float diameter = 2 * radius;
+			const sf::Vector2f innerSize = m_size - sf::Vector2f(diameter, diameter);
+
+			const std::array<sf::Vector2f, 4> centers = {
+					m_position + sf::Vector2f(radius, radius),
+					m_position + sf::Vector2f(m_size.x - radius, radius),
+					m_position + sf::Vector2f(m_size.x - radius, m_size.y - radius),
+					m_position + sf::Vector2f(radius, m_size.y - radius)
+			};
+
+			const std::array<float, 4> angles = { 180.f, 270.f, 0.f, 90.f };
+
+			// 生成四个圆角
+			for (int i = 0; i < 4; ++i) {
+				createCornerFan(centers[i], angles[i], 90.f, m_fillVertices);
+			}
+
+			// 生成中间区域
+			createQuad(m_position + sf::Vector2f(radius, 0), { innerSize.x, m_size.y }, m_fillVertices);
+			createQuad(m_position + sf::Vector2f(0, radius), { m_size.x, innerSize.y }, m_fillVertices);
+			createQuad(m_position + sf::Vector2f(radius, radius), innerSize, m_fillVertices);
+		}
+
+		void createCornerFan(const sf::Vector2f& center, float startAngle, float sweep, sf::VertexArray& target) {
+			const float deg2rad = 3.14159265f / 180.f;
+			const float step = sweep / (m_cornerPoints - 1);
+			const float radius = getValidRadius();
+
+			std::vector<sf::Vertex> fan;
+			fan.emplace_back(center, m_fillColor);
+
+			for (unsigned i = 0; i < m_cornerPoints; ++i) {
+				float angle = (startAngle + i * step) * deg2rad;
+				sf::Vector2f offset(std::cos(angle) * radius, std::sin(angle) * radius);
+				fan.emplace_back(center + offset, m_fillColor);
+			}
+
+			for (size_t i = 1; i < fan.size() - 1; ++i) {
+				target.append(fan[0]);
+				target.append(fan[i + 1]);
+				target.append(fan[i]);
+			}
+		}
+
+		void createOutlineGeometry() {
+			const float radius = getValidRadius();
+			const float outerRadius = radius + m_outlineThickness;
+			const sf::Vector2f outerSize = m_size + 2.f * sf::Vector2f(m_outlineThickness, m_outlineThickness);
+
+			// 外边框约束
+			const float maxOuterRadius = std::min(outerSize.x, outerSize.y) / 2;
+			const float actualOuterRadius = std::min(outerRadius, maxOuterRadius);
+
+			const sf::FloatRect outerRect(
+				m_position.x - m_outlineThickness,
+				m_position.y - m_outlineThickness,
+				outerSize.x,
+				outerSize.y
+			);
+
+			const sf::FloatRect innerRect(m_position, m_size);
+
+			// 外轮廓中心
+			const std::array<sf::Vector2f, 4> outerCenters = {
+					sf::Vector2f(outerRect.left + actualOuterRadius, outerRect.top + actualOuterRadius),
+					sf::Vector2f(outerRect.left + outerRect.width - actualOuterRadius, outerRect.top + actualOuterRadius),
+					sf::Vector2f(outerRect.left + outerRect.width - actualOuterRadius, outerRect.top + outerRect.height - actualOuterRadius),
+					sf::Vector2f(outerRect.left + actualOuterRadius, outerRect.top + outerRect.height - actualOuterRadius)
+			};
+
+			// 内轮廓中心
+			const std::array<sf::Vector2f, 4> innerCenters = {
+					sf::Vector2f(innerRect.left + radius, innerRect.top + radius),
+					sf::Vector2f(innerRect.left + innerRect.width - radius, innerRect.top + radius),
+					sf::Vector2f(innerRect.left + innerRect.width - radius, innerRect.top + innerRect.height - radius),
+					sf::Vector2f(innerRect.left + radius, innerRect.top + innerRect.height - radius)
+			};
+
+			// 生成圆角边框
+			const std::array<float, 4> angles = { 180.f, 270.f, 0.f, 90.f };
+			for (int i = 0; i < 4; ++i) {
+				createOutlineSegment(
+					outerCenters[i],
+					innerCenters[i],
+					angles[i],
+					90.f,
+					actualOuterRadius,
+					radius,
+					m_outlineVertices
+				);
+			}
+
+			// 生成直线边框
+			createOutlineLine(
+				{ outerRect.left + actualOuterRadius, outerRect.top },
+				{ outerRect.left + outerRect.width - actualOuterRadius, outerRect.top },
+				{ innerRect.left + radius, innerRect.top },
+				{ innerRect.left + innerRect.width - radius, innerRect.top },
+				m_outlineVertices
+			);
+
+			createOutlineLine(
+				{ outerRect.left + outerRect.width, outerRect.top + actualOuterRadius },
+				{ outerRect.left + outerRect.width, outerRect.top + outerRect.height - actualOuterRadius },
+				{ innerRect.left + innerRect.width, innerRect.top + radius },
+				{ innerRect.left + innerRect.width, innerRect.top + innerRect.height - radius },
+				m_outlineVertices
+			);
+
+			createOutlineLine(
+				{ outerRect.left + actualOuterRadius, outerRect.top + outerRect.height },
+				{ outerRect.left + outerRect.width - actualOuterRadius, outerRect.top + outerRect.height },
+				{ innerRect.left + radius, innerRect.top + innerRect.height },
+				{ innerRect.left + innerRect.width - radius, innerRect.top + innerRect.height },
+				m_outlineVertices
+			);
+
+			createOutlineLine(
+				{ outerRect.left, outerRect.top + actualOuterRadius },
+				{ outerRect.left, outerRect.top + outerRect.height - actualOuterRadius },
+				{ innerRect.left, innerRect.top + radius },
+				{ innerRect.left, innerRect.top + innerRect.height - radius },
+				m_outlineVertices
+			);
+		}
+
+		void createOutlineSegment(const sf::Vector2f& outerCenter, const sf::Vector2f& innerCenter,
+			float startAngle, float sweep, float outerRadius, float innerRadius,
+			sf::VertexArray& target) {
+			const float deg2rad = 3.14159265f / 180.f;
+			const float step = sweep / (m_cornerPoints - 1);
+
+			std::vector<sf::Vertex> outerArc, innerArc;
+
+			for (unsigned i = 0; i < m_cornerPoints; ++i) {
+				float angle = (startAngle + i * step) * deg2rad;
+
+				sf::Vector2f outerPoint = outerCenter + sf::Vector2f(
+					std::cos(angle) * outerRadius,
+					std::sin(angle) * outerRadius
+				);
+
+				sf::Vector2f innerPoint = innerCenter + sf::Vector2f(
+					std::cos(angle) * innerRadius,
+					std::sin(angle) * innerRadius
+				);
+
+				outerArc.emplace_back(outerPoint, m_outlineColor);
+				innerArc.emplace_back(innerPoint, m_outlineColor);
+			}
+
+			for (size_t i = 0; i < outerArc.size() - 1; ++i) {
+				target.append(outerArc[i]);
+				target.append(innerArc[i]);
+				target.append(outerArc[i + 1]);
+
+				target.append(innerArc[i]);
+				target.append(innerArc[i + 1]);
+				target.append(outerArc[i + 1]);
+			}
+		}
+
+		void createOutlineLine(const sf::Vector2f& outerStart, const sf::Vector2f& outerEnd,
+			const sf::Vector2f& innerStart, const sf::Vector2f& innerEnd,
+			sf::VertexArray& target) {
+			// 四边形分解为两个三角形
+			target.append(sf::Vertex(outerStart, m_outlineColor));
+			target.append(sf::Vertex(innerStart, m_outlineColor));
+			target.append(sf::Vertex(innerEnd, m_outlineColor));
+
+			target.append(sf::Vertex(outerStart, m_outlineColor));
+			target.append(sf::Vertex(innerEnd, m_outlineColor));
+			target.append(sf::Vertex(outerEnd, m_outlineColor));
+		}
+
+		void createQuad(const sf::Vector2f& pos, const sf::Vector2f& size, sf::VertexArray& target) {
+			const std::array<sf::Vector2f, 4> points = {
+					pos,
+					pos + sf::Vector2f(size.x, 0.f),
+					pos + size,
+					pos + sf::Vector2f(0.f, size.y)
+			};
+
+			target.append(sf::Vertex(points[0], m_fillColor));
+			target.append(sf::Vertex(points[3], m_fillColor));
+			target.append(sf::Vertex(points[2], m_fillColor));
+
+			target.append(sf::Vertex(points[0], m_fillColor));
+			target.append(sf::Vertex(points[2], m_fillColor));
+			target.append(sf::Vertex(points[1], m_fillColor));
+		}
+
+		void updateColors() {
+			for (size_t i = 0; i < m_fillVertices.getVertexCount(); ++i) {
+				m_fillVertices[i].color = m_fillColor;
+			}
+			for (size_t i = 0; i < m_outlineVertices.getVertexCount(); ++i) {
+				m_outlineVertices[i].color = m_outlineColor;
+			}
+		}
+
+	private:
+		sf::Vector2f m_size;
+		sf::Vector2f m_position;
+		float m_radius = 0.f;
+		unsigned int m_cornerPoints = 20;
+		float m_outlineThickness = 0.f;
+		sf::Color m_fillColor = sf::Color::White;
+		sf::Color m_outlineColor = sf::Color::Transparent;
+
+		sf::VertexArray m_fillVertices{ sf::Triangles };
+		sf::VertexArray m_outlineVertices{ sf::Triangles };
+	};
+
 	class VariableStateModule :public sf::RectangleShape {
 	public:
 		VariableStateModule() {
@@ -349,9 +652,9 @@ namespace alllink {
 		sf::Cursor::Type curType_ = sf::Cursor::Type::Hand;
 	};
 
-	class VariableStateFillModule :public CircleRectangle {
+	class VariableStateRoundModule :public AdvancedRoundedRectangle {
 	public:
-		VariableStateFillModule(sf::Color color, int thickness) : CircleRectangle(), outLineColor(color) {
+		VariableStateRoundModule(sf::Color color, int thickness) : AdvancedRoundedRectangle(), outLineColor(color) {
 			this->setOutlineColor(outLineColor);
 			this->setOutlineThickness(thickness);
 		}
@@ -429,7 +732,7 @@ namespace alllink {
 			win_->draw(*this);
 		}
 
-		virtual ~VariableStateFillModule() = default;
+		virtual ~VariableStateRoundModule() = default;
 	protected:
 		bool isPressed = false;
 		bool isHover = false;
@@ -504,14 +807,15 @@ namespace alllink {
 		std::vector<sf::Vertex> ver_;
 	};
 
-	class VariableStateVertxFillModule : public VariableStateFillModule {
+	class VariableStateVertxRoundModule : public VariableStateRoundModule {
 	public:
-		VariableStateVertxFillModule() : 
-			VariableStateFillModule(sf::Color::Transparent, 2), ver_(6) {};
+		VariableStateVertxRoundModule() :
+			VariableStateRoundModule(sf::Color::Transparent, 2), ver_(6) {};
 
-		void set(int width, int height, int x, int y) {
-			this->setSize(sf::Vector2f(width, height), 10);
-			this->setPosition(x, y);
+		void set(int width, int height, int x, int y, float radius) {
+			this->setSize(sf::Vector2f(width, height));
+			this->setCornerRadius(radius);
+			this->setPosition(sf::Vector2f(x, y));
 		}
 
 		void setVer(std::vector<sf::Vertex> vec) { ver_.swap(vec); }
@@ -587,6 +891,69 @@ namespace alllink {
 		bool init_ = false;
 	};
 
+	class VariableStateGraphicRoundModule : public VariableStateRoundModule {
+	public:
+		VariableStateGraphicRoundModule() 
+			: VariableStateRoundModule(sf::Color::Transparent, 1.f), texture_(nullptr) {};
+
+		virtual ~VariableStateGraphicRoundModule() {
+			if (texture_) {
+				delete texture_;
+				texture_ = nullptr;
+			}
+		}
+
+		void init(int width, int height, int x, int y, float radius) {
+			if (init_) return;
+			texture_ = new sf::Texture();
+			this->setSize(sf::Vector2f(width, height));
+			this->setCornerRadius(radius);
+			this->setPosition(sf::Vector2f(x, y));
+			init_ = true;
+		}
+
+		void setTexture(const std::string& textureFile, bool resetRect = false) {
+			texture_->loadFromFile(textureFile);
+			image_.setTexture(*texture_, resetRect);
+		}
+
+		virtual void setImage() {
+			int x = this->getPosition().x +
+				(this->getSize().x - image_.getGlobalBounds().width) / 2.f;
+			int y = this->getPosition().y +
+				(this->getSize().y - image_.getGlobalBounds().height) / 2.f;
+			image_.setPosition(x, y);
+		}
+
+		bool setImageSize(float width, float height) {
+			try {
+				auto size = texture_->getSize();
+				image_.setOrigin(texture_->getSize().x / 2.f, texture_->getSize().y / 2.f);
+				image_.setScale(width / size.x, height / size.y);
+				image_.setOrigin(0, 0);
+				setImage();
+			}
+			catch (std::exception& ex) {
+				E_LOG("[VariableStateGraphicModule::setImageSize] catch exception:{}", ex.what());
+				return false;
+			}
+			return true;
+		}
+
+		void setImageColor(sf::Color imageColor) {
+			image_.setColor(imageColor);
+		}
+
+		void render(sf::RenderTarget* tar) {
+			tar->draw(*this);
+			tar->draw(image_);
+		}
+
+	protected:
+		sf::Texture* texture_;
+		sf::Sprite image_;
+		bool init_ = false;
+	};
 	class GraphicTextsModule : public VariableStateModule {
 	public:
 		GraphicTextsModule() : texture_(nullptr) {};
@@ -944,14 +1311,15 @@ namespace alllink {
 		sf::Color inactiveColor;
 	};
 
-	class TextFillRectangle : public VariableStateFillModule {
+	class TextRoundRectangle : public VariableStateRoundModule {
 	public:
-		TextFillRectangle(sf::Color outlineColor, int thickness = 2)
-			: VariableStateFillModule(outlineColor, thickness) {};
+		TextRoundRectangle(sf::Color outlineColor, int thickness = 2)
+			: VariableStateRoundModule(outlineColor, thickness) {};
 
 		void init(int width, int height, int x, int y, float radius) {
-			this->setSize(sf::Vector2f(width, height), radius);
-			this->setPosition(x, y);
+			this->setSize(sf::Vector2f(width, height));
+			this->setCornerRadius(radius);
+			this->setPosition(sf::Vector2f(x, y));
 		}
 
 		void setText(const std::string& fontFile, const sf::String& text, sf::Color textColor, sf::Color hoverColor) {
@@ -1463,7 +1831,7 @@ namespace alllink {
 				E_LOG("label {} is exist", WstrConv.to_bytes(labelText));
 				return;
 			}
-			auto label = labelList.emplace(labelText, TextFillRectangle(sf::Color::Transparent, 2));
+			auto label = labelList.emplace(labelText, TextRoundRectangle(sf::Color::Transparent, 2));
 			label.first->second.setActivate(activate);
 			label.first->second.init(this->getGlobalBounds().getSize().x - margin * 3, btnHeight, this->getPosition().x + margin, this->getPosition().y + (labelList.size() - 1) * (btnHeight + margin * 2) + margin, 5);
 			label.first->second.setText(fontFile, labelText, sf::Color::Black, sf::Color::Black);
@@ -1488,7 +1856,7 @@ namespace alllink {
 	protected:
 		std::string fontFile;
 		int textSize = 12;
-		std::map<std::wstring, TextFillRectangle> labelList;
+		std::map<std::wstring, TextRoundRectangle> labelList;
 		sf::CircleShape point;
 		float btnHeight = 60;
 		float btnWidth = 60;

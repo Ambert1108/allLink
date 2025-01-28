@@ -324,19 +324,19 @@ namespace alllink {
 		void OnPaint();
 
 	private:
-		std::unique_ptr<VariableStateGraphicModule> closeMic;
-		std::unique_ptr<VariableStateGraphicModule> openMic;
-		std::unique_ptr<VariableStateGraphicModule> closeCam;
-		std::unique_ptr<VariableStateGraphicModule> openCam;
-		std::unique_ptr<VariableStateGraphicModule> closeShare;
-		std::unique_ptr<VariableStateGraphicModule> openShare;
+		std::unique_ptr<VariableStateGraphicRoundModule> closeMic;
+		std::unique_ptr<VariableStateGraphicRoundModule> openMic;
+		std::unique_ptr<VariableStateGraphicRoundModule> closeCam;
+		std::unique_ptr<VariableStateGraphicRoundModule> openCam;
+		std::unique_ptr<VariableStateGraphicRoundModule> closeShare;
+		std::unique_ptr<VariableStateGraphicRoundModule> openShare;
 		std::unique_ptr<HorizonGraphicTextsModule> meetingTime;
-		std::unique_ptr<TextFillRectangle> leaveMeeting;
+		std::unique_ptr<TextRoundRectangle> leaveMeeting;
 		std::unique_ptr<BaseText> meetingDescribe;
 		std::unique_ptr<SeekBarModule> volumeBar;
-		std::unique_ptr<VariableStateVertxModule> audioDevArrow, camDevArrow, shareScreenArrow;
+		std::unique_ptr<VariableStateVertxRoundModule> audioDevArrow, camDevArrow, shareScreenArrow;
 		std::unique_ptr<DropListModule> audioInputDevList, audioOutputDevList, videoDevList, screenList, windowList;
-		std::unique_ptr<VariableStateFillModule> settingBackground;
+		std::unique_ptr<VariableStateRoundModule> settingBackground;
 		sf::RectangleShape bottom, top, sense;
 		BaseText seekbarDescribe, micDescribe, spDescribe, camDescribe, screenDescribe, windowDescribe;
 		std::unique_ptr<VideoRenderer> local_renderer_;
