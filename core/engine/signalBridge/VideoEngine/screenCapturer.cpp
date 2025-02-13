@@ -19,7 +19,7 @@ void ScreenCapturer::startCapturer() {
   working = true;
 
   screenThread_ = std::thread(&ScreenCapturer::captureThread, this);
-  
+
   //std::thread captureTh(&ScreenCapturer::captureThread, this);
   //captureTh.detach();
 }
@@ -67,8 +67,8 @@ void ScreenCapturer::setWindow(int id) {
   for (const auto& source : sources) {
     I_LOG("Source ID:{}, Title:{}", source.id, source.title);
   }
- // if (id > sources.size() - 1)
-  //  id = 1;
+  // if (id > sources.size() - 1)
+   //  id = 1;
   window_capturer_->SelectSource(id);
   I_LOG("sources.size={}, Source ID:{}", sources.size(), id);
 }
@@ -100,7 +100,7 @@ void ScreenCapturer::OnCaptureResult(webrtc::DesktopCapturer::Result result,
 
     int cropWidth = (16 - width % 16);
     if (width % 16 != 0) {
-    //  //i420_buffer_.release();
+      //  //i420_buffer_.release();
       width = (16 - width % 16) + width;
     }
 
@@ -138,7 +138,7 @@ void ScreenCapturer::OnCaptureResult(webrtc::DesktopCapturer::Result result,
   catch (...) {
     E_LOG("Unknown exception caught");
   }
-  
+
 }
 
 

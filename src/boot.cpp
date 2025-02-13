@@ -14,7 +14,6 @@
 
 #include "controller.h"
 #include "vision.h"
-#include "signling.h"
 
 #include "seeker/logger.h"
 #include "seeker/loggerApi.h"
@@ -28,9 +27,8 @@ int main(int argc, char* argv[]) {
   seeker::IniConfig::init("./resources/config.ini");
   oatpp::base::Environment::init();
   {
-    VisionCentralContoller vcc;
-    SignlingInteractionSystem client;
-    auto controller = rtc::make_ref_counted<Controller>(&client, &vcc);
+    VisionCentralController vcc;
+    auto controller = rtc::make_ref_counted<Controller>(&vcc);
     vcc.run();
   }
   oatpp::base::Environment::destroy();

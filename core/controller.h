@@ -6,79 +6,57 @@
 #include <string>
 #include <vector>
 
-#include "api/media_stream_interface.h"
-#include "api/peer_connection_interface.h"
-#include "rtc_base/thread.h"
-
+#include "seeker/logger.h"
+#include "seeker/loggerApi.h"
 #include "seeker/iniConfig.hpp"
-#include "rtcAudioEngine.h"
-#include "rtcVideoEngine.h"
-//#include "videoEngine.h"
-#include "janitor.h"
+#include "engine/signalBridge/rtcConnectEngine.h"
+
 #include "vision.h"
-#include "signling.h"
-#include "janus.h"
 
 
 namespace alllink {
-  class Controller : public webrtc::PeerConnectionObserver,
-    public webrtc::CreateSessionDescriptionObserver,
-    public SignlingInteractionObserver,
-    public VisionCnetralCallback {
+  class Controller :
+    public VisionCentralCallback,
+    public rtcengine::RtcConnectEngine {
 
   public:
-    Controller(SignlingInteractionSystem* client, VisionCnetralBase* vcb);
+    Controller(VisionCentralBase* vcb);
 
     void Close() override;
 
   protected:
     ~Controller();
-    bool InitializePeerConnection();
-    bool CreatePeerConnection();
-    void DeletePeerConnection(bool clear = true);
-    void AddTracks();
 
     //
-    // PeerConnectionObserver implementation.
+    // RtcConnectEngine implementation.
     //
 
-    void OnSignalingChange(
-      webrtc::PeerConnectionInterface::SignalingState new_state) override {}
-    void OnAddTrack(
-      rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver,
-      const std::vector<rtc::scoped_refptr<webrtc::MediaStreamInterface>>&
-      streams) override;
-    void OnRemoveTrack(
-      rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver) override;
-    void OnDataChannel(
-      rtc::scoped_refptr<webrtc::DataChannelInterface> channel) override {}
-    void OnRenegotiationNeeded() override {}
-    void OnIceConnectionChange(
-      webrtc::PeerConnectionInterface::IceConnectionState new_state) override {}
-    void OnIceGatheringChange(
-      webrtc::PeerConnectionInterface::IceGatheringState new_state) override;
-    void OnIceCandidate(const webrtc::IceCandidateInterface* candidate) override;
-    void OnIceConnectionReceivingChange(bool receiving) override {}
-
-    //
-    // SignlingInteractionObserver implementation.
-    //
-
-    void OnPeerDisconnected(const std::string& id) override;
-
-    void OnMessageFromSignling(const SignInfo& info) override;
-
-    void OnSignlingDisconnect() override;
-
-    void OnRinging() override;
-
-    void OnInfoSuccess() override;
+    // 登录成功
+    virtual void OnLoginSuccess(std::string userId) override;
+    // 登陆失败
+    virtual void OnLoginFailure() override;
+    // OnAddTrack, 即入会成功
+    virtual void OnReceiveTrack(webrtc::MediaStreamTrackInterface* receiver) override;
+    // 入会成功
+    virtual void OnJoinMeetingSuccess(int64_t timePoint) override;
+    // 入会失败
+    virtual void OnJoinMeetingFailure() override;
+    // 获取到麦克风设备信息
+    virtual void OnAudioInputDevInfo(std::map<int16_t, std::string> list) override;
+    // 获取扬声器设备信息
+    virtual void OnAudioOutputDevInfo(std::map<int16_t, std::string> list) override;
+    // 获取摄像头设备信息
+    virtual void OnVideoInputDevInfo(std::map<int16_t, std::string> list) override;
+    // 获取屏幕设备信息
+    virtual void OnScreenInfo(std::map<int, std::string> list) override;
+    // 获取窗口信息
+    virtual void OnWindowInfo(std::map<int, std::string> list) override;
 
     //
     // VisionCnetralCallback implementation.
     //
 
-    bool StartLogin(const ServerInfo& server, const UserInfo& user) override;
+    bool LoginSignaling(const linkinfo::ServerInfo& server, const linkinfo::UserInfo& user) override;
 
     void DisconnectFromServer() override;
 
@@ -88,31 +66,12 @@ namespace alllink {
 
     void CustomMessageCallback(const Message& msg) override;
 
-    // 
-    // CreateSessionDescriptionObserver implementation
-    //
-
-    void OnSuccess(webrtc::SessionDescriptionInterface* desc) override;
-    void OnFailure(webrtc::RTCError error) override;
   private:
-    SignlingInteractionSystem* client_;
-    VisionCnetralBase* vision_;
-    std::unique_ptr<rtc::Thread> signaling_thread_;
-    rtc::scoped_refptr<webrtc::PeerConnectionInterface> peerConnection_;
-    rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface>
-      peerConnectionFactory_;
-    rtc::scoped_refptr<webrtc::VideoTrackInterface> screenTrackInterface;
-    rtcengine::rtcAudioEngine audioEngine;
+    VisionCentralBase* vision_;
     std::map<int16_t, std::string> audioInputDevMap, audioOutputDevMap;
     std::map<int16_t, std::string> videoInputDevMap;
     std::map<int, std::string> shareScreenMap, shareWindowMap;
-    rtcengine::RTCVideoEngine videoEngine;
-    //VideoEngine videoEngine;
-    std::shared_ptr<rtcengine::Janitor> janusEngine;
     std::string meetId_;
-    std::unique_ptr<webrtc::SessionDescriptionInterface> localDesc;
-    std::string sdpTmp;
-    webrtc::SdpType type;
     bool needRequestIFrame = false;
   };
 }

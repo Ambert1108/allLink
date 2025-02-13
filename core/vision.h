@@ -13,15 +13,82 @@
 #if defined(WEBRTC_WIN)
 #include "rtc_base/win32.h"
 #endif  // WEBRTC_WIN
-#include "signling.h"
 #include "message.h"
 #include "screen/screensink.h"
+#include "seeker/iniConfig.hpp"
+
+namespace linkinfo {
+  struct UserInfo {
+    std::string id_;
+    std::string pwd_;
+
+    UserInfo() = default;
+
+    bool operator==(const UserInfo& other) const {
+      return id_ == other.id_ && pwd_ == other.pwd_;
+    }
+
+    UserInfo& operator=(const UserInfo& other) {
+      if (this != &other) {
+        id_ = other.id_;
+        pwd_ = other.pwd_;
+      }
+      return *this;
+    }
+
+    void clear() {
+      id_.clear();
+      pwd_.clear();
+    }
+  };
+
+  struct ServerInfo {
+    std::string serverIp_;
+    uint16_t serverPort_;
+
+    ServerInfo() = default;
+
+    explicit ServerInfo(const std::string& addr) {
+      try {
+        std::regex pattern(R"((\d+\.\d+\.\d+\.\d+):(\d+))");
+        std::smatch matches;
+        if (!std::regex_match(addr, matches, pattern)) throw std::runtime_error("");
+        if (matches.size() != 3) throw std::runtime_error("");
+        // 0是整个匹配，1是IP，2是端口
+        serverIp_ = matches[1];
+        std::string port = matches[2];
+        serverPort_ = std::stoi(port);
+      }
+      catch (std::exception& ex) {
+        E_LOG("[ServerInfo::conductor] Failed to resolve server addr:{}", addr);
+      }
+    }
+
+    bool operator==(const ServerInfo& other) const {
+      return serverIp_ == other.serverIp_ && serverPort_ == other.serverPort_;
+    }
+
+    ServerInfo& operator=(const ServerInfo& other) {
+      if (this != &other) {
+        serverIp_ = other.serverIp_;
+        serverPort_ = other.serverPort_;
+      }
+      return *this;
+    }
+
+    void clear() {
+      serverIp_.clear();
+      serverPort_ = 0;
+    }
+  };
+}
+
 
 namespace alllink {
-  class VisionCnetralCallback {
+  class VisionCentralCallback {
   public:
     /*通知控制器登录信令服务器*/
-    virtual bool StartLogin(const ServerInfo& server, const UserInfo& user) = 0;
+    virtual bool LoginSignaling(const linkinfo::ServerInfo& server, const linkinfo::UserInfo& user) = 0;
     /*通知控制器登出信令服务器*/
     virtual void DisconnectFromServer() = 0;
     /*通知控制器连接对端peer*/
@@ -34,14 +101,14 @@ namespace alllink {
     virtual void Close() = 0;
 
   protected:
-    virtual ~VisionCnetralCallback() {}
+    virtual ~VisionCentralCallback() {}
   };
 
-  class VisionCnetralBase {
+  class VisionCentralBase {
   public:
-    virtual ~VisionCnetralBase() {}
+    virtual ~VisionCentralBase() {}
 
-    virtual void registerObserver(VisionCnetralCallback* callback) = 0;
+    virtual void registerObserver(VisionCentralCallback* callback) = 0;
 
     virtual void startLocalRenderer(webrtc::VideoTrackInterface* local_video) = 0;
     virtual void stopLocalRenderer() = 0;
@@ -49,7 +116,7 @@ namespace alllink {
     virtual void stopRemoteRenderer() = 0;
   };
 
-  class VisionCentralContoller : public VisionCnetralBase {
+  class VisionCentralController : public VisionCentralBase {
   public:
     enum class VisionType {
       LOGIN = 0,
@@ -57,10 +124,10 @@ namespace alllink {
       RECONNECT
     };
 
-    VisionCentralContoller();
-    ~VisionCentralContoller();
+    VisionCentralController();
+    ~VisionCentralController();
 
-    void registerObserver(VisionCnetralCallback* callback);
+    void registerObserver(VisionCentralCallback* callback);
     void run();
 
     void startLocalRenderer(webrtc::VideoTrackInterface* local_video);
@@ -78,7 +145,7 @@ namespace alllink {
     std::shared_ptr<BaseScreen> streamWnd = nullptr; //流式窗口
     std::shared_ptr<BaseScreen> loginWnd = nullptr;
     std::shared_ptr<BaseScreen> enterWnd = nullptr;
-    VisionCnetralCallback* callback_;
+    VisionCentralCallback* callback_;
     Message msg;
     VisionType type_{ VisionType::LOGOUT };
     bool autoLogin = true;

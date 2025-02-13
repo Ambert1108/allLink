@@ -1,9 +1,8 @@
 #pragma once
 #include<iostream>
-#include<seeker/common.h>
-#include<seeker/loggerApi.h>
-#include<seeker/logger.h>
-#include"utils/httplib.h"
+#include"seeker/common.h"
+#include"seeker/loggerApi.h"
+#include"seeker/logger.h"
 #include <string>
 #include <chrono>
 #include <condition_variable>

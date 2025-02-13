@@ -51,9 +51,8 @@ namespace alllink {
 		/* 会议窗口消息 */
 		
 		MEETING_END,                    //通知中控器通话应该结束
-		SWITCH_AUDIO_INPUT,             //通知中控器切换音频输入设备
-		SWITCH_AUDIO_INPUT_STR,         //通知中控器切换音频输入设备字符版本
-		SWITCH_AUDIO_OUTPUT_STR,        //通知中控器切换音频输出设备字符版本
+		SWITCH_AUDIO_INPUT_STR,         //通知中控器切换音频输入设备
+		SWITCH_AUDIO_OUTPUT_STR,        //通知中控器切换音频输出设备
 		SWITCH_VIDEO_INPUT,             //通知中控器切换视频输入设备
 		SWITCH_SHARE_SCREEN,            //通知中控器切换共享屏幕
 		SWITCH_SHARE_WINDOW,            //通知中控器切换共享窗口
@@ -92,7 +91,6 @@ namespace alllink {
 
 	static std::string enumToString(MessageType e) {
 		static const std::unordered_map<MessageType, std::string> enumMap = {
-				{MessageType::SWITCH_AUDIO_INPUT, "SWITCH_AUDIO_INPUT"},
 				{MessageType::SWITCH_AUDIO_INPUT_STR, "SWITCH_AUDIO_INPUT_STR"},
 				{MessageType::SWITCH_MIC_VOLUME, "SWITCH_MIC_VOLUME"},
 				{MessageType::SET_MIC_PHONE, "SET_MIC_PHONE"},

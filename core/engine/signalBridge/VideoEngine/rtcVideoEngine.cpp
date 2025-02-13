@@ -186,8 +186,8 @@ namespace rtcengine {
 		std::unique_ptr<webrtc::DesktopCapturer> screen_capturer(
 			webrtc::DesktopCapturer::CreateWindowCapturer(
 				CreateDesktopCaptureOptions()));
-			//webrtc::DesktopCapturer::CreateScreenCapturer(
-			//	CreateDesktopCaptureOptions()));
+		//webrtc::DesktopCapturer::CreateScreenCapturer(
+		//	CreateDesktopCaptureOptions()));
 		return screen_capturer->GetSourceList(sources);
 	}
 
@@ -224,7 +224,7 @@ namespace rtcengine {
 		}
 	}
 
-	
+
 
 	webrtc::DesktopCaptureOptions
 		RTCVideoEngine::CreateDesktopCaptureOptions() {
@@ -250,7 +250,7 @@ namespace rtcengine {
 		if (screen_device) {
 			screen_device->startCapturer();
 			screen_track_ = peer_connection_factory_->CreateVideoTrack(screen_device, "screen");
-			
+
 			video_track = screen_track_;
 			auto result_or_error = peer_connection_->AddTrack(screen_track_, { "111" });
 			I_LOG("[VideoEngine::addScreenTrack] add track done");

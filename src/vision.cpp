@@ -13,7 +13,7 @@
 #include "libyuv.h"
 
 namespace alllink {
-  VisionCentralContoller::VisionCentralContoller() 
+  VisionCentralController::VisionCentralController()
     : callback_(nullptr) {
     sf::Image icon;
     icon.loadFromFile(iconFile);
@@ -30,13 +30,13 @@ namespace alllink {
     streamWnd->init();
   }
 
-  VisionCentralContoller::~VisionCentralContoller() {
+  VisionCentralController::~VisionCentralController() {
 
   }
 
-  void VisionCentralContoller::registerObserver(VisionCnetralCallback* callback) { callback_ = callback; }
+  void VisionCentralController::registerObserver(VisionCentralCallback* callback) { callback_ = callback; }
   
-  void VisionCentralContoller::run() {
+  void VisionCentralController::run() {
     while (wnd->isOpen()) {
       pollEvent();
       update();
@@ -44,31 +44,31 @@ namespace alllink {
     }
   }
 
-  void VisionCentralContoller::startLocalRenderer(webrtc::VideoTrackInterface* local_video) {
+  void VisionCentralController::startLocalRenderer(webrtc::VideoTrackInterface* local_video) {
     std::shared_ptr<StreamScreen> point = std::dynamic_pointer_cast<StreamScreen>(streamWnd);
     if (!point) return;
     point->startLocalRenderer(local_video);
   }
   
-  void VisionCentralContoller::stopLocalRenderer() {
+  void VisionCentralController::stopLocalRenderer() {
     std::shared_ptr<StreamScreen> point = std::dynamic_pointer_cast<StreamScreen>(streamWnd);
     if (!point) return;
     point->stopLocalRenderer();
   }
   
-  void VisionCentralContoller::startRemoteRenderer(webrtc::VideoTrackInterface* remote_video) {
+  void VisionCentralController::startRemoteRenderer(webrtc::VideoTrackInterface* remote_video) {
     std::shared_ptr<StreamScreen> point = std::dynamic_pointer_cast<StreamScreen>(streamWnd);
     if (!point) return;
     point->startRemoteRenderer(remote_video);
   }
   
-  void VisionCentralContoller::stopRemoteRenderer() {
+  void VisionCentralController::stopRemoteRenderer() {
     std::shared_ptr<StreamScreen> point = std::dynamic_pointer_cast<StreamScreen>(streamWnd);
     if (!point) return;
     point->stopRemoteRenderer();
   }
 
-  void VisionCentralContoller::pollEvent() {
+  void VisionCentralController::pollEvent() {
     /* 处理窗口事件 */
     wnd->eventProcess();
     loginWnd->eventProcess();
@@ -76,7 +76,7 @@ namespace alllink {
     streamWnd->eventProcess();
   }
 
-  void VisionCentralContoller::update() {
+  void VisionCentralController::update() {
     /* 读取并处理自定义消息事件 */
     if (!hi::GetMsg(msg)) return;
     try {
@@ -106,7 +106,7 @@ namespace alllink {
             std::string user = seeker::IniConfig::Get("this", "userId", "a");
             std::string pwd = seeker::IniConfig::Get("this", "passwd", "1");
 
-            callback_->StartLogin(ServerInfo(addr), { user, pwd });
+            callback_->LoginSignaling(linkinfo::ServerInfo(addr), { user, pwd });
 
             autoLogin = false;
           }
@@ -133,7 +133,7 @@ namespace alllink {
           I_LOG("[debug] server addr:{}, useId:{}, usePwd:{}", loginInfo.at(0), loginInfo.at(1), loginInfo.at(2));
 
           //调用中控器的回调接口进行具体的登录操作
-          callback_->StartLogin(ServerInfo(loginInfo.at(0)), {loginInfo.at(1), loginInfo.at(2)});
+          callback_->LoginSignaling(linkinfo::ServerInfo(loginInfo.at(0)), {loginInfo.at(1), loginInfo.at(2)});
           break;
         }
         case msgTo(MessageType::IS_ENTER): {
@@ -152,11 +152,6 @@ namespace alllink {
           std::shared_ptr<StreamScreen> point = std::dynamic_pointer_cast<StreamScreen>(streamWnd);
           if (!point) return;
           point->setSessionId(meetingInfo);
-          // 假设连接成功，隐藏连接窗口及开始窗口，显示会议窗口
-          //I_LOG("[test] link success");
-          //enterWnd->OnExit();
-          //wnd->OnExit();
-          //streamWnd->OnEnter();
           break;
         }
         case msgTo(MessageType::LOGIN_SUCCESS): {
@@ -253,7 +248,6 @@ namespace alllink {
         }
         case msgTo(MessageType::SWITCH_AUDIO_INPUT_STR):
         case msgTo(MessageType::SWITCH_AUDIO_OUTPUT_STR):
-        case msgTo(MessageType::SWITCH_AUDIO_INPUT):
         case msgTo(MessageType::SWITCH_VIDEO_INPUT):
         case msgTo(MessageType::SWITCH_SHARE_SCREEN):
         case msgTo(MessageType::SWITCH_SHARE_WINDOW):
@@ -319,7 +313,7 @@ namespace alllink {
     }
   }
 
-  void VisionCentralContoller::render() {
+  void VisionCentralController::render() {
     wnd->show();
     loginWnd->show();
     enterWnd->show();
