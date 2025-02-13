@@ -68,11 +68,9 @@ namespace alllink {
 	int StreamScreen::init() {
     // 初始化本地及远端画面纹理
     remoteSrc = new sf::Texture();
-    localSrc = new sf::Texture();
 
     // 初始化本地及远端精灵尺寸，其中远端精灵尺寸需要适配不同分辨率屏幕
     remoteVideo.init(1920 * wr, 1080 * hr, 0, 0);
-    localVideo.init(640, 480, 1180, 590);
 
 
     closeMic = std::make_unique<VariableStateGraphicRoundModule>();
@@ -282,27 +280,6 @@ namespace alllink {
       remoteVideo.setVideo(*remoteSrc);
       remoteVideo.render(this);
     }
-    if (localImageList.TryPopFlex(localData)) {
-      int rawWidth = localData.bmi.bmiHeader.biWidth;
-      int rawHeight = abs(localData.bmi.bmiHeader.biHeight);
-      int localWidth = rawWidth / 4;
-      int localHeight = rawHeight / 4;
-
-      bool reset = false;
-      if (localSrc->getSize().x != rawWidth || localSrc->getSize().y != rawHeight) {
-        I_LOG("local size is {}:{}, raw size is {}:{}", localSrc->getSize().x, localSrc->getSize().y,
-          rawWidth, rawHeight);
-        localSrc->create(rawWidth, rawHeight);
-        int lcoalX = this->getSize().x - localWidth - 10;
-        int lcoalY = this->getSize().y - localHeight - 10;
-        //localVideo.setPosition(sf::Vector2f(lcoalX, lcoalY));
-        reset = true;
-      }
-      localSrc->update(localData.image.get());
-      localVideo.setVideo(*localSrc);
-      localVideo.setScale(0.25f, 0.25f);
-      localVideo.render(this);
-    }
     if (!isFull) {
       this->draw(top);
       this->draw(bottom);
@@ -504,16 +481,6 @@ namespace alllink {
     }
 	}
 
-  void StreamScreen::startLocalRenderer(webrtc::VideoTrackInterface* local_video) {
-    local_renderer_.reset(new VideoRenderer(std::bind(&StreamScreen::OnPaint, this), 1, 1, local_video));
-    I_LOG("local render reset");
-  }
-
-  void StreamScreen::stopLocalRenderer() {
-    local_renderer_.reset();
-    I_LOG("local render stop");
-  }
-
   void StreamScreen::startRemoteRenderer(webrtc::VideoTrackInterface* remote_video) {
     remote_renderer_.reset(new VideoRenderer(std::bind(&StreamScreen::OnPaint, this), 1, 1, remote_video));
     I_LOG("remote render reset");
@@ -591,47 +558,18 @@ namespace alllink {
 
   // 远端流收到视频帧和本地捕捉到视频帧都会调用此函数
   void StreamScreen::OnPaint() {
-    //获取本地和远端的视频画面
-    VideoRenderer* local_renderer = local_renderer_.get();
+    //获取远端的视频画面
     VideoRenderer* remote_renderer = remote_renderer_.get();
-    if (isActive && remote_renderer && local_renderer) {
-      AutoLock<VideoRenderer> local_lock(local_renderer);
+    if (isActive && remote_renderer) {
       AutoLock<VideoRenderer> remote_lock(remote_renderer);
       const BITMAPINFO& bmi = remote_renderer->bmi();
       const uint8_t* image = remote_renderer->image();
-
       if (image != NULL) {
         remoteImageList.Push(ImageData(bmi, image));
-        if (this->getSize().x > 200 && this->getSize().y > 200 && mode == 0) {
-          const BITMAPINFO& lbmi = local_renderer->bmi();
-          const uint8_t* limage = local_renderer->image();
-          if (limage == nullptr) {
-            I_LOG("local image is nullptr");
-            return;
-          }
-          else if (lbmi.bmiHeader.biSizeImage <= 0) {
-            I_LOG("error, image size is {}", lbmi.bmiHeader.biSizeImage);
-            return;
-          }
-          if (isMirror.load()) {
-            ImageData data;
-            data.bmi = lbmi;
-            data.image.reset(new uint8_t[lbmi.bmiHeader.biSizeImage]);
-            libyuv::ARGBMirror(limage, lbmi.bmiHeader.biWidth * lbmi.bmiHeader.biBitCount / 8,
-              data.image.get(), lbmi.bmiHeader.biWidth * lbmi.bmiHeader.biBitCount / 8,
-              lbmi.bmiHeader.biWidth, std::abs(lbmi.bmiHeader.biHeight));
-            localImageList.Push(data);
-          }
-          else {
-            localImageList.Push(ImageData(lbmi, limage));
-          }
-        }
       }
       else {
         //TODO：没有收到远端画面，渲染文字
         // Connecting...
-        // 若没有本地流：(no video streams either way)
-        // 有本地流：(no incoming video)
       }
     }
     else {

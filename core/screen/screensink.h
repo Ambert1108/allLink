@@ -339,14 +339,10 @@ namespace alllink {
 		std::unique_ptr<VariableStateRoundModule> settingBackground;
 		sf::RectangleShape bottom, top, sense;
 		BaseText seekbarDescribe, micDescribe, spDescribe, camDescribe, screenDescribe, windowDescribe;
-		std::unique_ptr<VideoRenderer> local_renderer_;
 		std::unique_ptr<VideoRenderer> remote_renderer_;
-		sf::Texture* localSrc = nullptr;
 		sf::Texture* remoteSrc = nullptr;
-		VideoModule localVideo{};
 		VideoModule remoteVideo{};
 		base::ThreadSafeQueue<ImageData> remoteImageList{};
-		base::ThreadSafeQueue<ImageData> localImageList{};
 		std::atomic<bool> isMirror{ false };
 		float wr, hr;
 		sf::Vector2i wndPosition;

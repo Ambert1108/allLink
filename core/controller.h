@@ -36,7 +36,7 @@ namespace alllink {
     // 登陆失败
     virtual void OnLoginFailure() override;
     // OnAddTrack, 即入会成功
-    virtual void OnReceiveTrack(webrtc::MediaStreamTrackInterface* receiver) override;
+    virtual void OnReceiveTrack(rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver) override;
     // 入会成功
     virtual void OnJoinMeetingSuccess(int64_t timePoint) override;
     // 入会失败

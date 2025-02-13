@@ -43,18 +43,6 @@ namespace alllink {
       render();
     }
   }
-
-  void VisionCentralController::startLocalRenderer(webrtc::VideoTrackInterface* local_video) {
-    std::shared_ptr<StreamScreen> point = std::dynamic_pointer_cast<StreamScreen>(streamWnd);
-    if (!point) return;
-    point->startLocalRenderer(local_video);
-  }
-  
-  void VisionCentralController::stopLocalRenderer() {
-    std::shared_ptr<StreamScreen> point = std::dynamic_pointer_cast<StreamScreen>(streamWnd);
-    if (!point) return;
-    point->stopLocalRenderer();
-  }
   
   void VisionCentralController::startRemoteRenderer(webrtc::VideoTrackInterface* remote_video) {
     std::shared_ptr<StreamScreen> point = std::dynamic_pointer_cast<StreamScreen>(streamWnd);

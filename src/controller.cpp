@@ -27,8 +27,8 @@ namespace alllink {
     W_LOG("[Controller::OnLoginFailure] login failed");
   }
 
-  void Controller::OnReceiveTrack(webrtc::MediaStreamTrackInterface* receiver) {
-    hi::PostMsg({ msgTo(MessageType::ADD_TRACK), receiver });
+  void Controller::OnReceiveTrack(rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver) {
+    hi::PostMsg({ msgTo(MessageType::ADD_TRACK), receiver->track().release() });
   }
 
   void Controller::OnJoinMeetingSuccess(int64_t timePoint) {

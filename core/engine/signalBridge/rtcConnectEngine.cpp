@@ -303,7 +303,7 @@ namespace rtcengine {
     void RtcConnectEngine::OnAddTrack(rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver,
                                    const std::vector<rtc::scoped_refptr<webrtc::MediaStreamInterface>> &streams) {
         D_LOG("OnAddTrack");
-        OnReceiveTrack(receiver->track().release());
+        OnReceiveTrack(receiver);
     }
 
     void RtcConnectEngine::OnRemoveTrack(rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver) {

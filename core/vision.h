@@ -110,8 +110,6 @@ namespace alllink {
 
     virtual void registerObserver(VisionCentralCallback* callback) = 0;
 
-    virtual void startLocalRenderer(webrtc::VideoTrackInterface* local_video) = 0;
-    virtual void stopLocalRenderer() = 0;
     virtual void startRemoteRenderer(webrtc::VideoTrackInterface* remote_video) = 0;
     virtual void stopRemoteRenderer() = 0;
   };

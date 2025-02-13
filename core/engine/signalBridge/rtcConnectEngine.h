@@ -153,7 +153,7 @@ namespace rtcengine{
         // 登陆失败
         virtual void OnLoginFailure() = 0;
         // OnAddTrack, 即入会成功
-        virtual void OnReceiveTrack(webrtc::MediaStreamTrackInterface* receiver) = 0;
+        virtual void OnReceiveTrack(rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver) = 0;
         // 入会成功
         virtual void OnJoinMeetingSuccess(int64_t timePoint) = 0;
         // 入会失败
