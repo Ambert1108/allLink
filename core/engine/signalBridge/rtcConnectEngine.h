@@ -20,7 +20,6 @@
 #include "api/audio_codecs/builtin_audio_decoder_factory.h"
 #include "api/audio_codecs/builtin_audio_encoder_factory.h"
 #include "api/audio_options.h"
-#include "api/media_stream_interface.h"
 #include "api/rtp_sender_interface.h"
 #include "api/video_codecs/video_decoder_factory.h"
 #include "api/video_codecs/video_decoder_factory_template.h"
@@ -138,11 +137,28 @@ namespace rtcengine{
         // 关闭屏幕共享
         bool closeScreenShare();
 
+        void setCamera(int devId);
+
+        void setScreen(int devId);
+
+        void setWindow(int devId);
+
         void setMicphone(int devId);
 
         void setMicphoneVolume(int val);
 
         void setSpeaker(int devId);
+
+        // 获取媒体设备信息
+        void getAudioInputDevInfo(std::map<int16_t, std::string>& list);
+
+        void getAudioOutputDevInfo(std::map<int16_t, std::string>& list);
+
+        void getVideoInputDevInfo(std::map<int16_t, std::string>& list);
+
+        void getScreenInfo(std::map<int, std::string>& list);
+
+        void getWindowInfo(std::map<int, std::string>& list);
 
 
         //
@@ -154,20 +170,20 @@ namespace rtcengine{
         virtual void OnLoginFailure() = 0;
         // OnAddTrack, 即入会成功
         virtual void OnReceiveTrack(rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver) = 0;
-        // 入会成功
+        // 入会失败
         virtual void OnJoinMeetingSuccess(int64_t timePoint) = 0;
         // 入会失败
         virtual void OnJoinMeetingFailure() = 0;
-        // 获取到麦克风设备信息
-        virtual void OnAudioInputDevInfo(std::map<int16_t, std::string> list) = 0;
-        // 获取扬声器设备信息
-        virtual void OnAudioOutputDevInfo(std::map<int16_t, std::string> list) = 0;
-        // 获取摄像头设备信息
-        virtual void OnVideoInputDevInfo(std::map<int16_t, std::string> list) = 0;
-        // 获取屏幕设备信息
-        virtual void OnScreenInfo(std::map<int, std::string> list) = 0;
-        // 获取窗口信息
-        virtual void OnWindowInfo(std::map<int, std::string> list) = 0;
+//        //获取到麦克风设备信息
+//        virtual void OnAudioInputDevInfo(std::map<int16_t, std::string> list) = 0;
+//        // 获取扬声器设备信息
+//        virtual void OnAudioOutputDevInfo(std::map<int16_t, std::string> list) = 0;
+//        // 获取摄像头设备信息
+//        virtual void OnVideoInputDevInfo(std::map<int16_t, std::string> list) = 0;
+//        // 获取屏幕设备信息
+//        virtual void OnScreenInfo(std::map<int, std::string> list) = 0;
+//        // 获取窗口信息
+//        virtual void OnWindowInfo(std::map<int, std::string> list) = 0;
 
         std::atomic<bool> threadDestroy = false;
 
@@ -180,6 +196,7 @@ namespace rtcengine{
         void AddTracks();
         void sendTrickle(const webrtc::IceCandidateInterface* candidate);
         void sendTrickleComplete();
+        void setLocal(std::string jsep);
         void setRemote(std::string jsep);
         void getDevList();
 
@@ -229,7 +246,7 @@ namespace rtcengine{
 
         std::thread keepaliveThread;
 
-        std::thread getDevInfoThread;
+//        std::thread getDevInfoThread;
 
         std::string localJsep = "unknown";
 
@@ -271,7 +288,7 @@ namespace rtcengine{
 
         SignalingInfo signalInfo;
 
-        std::queue<const webrtc::IceCandidateInterface *> iceQue;
+//        std::queue<const webrtc::IceCandidateInterface *> iceQue;
 
         std::mutex queueMutex;
 

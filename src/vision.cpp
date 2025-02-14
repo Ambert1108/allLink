@@ -31,7 +31,6 @@ namespace alllink {
   }
 
   VisionCentralController::~VisionCentralController() {
-
   }
 
   void VisionCentralController::registerObserver(VisionCentralCallback* callback) { callback_ = callback; }

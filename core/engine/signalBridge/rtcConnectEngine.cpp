@@ -19,43 +19,46 @@ namespace rtcengine {
         }
     };
 
-    RtcConnectEngine::RtcConnectEngine() {}
+    RtcConnectEngine::RtcConnectEngine() {
+        //oatpp::base::Environment::init();
+    }
 
     RtcConnectEngine::~RtcConnectEngine() {
         threadDestroy = true;
         if (keepaliveThread.joinable()) {
             keepaliveThread.join();
         }
-        D_LOG("keepaliveThread.join");
+        I_LOG("keepaliveThread.join");
 
-        if(getDevInfoThread.joinable()){
-            getDevInfoThread.join();
-            D_LOG("getDevInfoThread.join");
+        if(signalingSocket) {
+            signalingSocket->sendClose();
+            signalingSocket->stopListening();
+            signalingSocket = nullptr;
+            I_LOG("sendClose");
         }
-
-        std::unique_lock<std::mutex> lock(stopMtx);
-        stopCv.wait(lock, [this]{ return meetingId.empty(); });
-        D_LOG("stopCv notify");
-
-        signalingSocket->sendClose();
-        D_LOG("sendClose");
 
         if (listenerThread.joinable()) {
             listenerThread.join();
-        }
-        D_LOG("listenerThread.join");
+        } 
+        I_LOG("listenerThread.join");
+
+        audioEngine = nullptr;
+        videoEngine = nullptr;
+        peer_connection_ = nullptr;
+        I_LOG("audioEngine/videoEngine/peer_connection_ = nullptr");
     }
 
     bool RtcConnectEngine::connect(std::string signalIp_, uint16_t signalPort_) {
+        I_LOG("in RtcConnectEngine::connect");
         try {
             auto connectionProvider = oatpp::network::tcp::client::ConnectionProvider::createShared({signalIp_, signalPort_});
-            D_LOG("signaling addr: {}:{}", signalIp_, signalPort_);
+            I_LOG("signaling addr: {}:{}", signalIp_, signalPort_);
 
             auto connector = oatpp::websocket::Connector::createShared(connectionProvider);
             auto connection = connector->connect("/connectWS");
             signalInfo.signalIp = signalIp_;
             signalInfo.signalPort = signalPort_;
-            D_LOG("signaling ws connected done!");
+            I_LOG("signaling ws connected done!");
 
             signalingSocket = oatpp::websocket::WebSocket::createShared(connection,
                                                                         true /* maskOutgoingMessages must be true for clients */);
@@ -74,12 +77,15 @@ namespace rtcengine {
             signalState = State::CONNECT_ON;
         }
         catch (...) {
+            E_LOG("RtcConnectEngine::connect catch error");
             return false;
         }
+        I_LOG("RtcConnectEngine::connect done");
         return true;
     }
 
     bool RtcConnectEngine::login(std::string userId_, std::string password_) {
+        I_LOG("in RtcConnectEngine::login");
         if (!userId_.empty() && !password_.empty()) {
             Message loginReq;
             loginReq.set_userid(userId_);
@@ -87,20 +93,24 @@ namespace rtcengine {
             loginReq.set_cseq(cseq++);
             loginReq.set_meth("REGISTER");
             loginReq.set_isresponse(false);
-            D_LOG("login Req: {}", loginReq.js.dump(4));
+            I_LOG("login Req: {}", loginReq.js.dump(4));
             oatpp::String loginJson = oatpp::String(loginReq.js.dump());
             sendSocket(loginJson);
 
             userInfo.userId = userId_;
             userInfo.password = password_;
+            I_LOG("RtcConnectEngine::login userId: {} password: {}", userInfo.userId, userInfo.password);
         } else {
             E_LOG("userId/password is empty");
             return false;
         }
+
+        I_LOG("RtcConnectEngine::login done");
         return true;
     }
 
     bool RtcConnectEngine::joinMeeting(std::string meetingId_) {
+        I_LOG("in RtcConnectEngine::joinMeeting");
         std::regex pattern("^\\d{3}-\\d{3}$");
         if(std::regex_match(meetingId_, pattern)) {
             if (signalState != State::LOGIN_ON) {
@@ -110,17 +120,21 @@ namespace rtcengine {
             this->meetingId = meetingId_;
 
             if (audioEngine == nullptr) {
+                I_LOG("init audioEngine");
                 audioEngine = std::make_shared<rtcAudioEngine>();
+                I_LOG("init audioEngine done");
             }
             if (videoEngine == nullptr) {
+                I_LOG("init videoEngine");
                 videoEngine = std::make_shared<RTCVideoEngine>();
+                I_LOG("init videoEngine done");
             }
             InitializePeerConnection();
 
             peer_connection_->CreateOffer(this, webrtc::PeerConnectionInterface::RTCOfferAnswerOptions());
-
-            //std::thread threadGetdevInfo(&RtcConnectEngine::getDevList, this);
-            //getDevInfoThread = std::move(threadGetdevInfo);
+            audioEngine->setMicrophoneVolume(50);
+//            std::thread threadGetdevInfo(&RtcConnectEngine::getDevList, this);
+//            getDevInfoThread = std::move(threadGetdevInfo);
         }
         else{
             E_LOG("meetingId error");
@@ -138,23 +152,27 @@ namespace rtcengine {
         byeReq.set_call_id(std::to_string(rand()));
         byeReq.set_meth("BYE");
         byeReq.set_isresponse(false);
-        D_LOG("bye Req: {}", byeReq.js.dump(4));
+        I_LOG("bye Req: {}", byeReq.js.dump(4));
         oatpp::String js = oatpp::String(byeReq.js.dump());
         sendSocket(js);
 
         screenTrackInterface.release();
         videoEngine->close();
         audioEngine->close();
+        peer_connection_ = nullptr;
+        peer_connection_factory_ = nullptr;
         return true;
     }
 
     bool RtcConnectEngine::openCamera() {
+        videoEngine->setVideoBitrate(0.9);
         videoEngine->switchCamera(true);
 
         return true;
     }
 
     bool RtcConnectEngine::closeCamera() {
+        videoEngine->setVideoBitrate(0.2);
         videoEngine->switchCamera(false);
         return true;
     }
@@ -168,7 +186,7 @@ namespace rtcengine {
         openMicReq.set_meth("INFO");
         openMicReq.set_signal("21");
         openMicReq.set_isresponse(false);
-        D_LOG("openMic Req: {}", openMicReq.js.dump(4));
+        I_LOG("openMic Req: {}", openMicReq.js.dump(4));
         oatpp::String js = oatpp::String(openMicReq.js.dump());
         sendSocket(js);
         bool ret = audioEngine->setMicrophone(true);
@@ -185,7 +203,7 @@ namespace rtcengine {
         closeMicReq.set_meth("INFO");
         closeMicReq.set_signal("20");
         closeMicReq.set_isresponse(false);
-        D_LOG("closeMic Req: {}", closeMicReq.js.dump(4));
+        I_LOG("closeMic Req: {}", closeMicReq.js.dump(4));
         oatpp::String js = oatpp::String(closeMicReq.js.dump());
         sendSocket(js);
 
@@ -203,10 +221,11 @@ namespace rtcengine {
         screenShareReq.set_meth("INFO");
         screenShareReq.set_signal("31");
         screenShareReq.set_isresponse(false);
-        D_LOG("openScreenShare Req: {}", screenShareReq.js.dump(4));
+        I_LOG("openScreenShare Req: {}", screenShareReq.js.dump(4));
         oatpp::String js = oatpp::String(screenShareReq.js.dump());
         sendSocket(js);
 
+        videoEngine->setVideoBitrate(1.6);
         bool ret = videoEngine->switchScreen(true);
 
         return ret;
@@ -221,25 +240,132 @@ namespace rtcengine {
         screenShareReq.set_meth("INFO");
         screenShareReq.set_signal("30");
         screenShareReq.set_isresponse(false);
-        D_LOG("closeScreenShare Req: {}", screenShareReq.js.dump(4));
+        I_LOG("closeScreenShare Req: {}", screenShareReq.js.dump(4));
         oatpp::String js = oatpp::String(screenShareReq.js.dump());
         sendSocket(js);
 
+        videoEngine->setVideoBitrate(0.9);
         bool ret = videoEngine->switchScreen(false);
 
         return ret;
     }
 
+    void RtcConnectEngine::setCamera(int devId) {
+        videoEngine->setVideoBitrate(0.9);
+        videoEngine->setCamera(devId);
+        I_LOG("setCamera done");
+    }
+
+    void RtcConnectEngine::setScreen(int devId) {
+        videoEngine->setVideoBitrate(1.6);
+        videoEngine->setScreenCapture(devId);
+        I_LOG("setScreen done");
+    }
+
+    void RtcConnectEngine::setWindow(int devId) {
+        videoEngine->setVideoBitrate(1.6);
+        videoEngine->setWindowCapture(devId);
+        I_LOG("setWindow done");
+    }
+
     void RtcConnectEngine::setMicphone(int devId) {
-        audioEngine->SetRecordingDevices(devId);
+        audioEngine->ReplaceRecordingDevices(devId);
+        I_LOG("setMicphone done");
     }
 
     void RtcConnectEngine::setMicphoneVolume(int val) {
         audioEngine->setMicrophoneVolume(val);
+        I_LOG("setMicphoneVolume done");
     }
 
     void RtcConnectEngine::setSpeaker(int devId) {
-        audioEngine->SetPlayoutDevices(devId);
+        audioEngine->ReplacePlayoutDevices(devId);
+        I_LOG("setSpeaker done");
+    }
+
+    void RtcConnectEngine::getAudioInputDevInfo(std::map<int16_t, std::string>& list) {
+        I_LOG("in RtcConnectEngine::getAudioInputDevInfo");
+        if(audioEngine){
+            audioEngine->GetRecordingDevices(micList);
+            if(micList.size() == 0){
+                E_LOG("no AudioInputDevInfo");
+                return;
+            }
+            else{
+                list.swap(micList);
+            }
+        }
+        else{
+            E_LOG("audioEngine is null");
+        }
+    }
+
+    void RtcConnectEngine::getAudioOutputDevInfo(std::map<int16_t, std::string>& list) {
+        I_LOG("in RtcConnectEngine::getAudioOutputDevInfo");
+        if(audioEngine){
+            audioEngine->GetPlayoutDevices(speakerList);
+            if(speakerList.size() == 0){
+                E_LOG("no AudioOutputDevInfo");
+                return;
+            }
+            else{
+                list.swap(speakerList);
+            }
+        }
+        else{
+            E_LOG("audioEngine is null");
+        }
+    }
+
+    void RtcConnectEngine::getVideoInputDevInfo(std::map<int16_t, std::string>& list) {
+        I_LOG("in RtcConnectEngine::getVideoInputDevInfo");
+        if(videoEngine){
+            videoEngine->getCameraMap(camList);
+            if(camList.size() == 0){
+                E_LOG("no VideoInputDevInfo");
+                return;
+            }
+            else{
+                list.swap(camList);
+            }
+        }
+        else{
+            E_LOG("videoEngine is null");
+        }
+    }
+
+    void RtcConnectEngine::getScreenInfo(std::map<int, std::string>& list) {
+        I_LOG("in RtcConnectEngine::getScreenInfo");
+        if(videoEngine){
+            videoEngine->getScreenMap(screenList);
+            if(screenList.size() == 0){
+                E_LOG("no ScreenInfo");
+                return;
+            }
+            else{
+                list.swap(screenList);
+            }
+        }
+        else{
+            E_LOG("videoEngine is null");
+        }
+    }
+
+    void RtcConnectEngine::getWindowInfo(std::map<int, std::string>& list) {
+        I_LOG("in RtcConnectEngine::getWindowInfo");
+        if(videoEngine){
+            videoEngine->getWinMap(windowList);
+            if(windowList.size() == 0){
+                E_LOG("no WindowInfo");
+                return;
+            }
+            else{
+                list.swap(windowList);
+            }
+        }
+        else{
+            E_LOG("videoEngine is null");
+        }
     }
 
 
@@ -248,36 +374,57 @@ namespace rtcengine {
 //
     void RtcConnectEngine::onOK(Message resp) {
         if (resp.cmeth() == "REGISTER") {
+            I_LOG("REGISTER onOK");
             signalState = State::LOGIN_ON;
-            OnLoginSuccess(resp.to());
+            OnLoginSuccess(userInfo.userId);
         }
         else if (resp.cmeth() == "INVITE") {
+            I_LOG("INVITE onOK");
             remoteJsep = resp.sdp();
             setRemote(remoteJsep);
-            if(resp.timePoint() == -1) OnJoinMeetingSuccess(seeker::time::currentTime());
-            else OnJoinMeetingSuccess(resp.timePoint());
+            if(resp.timePoint() == -1){
+                OnJoinMeetingSuccess(seeker::Time::currentTime());
+            }
+            else{
+                OnJoinMeetingSuccess(resp.timePoint());
+            }
+        }
+        else if (resp.cmeth() == "INFO" && resp.signal() == "31") {
+            I_LOG("INFO 31 onOK");
+            videoEngine->requestKeyFrame();
         }
         else if (resp.cmeth() == "BYE") {
+            I_LOG("BYE onOK");
             meetingId = "";
-            stopCv.notify_one();
         }
     }
 
     void RtcConnectEngine::onTrying(Message resp) {
+        I_LOG("onTrying");
         signalState = State::TRYING;
     }
 
     void RtcConnectEngine::onRinging(Message resp) {
+        I_LOG("onRinging");
         signalState = State::RINGING;
-        D_LOG("iceQue.size: {}", iceQue.size());
-        std::unique_lock<std::mutex> lock(queueMutex);
-        for(int i = 0; i <= iceQue.size(); i++) {
-            auto candidate = iceQue.front();
-            sendTrickle(candidate);
-            iceQue.pop();
+        if(localJsep != "unknown") {
+            setLocal(localJsep);
         }
-        lock.unlock();
-        D_LOG("iceQue.size: {}", iceQue.size());
+        else{
+            E_LOG("local jsep unknown");
+        }
+//        I_LOG("iceQue.size: {}", iceQue.size());
+//        std::unique_lock<std::mutex> lock(queueMutex);
+//        for(int i = 0; i <= iceQue.size(); i++) {
+//            I_LOG("iceQue[{}]", i);
+//            auto candidate = iceQue.front();
+//            I_LOG("get candidate");
+//            sendTrickle(candidate);
+//            I_LOG("send iceQue candidate");
+//            iceQue.pop();
+//        }
+//        lock.unlock();
+//        I_LOG("iceQue.size: {}", iceQue.size());
     }
 
     void RtcConnectEngine::onUnauthorized(Message resp) {
@@ -300,36 +447,35 @@ namespace rtcengine {
 //
 // PeerConnectionObserver implementation.
 //
-    void RtcConnectEngine::OnAddTrack(rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver,
-                                   const std::vector<rtc::scoped_refptr<webrtc::MediaStreamInterface>> &streams) {
-        D_LOG("OnAddTrack");
+    void RtcConnectEngine::OnAddTrack(rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver, const std::vector<rtc::scoped_refptr<webrtc::MediaStreamInterface>> &streams) {
+        I_LOG("OnAddTrack");
         OnReceiveTrack(receiver);
     }
 
     void RtcConnectEngine::OnRemoveTrack(rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver) {
-        D_LOG("OnRemoveTrack");
+        I_LOG("OnRemoveTrack");
         RTC_LOG(LS_INFO) << __FUNCTION__ << " " << receiver->id();
     }
 
     void RtcConnectEngine::OnIceCandidate(const webrtc::IceCandidateInterface *candidate) {
-        D_LOG("OnIceCandidate");
+        I_LOG("OnIceCandidate");
         RTC_LOG(LS_INFO) << __FUNCTION__ << " " << candidate->sdp_mline_index();
         peer_connection_->AddIceCandidate(candidate);
 
-        if(signalState != State::RINGING){
-            std::lock_guard<std::mutex> lock(queueMutex);
-            iceQue.push(candidate);
-        }
-        else{
-            sendTrickle(candidate);
-        }
+//        if(signalState != State::RINGING){
+//            std::lock_guard<std::mutex> lock(queueMutex);
+//            iceQue.push(candidate);
+//        }
+//        else{
+        sendTrickle(candidate);
+//        }
     }
 
     void RtcConnectEngine::OnIceGatheringChange(webrtc::PeerConnectionInterface::IceGatheringState new_state) {
-        D_LOG("OnIceGatheringChange");
+        I_LOG("OnIceGatheringChange");
         sendCandidateDone = true;
         if (new_state == webrtc::PeerConnectionInterface::kIceGatheringComplete) {
-            D_LOG("send trickle complete");
+            I_LOG("send trickle complete");
 //            sendTrickleComplete();
         }
     }
@@ -339,10 +485,10 @@ namespace rtcengine {
 //
     void RtcConnectEngine::OnSuccess(webrtc::SessionDescriptionInterface *desc) {
         I_LOG("onSuccess");
-        peer_connection_->SetLocalDescription(DummySetSessionDescriptionObserver::Create().get(), desc);
-
-        desc->ToString(&localJsep);
-
+//        peer_connection_->SetLocalDescription(DummySetSessionDescriptionObserver::Create().get(), desc);
+        std::string sdp;
+        desc->ToString(&sdp);
+        localJsep = audioEngine->modifySdp(sdp);
         Message inviteReq;
         inviteReq.set_from(userInfo.userId);
         inviteReq.set_to(meetingId);
@@ -361,7 +507,7 @@ namespace rtcengine {
     }
 
     void RtcConnectEngine::OnFailure(webrtc::RTCError error) {
-        D_LOG("OnFailure");
+        I_LOG("OnFailure");
         RTC_LOG(LS_ERROR) << ToString(error.type()) << ": " << error.message();
     }
 
@@ -391,6 +537,7 @@ namespace rtcengine {
 // private
 //
     void RtcConnectEngine::socketTask(const std::shared_ptr<oatpp::websocket::WebSocket> &websocket) {
+        I_LOG("in RtcConnectEngine::socketTask");
         try {
             websocket->listen();
         }
@@ -400,8 +547,9 @@ namespace rtcengine {
     }
 
     void RtcConnectEngine::keepalive() {
+        I_LOG("in RtcConnectEngine::keepalive");
         while (!threadDestroy) {
-            D_LOG("send keepalive");
+            I_LOG("send keepalive");
             Message keepaliveReq;
             keepaliveReq.set_from(userInfo.userId);
             keepaliveReq.set_to(userInfo.userId);
@@ -419,6 +567,7 @@ namespace rtcengine {
     }
 
     bool RtcConnectEngine::InitializePeerConnection() {
+        I_LOG("in InitializePeerConnection");
         RTC_DCHECK(!peer_connection_factory_);
         RTC_DCHECK(!peer_connection_);
 
@@ -446,15 +595,15 @@ namespace rtcengine {
             E_LOG("error");
             return false;
         }
-        I_LOG("create pc finish");
+
         AddTracks();
-        I_LOG("InitializePeerConnection finish");
+        I_LOG("InitializePeerConnection end");
 
         return true;
     }
 
     void RtcConnectEngine::AddTracks() {
-        D_LOG("AddTracks");
+        I_LOG("AddTracks");
         if (!peer_connection_->GetSenders().empty()) {
             return;  // Already added tracks.
         }
@@ -463,11 +612,11 @@ namespace rtcengine {
 
         rtc::scoped_refptr<webrtc::VideoTrackInterface> video_track_, screen_track_;
         videoEngine->addVideoTrack(peer_connection_factory_, peer_connection_, video_track_);
-        //videoEngine->addScreenTrack(peer_connection_factory_, peer_connection_, screen_track_);
-        //screenTrackInterface = screen_track_;
+        videoEngine->addScreenTrack(peer_connection_factory_, peer_connection_, screen_track_);
+        screenTrackInterface = screen_track_;
 
         videoEngine->switchCamera(false);
-        //videoEngine->switchScreen(false);
+        videoEngine->switchScreen(false);
     }
 
     bool RtcConnectEngine::CreatePeerConnection() {
@@ -507,7 +656,7 @@ namespace rtcengine {
         }
         trickleReq.set_candidate(candidateString);
         trickleReq.set_isresponse(false);
-        D_LOG("trickle Req: {}", trickleReq.js.dump(4));
+        I_LOG("trickle Req: {}", trickleReq.js.dump(4));
         oatpp::String js = oatpp::String(trickleReq.js.dump());
         sendSocket(js);
     }
@@ -521,9 +670,16 @@ namespace rtcengine {
         trickleReq.set_meth("TRICKLE");
         trickleReq.set_completed(true);
         trickleReq.set_isresponse(false);
-        D_LOG("trickle complete Req: {}", trickleReq.js.dump(4));
+        I_LOG("trickle complete Req: {}", trickleReq.js.dump(4));
         oatpp::String js = oatpp::String(trickleReq.js.dump());
         sendSocket(js);
+    }
+
+    void RtcConnectEngine::setLocal(std::string jsep) {
+        std::unique_ptr<webrtc::SessionDescriptionInterface> session_description = webrtc::CreateSessionDescription(
+                webrtc::SdpType::kOffer, jsep);
+        peer_connection_->SetLocalDescription(DummySetSessionDescriptionObserver::Create().get(),
+                                               session_description.release());
     }
 
     void RtcConnectEngine::setRemote(std::string jsep) {
@@ -532,43 +688,4 @@ namespace rtcengine {
         peer_connection_->SetRemoteDescription(DummySetSessionDescriptionObserver::Create().get(),
                                                session_description.release());
     }
-
-    void RtcConnectEngine::getDevList() {
-        while (!threadDestroy) {
-            if (audioEngine) {
-                audioEngine->GetRecordingDevices(micList);
-                if (micList.size() != micListSize) {
-                    OnAudioInputDevInfo(micList);
-                    micListSize = micList.size();
-                }
-
-                audioEngine->GetPlayoutDevices(speakerList);
-                if (speakerList.size() != speakerListSize) {
-                    OnAudioOutputDevInfo(speakerList);
-                    speakerListSize = speakerList.size();
-                }
-            }
-            if (videoEngine) {
-                videoEngine->getCameraMap(camList);
-                if (camList.size() != camListSize) {
-                    OnVideoInputDevInfo(camList);
-                    camListSize = camList.size();
-                }
-
-                videoEngine->getScreenMap(screenList);
-                if (screenList.size() != screenListSize) {
-                    OnScreenInfo(screenList);
-                    screenListSize = screenList.size();
-                }
-
-                videoEngine->getWinMap(windowList);
-                if (windowList.size() != windowListSize) {
-                    OnWindowInfo(windowList);
-                    windowListSize = windowList.size();
-                }
-            }
-            Sleep(1000);
-        }
-    }
-
 }

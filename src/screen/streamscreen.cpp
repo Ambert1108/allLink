@@ -524,6 +524,7 @@ namespace alllink {
   }
 
   void StreamScreen::setShareList(const std::map<int, std::string>& list, int type) {
+    I_LOG("set share list, type is {}", type);
     if (type == 1) {
       for (const auto& [id, name] : list) {
         screenList->addLabel(WstrConv.from_bytes(std::to_string(id)), sf::Color(225, 225, 225),
@@ -531,10 +532,18 @@ namespace alllink {
       }
     }
     else if (type == 2) {
+      I_LOG("set window info");
+      if (list.empty()) {
+        W_LOG("window info list is empty!");
+        return;
+      }
       for (const auto& [id, name] : list) {
-        if (name.find("allLink") != std::string::npos) continue;
-        else if (name.find("AllLink") != std::string::npos) continue;
-        else if (name.find("NVIDIA") != std::string::npos) continue;
+        /*if (name.find("allLink") != std::string::npos 
+          && name.find("Visual Studio") == std::string::npos) continue;
+        else if (name.find("AllLink") != std::string::npos) continue;*/
+        std::regex pattern("^(\s*allLink\s*)(.*\.exe.*)?$|^(\s*allLink\s*)$|^(?=.*allLink)(?=.*\.exe).+", std::regex_constants::icase);
+        if (std::regex_search(name, pattern)) continue;
+        if (name.find("NVIDIA") != std::string::npos) continue;
         else if (name.find("WeMail") != std::string::npos) continue;
         else if (name.find("As") != std::string::npos) continue;
         else if (name.find("微信") != std::string::npos) continue;
@@ -551,6 +560,7 @@ namespace alllink {
           windowList->addLabel(WstrConv.from_bytes(name), sf::Color(225, 225, 225),
             sf::Color(230, 230, 230), sf::Color(240, 240, 240));
         }
+        I_LOG("insert {}", name);
       }
       tp = seeker::time::currentTime();
     }

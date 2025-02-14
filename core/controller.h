@@ -25,7 +25,7 @@ namespace alllink {
     void Close() override;
 
   protected:
-    ~Controller();
+    virtual ~Controller();
 
     //
     // RtcConnectEngine implementation.
@@ -41,16 +41,6 @@ namespace alllink {
     virtual void OnJoinMeetingSuccess(int64_t timePoint) override;
     // 入会失败
     virtual void OnJoinMeetingFailure() override;
-    // 获取到麦克风设备信息
-    virtual void OnAudioInputDevInfo(std::map<int16_t, std::string> list) override;
-    // 获取扬声器设备信息
-    virtual void OnAudioOutputDevInfo(std::map<int16_t, std::string> list) override;
-    // 获取摄像头设备信息
-    virtual void OnVideoInputDevInfo(std::map<int16_t, std::string> list) override;
-    // 获取屏幕设备信息
-    virtual void OnScreenInfo(std::map<int, std::string> list) override;
-    // 获取窗口信息
-    virtual void OnWindowInfo(std::map<int, std::string> list) override;
 
     //
     // VisionCnetralCallback implementation.

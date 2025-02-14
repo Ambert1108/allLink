@@ -12,7 +12,6 @@ namespace alllink {
   }
 
   Controller::~Controller() {
-
   }
 
   //
@@ -37,31 +36,6 @@ namespace alllink {
 
   void Controller::OnJoinMeetingFailure() {
 
-  }
-
-  void Controller::OnAudioInputDevInfo(std::map<int16_t, std::string> list) {
-    I_LOG("recv audio input dev");
-    //hi::PostMsg({ msgTo(MessageType::AUDIO_INPUT_DEV_INFO), list });
-  }
-
-  void Controller::OnAudioOutputDevInfo(std::map<int16_t, std::string> list) {
-    I_LOG("recv audio output dev");
-    //hi::PostMsg({ msgTo(MessageType::AUDIO_OUTPUT_DEV_INFO), list });
-  }
-
-  void Controller::OnVideoInputDevInfo(std::map<int16_t, std::string> list) {
-    I_LOG("recv video input dev");
-    //hi::PostMsg({ msgTo(MessageType::VIDEO_DEV_INFO), list });
-  }
-
-  void Controller::OnScreenInfo(std::map<int, std::string> list) {
-    I_LOG("recv screen dev");
-    //hi::PostMsg({ msgTo(MessageType::SHARE_SCREEN_INFO), list });
-  }
-
-  void Controller::OnWindowInfo(std::map<int, std::string> list) {
-    I_LOG("recv window dev");
-    //hi::PostMsg({ msgTo(MessageType::SHARE_WINDOW_INFO), list });
   }
 
 
@@ -95,11 +69,25 @@ namespace alllink {
       E_LOG("[Controller::ConnectToPeer] join meeting failed");
       return false;
     }
+    getAudioInputDevInfo(audioInputDevMap);
+    getAudioOutputDevInfo(audioOutputDevMap);
+    getVideoInputDevInfo(videoInputDevMap);
+    getScreenInfo(shareScreenMap);
+    getWindowInfo(shareWindowMap);
+    for (const auto& c : shareWindowMap) {
+      I_LOG("{} : {}", c.first, c.second);
+    }
+    hi::PostMsg({ msgTo(MessageType::AUDIO_INPUT_DEV_INFO), audioInputDevMap });
+    hi::PostMsg({ msgTo(MessageType::AUDIO_OUTPUT_DEV_INFO), audioOutputDevMap });
+    hi::PostMsg({ msgTo(MessageType::VIDEO_DEV_INFO), videoInputDevMap });
+    hi::PostMsg({ msgTo(MessageType::SHARE_SCREEN_INFO), shareScreenMap });
+    hi::PostMsg({ msgTo(MessageType::SHARE_WINDOW_INFO), shareWindowMap });
     I_LOG("[Controller::ConnectToPeer] join meeting {} start ...", meetId_);
     return true;
   }
 
   void Controller::DisconnectFromCurrentPeer() {
+    vision_->stopRemoteRenderer();
     if (exitMeeting()) {
       meetId_.clear();
       I_LOG("delete caller peer connection");
@@ -143,7 +131,7 @@ namespace alllink {
       for (const auto& [id, name] : videoInputDevMap) {
         if (device == name) {
           I_LOG("[Controller::CustomMessageCallback] pick mic output device:{}", name);
-          //setCamera(id);
+          setCamera(id);
           break;
         }
       }
@@ -154,7 +142,7 @@ namespace alllink {
       for (const auto& [id, name] : shareScreenMap) {
         if (std::atoi(deviceId.c_str()) == id) {
           I_LOG("[Controller::CustomMessageCallback] pick share screen:{}", id);
-          //setScreenCapture(id);
+          setScreen(id);
           break;
         }
       }
@@ -167,14 +155,14 @@ namespace alllink {
         if (lastDashIndex != std::string::npos) {
           if (label == name.substr(lastDashIndex + 1)) {
             I_LOG("[Controller::CustomMessageCallback] pick share window {}:{}", id, name);
-            //setWindowCapture(id);
+            setWindow(id);
             break;
           }
         }
         else {
           if (label == name) {
             I_LOG("[Controller::CustomMessageCallback] pick share window {}:{}", id, name);
-            //setWindowCapture(id);
+            setWindow(id);
             break;
           }
         }
@@ -220,10 +208,10 @@ namespace alllink {
       break;
     }
     case msgTo(MessageType::REQUEST_WINDOW_LIST): {
-      //std::map<int, std::string> tmp = shareWindowMap;
-      //videoEngine.getWinMap(shareWindowMap);
-      //if(tmp.size() != shareWindowMap.size())
-      //  hi::PostMsg({ msgTo(MessageType::SHARE_WINDOW_INFO), shareWindowMap });
+      std::map<int, std::string> tmp = shareWindowMap;
+      getWindowInfo(shareWindowMap);
+      if(tmp.size() != shareWindowMap.size())
+        hi::PostMsg({ msgTo(MessageType::SHARE_WINDOW_INFO), shareWindowMap });
       break;
     }
     case msgTo(MessageType::DISCONNECT_PEER): {

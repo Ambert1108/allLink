@@ -181,19 +181,6 @@ public:
         js["signal"] = input;
     }
 
-    // timepoint
-    int64_t timePoint() const {
-      if (js["timePoint"].is_null()) {
-        E_LOG("timePoint is null");
-        return -1;
-      }
-      if (!js["timePoint"].is_number()) {
-        E_LOG("timePoint is not number");
-        return -1;
-      }
-      return js["timePoint"];
-    }
-
     // reason
     std::string reason() {
         if (js["reason"].is_null()) {
@@ -269,5 +256,17 @@ public:
     }
     void set_sdpMid(std::string input) {
         js["sdpMid"] = input;
+    }
+
+    int64_t timePoint() const {
+        if (js["timePoint"].is_null()) {
+            E_LOG("timePoint is null");
+            return -1;
+        }
+        if (!js["timePoint"].is_number()) {
+            E_LOG("timePoint is not number");
+            return -1;
+        }
+        return js["timePoint"];
     }
 };
