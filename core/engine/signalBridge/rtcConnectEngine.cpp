@@ -44,7 +44,9 @@ namespace rtcengine {
 
         audioEngine = nullptr;
         videoEngine = nullptr;
+
         peer_connection_ = nullptr;
+        peer_connection_factory_ = nullptr;
         I_LOG("audioEngine/videoEngine/peer_connection_ = nullptr");
 
         oatpp::base::Environment::destroy();
@@ -170,6 +172,8 @@ namespace rtcengine {
         screenTrackInterface.release();
         videoEngine->close();
         audioEngine->close();
+        peer_connection_ = nullptr;
+        peer_connection_factory_ = nullptr;
         return true;
     }
 
