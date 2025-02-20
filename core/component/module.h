@@ -1336,6 +1336,12 @@ namespace alllink {
 			textHoverColor_ = hoverColor;
 		}
 
+		void setDescription(const sf::String& text) {
+			text_.setString(text);
+		}
+
+		std::wstring getDescription() const { return text_.getString(); }
+
 		bool onClick(sf::Event& event_, sf::Vector2f mousePos_,
 			sf::RenderWindow* win_ = nullptr,
 			sf::Mouse::Button btn = sf::Mouse::Left) {

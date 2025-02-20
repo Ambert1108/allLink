@@ -89,25 +89,27 @@ namespace alllink {
 		int w, h, x, y;
 	};
 
-	class DropDescriptionWidget {
+	class DropDescriptionWidget : public BaseWidget {
 	public:
 		DropDescriptionWidget(int width, int height, int x, int y, const std::string& fontFile)
-			:width_(width), height_(height), x_(x), y_(y), fontFile_(fontFile) {
-			//rect.setSize(sf::Vector2f())
-			dropList.init(width_, height_ * 2, x_, y_ + height_, height_, fontFile_);
+			: BaseWidget(width, height, x, y), fontFile_(fontFile), rect(sf::Color::Transparent, 2) {
+			int rectW = width_ - 4;
+			int rectH = rectW / 6;
+			rect.init(rectW, rectH, x + 2, y + 2, 6.f);
 		};
 
 		void setDescription(const std::string& fontFile, const sf::String& text, sf::Color color = sf::Color::Black) {
-			description.init(fontFile);
-			description.setCharacterSize(height_ / 2.5);
-			description.setFillColor(color);
-			description.setPosition(x_, y_ - height_ - 2);
-			description.setString(text);
+			
+		}
+
+		void setDropList() {
+			dropList.init(width_, height_ * labelNum, x_, y_ + height_, height_, fontFile_);
 		}
 
 		void addLabel(sf::String labelText, sf::Color fillColor, sf::Color hoverColor,
 			sf::Color pressColor, bool activate = true) {
 			dropList.addLabel(labelText, fillColor, hoverColor, pressColor, activate);
+			labelNum++;
 		}
 
 		void clearList() {
@@ -122,15 +124,14 @@ namespace alllink {
 			dropList.setShow(isShow);
 		}
 
-		const std::wstring& getSelectedLabel() { return dropList.getSelectedLabel(); }
+		std::wstring getSelectedLabel() { return rect.getDescription(); }
 
 	protected:
 		std::string fontFile_;
 
 	private:
-		AdvancedRoundedRectangle rect;
+		TextRoundRectangle rect;
 		DropListModule dropList;
-		BaseText description;
-		int width_, height_, x_, y_;
+		int labelNum = 0;
 	};
 }
