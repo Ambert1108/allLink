@@ -341,6 +341,33 @@ namespace rtcengine {
 		}
 	}
 
+	void RTCVideoEngine::getVideoFactory(int mode, std::unique_ptr<webrtc::VideoEncoderFactory>& video_encoder_factory, 
+		std::unique_ptr<webrtc::VideoDecoderFactory>& video_decoder_factory) {
+
+		if (mode == 0) {
+			video_encoder_factory = std::make_unique<webrtc::VideoEncoderFactoryTemplate<
+				webrtc::OpenH264EncoderTemplateAdapter>>();
+			video_decoder_factory = std::make_unique<webrtc::VideoDecoderFactoryTemplate<
+				webrtc::OpenH264DecoderTemplateAdapter>>();
+		}
+
+		if (mode == 1) {
+			video_encoder_factory = std::make_unique<webrtc::VideoEncoderFactoryTemplate<
+				webrtc::LibvpxVp9EncoderTemplateAdapter>>();
+			video_decoder_factory = std::make_unique<webrtc::VideoDecoderFactoryTemplate<
+				webrtc::LibvpxVp9DecoderTemplateAdapter>>();
+		}
+
+		if (mode == 2) {
+			video_encoder_factory = std::make_unique<webrtc::VideoEncoderFactoryTemplate<
+				webrtc::LibvpxVp9EncoderTemplateAdapter,
+				webrtc::OpenH264EncoderTemplateAdapter>>();
+			video_decoder_factory = std::make_unique<webrtc::VideoDecoderFactoryTemplate<
+				webrtc::LibvpxVp9DecoderTemplateAdapter,
+				webrtc::OpenH264DecoderTemplateAdapter>>();
+		}
+	}		
+
 	void RTCVideoEngine::close() {
 		peer_connection_factory_ = nullptr;
 		peer_connection_ = nullptr;

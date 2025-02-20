@@ -1,8 +1,8 @@
 #pragma once
 #include<iostream>
-#include"seeker/common.h"
-#include"seeker/loggerApi.h"
-#include"seeker/logger.h"
+#include<seeker/common.h>
+#include<seeker/loggerApi.h>
+#include<seeker/logger.h>
 #include <string>
 #include <chrono>
 #include <condition_variable>
@@ -79,11 +79,11 @@ namespace rtcengine {
 
 		//清除adm、audio_track;
 		void close();
-		std::string modifySdp(const std::string& sdp);
+		std::string modifySdp(const std::string& sdp, std::string audioformat);
 	private:
 		rtc::scoped_refptr<webrtc::AudioDeviceModule> adm;
 		std::unique_ptr<webrtc::TaskQueueFactory> task_queue_factory;
 		rtc::scoped_refptr<webrtc::AudioTrackInterface> audio_track;
-		bool shouldKeepCodec(const std::string& line);
+		bool shouldKeepCodec(const std::string& line, std::string audioformat);
 	};
 }

@@ -86,20 +86,18 @@ namespace rtcengine{
             // 作为主叫收到Ringing后，继续等待接收OK，并从中取出SDP
             RINGING,
 
-            // 作为主叫收到OK并成功解析SDP后，作为主叫接通
-            CALLER,
+            // 在会议中
+            MEETING
+        };
 
-            // 作为被叫收到FORWARD后，等待用户响应以发送Ringing
-            FORWARDING,
+        enum VideoCodecType{
+            H264 = 0,
+            VP9 = 1
+        };
 
-            // 作为被叫用户确认接通后，生成Answer SDP并发送OK
-            RINGEE,
-
-            // 作为被叫发送OK后，等待收到ACK
-            ACKING,
-
-            // 作为被叫收到ACK后，作为被叫接通
-            CALLEE
+        enum AudioCodecType{
+            PCMA = 0,
+            OPUS = 1
         };
 
         struct SignalingInfo{
@@ -120,6 +118,8 @@ namespace rtcengine{
         bool connect(std::string signalIp, uint16_t signalPort);
         // 用户登录
         bool login(std::string userId, std::string password);
+        // 创建会议
+        bool createMeeting(int mcu, VideoCodecType videoType_, AudioCodecType audioType_);
         // 加入会议
         bool joinMeeting(std::string meetingId);
         // 退出会议
@@ -199,6 +199,7 @@ namespace rtcengine{
         void setLocal(std::string jsep);
         void setRemote(std::string jsep);
         void getDevList();
+        void reconnect();
 
         //
         // signaling virtual func
@@ -207,6 +208,7 @@ namespace rtcengine{
         virtual void onTrying(Message resp) override;
         virtual void onRinging(Message resp) override;
         virtual void onUnauthorized(Message resp) override;
+        virtual void onHeartbeatResp() override;
 
 
         //
@@ -314,6 +316,13 @@ namespace rtcengine{
 
         int windowListSize = 0;
 
+        int noHeartbeatRespTime = 0;
+
+        int videoCodecType;
+
+        int audioCodecType;
+
+        int mcu;
 
     };
 

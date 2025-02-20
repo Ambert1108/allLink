@@ -37,7 +37,11 @@ void EngineListener::readMessage(const WebSocket &socket, v_uint8 opcode, p_char
 
                 Message tmp;
                 tmp.js = json::parse(wholeMessage->c_str());
-                if(tmp.cmeth() != "Heartbeat") {
+                if(tmp.cmeth() == "Heartbeat") {
+                    D_LOG("readMessage: {}", tmp.js.dump(4));
+                    callback->onHeartbeatResp();
+                }
+                else{
                     I_LOG("readMessage: {}", tmp.js.dump(4));
                 }
                 if (tmp.statuscode() == 200) { callback->onOK(tmp); }

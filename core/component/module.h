@@ -623,7 +623,7 @@ namespace alllink {
 		}
 
 		void setCursorType(sf::Cursor::Type cursorType) { curType_ = cursorType; }
-
+		 
 		int setColor(sf::Color fillColor_, sf::Color hoverColor_, sf::Color pressColor_) {
 			fillColor = fillColor_;
 			hoverColor = hoverColor_;
@@ -954,6 +954,7 @@ namespace alllink {
 		sf::Sprite image_;
 		bool init_ = false;
 	};
+	
 	class GraphicTextsModule : public VariableStateModule {
 	public:
 		GraphicTextsModule() : texture_(nullptr) {};

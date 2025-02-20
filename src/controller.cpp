@@ -65,10 +65,12 @@ namespace alllink {
   bool Controller::ConnectToPeer(const std::string& to) {
     //用户触发
     meetId_ = to;
+    int audiocodecType = seeker::IniConfig::GetInteger("tmp", "audioCodecType", 0);
+    createMeeting(2, H264, (AudioCodecType)audiocodecType);
     if (!joinMeeting(meetId_)) {
       E_LOG("[Controller::ConnectToPeer] join meeting failed");
       return false;
-    }
+    } 
     getAudioInputDevInfo(audioInputDevMap);
     getAudioOutputDevInfo(audioOutputDevMap);
     getVideoInputDevInfo(videoInputDevMap);

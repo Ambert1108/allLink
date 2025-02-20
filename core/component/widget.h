@@ -63,7 +63,7 @@ namespace alllink {
 		}
 
 		void render(sf::RenderTarget* tar) {
-			this->clear(sf::Color(242, 242, 242, 0));
+			this->clear(sf::Color(242, 242, 242, 255));
 			this->draw(description);
 			inputBox.render(this);
 			this->display();
@@ -87,5 +87,50 @@ namespace alllink {
 		BaseText description;
 	private:
 		int w, h, x, y;
+	};
+
+	class DropDescriptionWidget {
+	public:
+		DropDescriptionWidget(int width, int height, int x, int y, const std::string& fontFile)
+			:width_(width), height_(height), x_(x), y_(y), fontFile_(fontFile) {
+			//rect.setSize(sf::Vector2f())
+			dropList.init(width_, height_ * 2, x_, y_ + height_, height_, fontFile_);
+		};
+
+		void setDescription(const std::string& fontFile, const sf::String& text, sf::Color color = sf::Color::Black) {
+			description.init(fontFile);
+			description.setCharacterSize(height_ / 2.5);
+			description.setFillColor(color);
+			description.setPosition(x_, y_ - height_ - 2);
+			description.setString(text);
+		}
+
+		void addLabel(sf::String labelText, sf::Color fillColor, sf::Color hoverColor,
+			sf::Color pressColor, bool activate = true) {
+			dropList.addLabel(labelText, fillColor, hoverColor, pressColor, activate);
+		}
+
+		void clearList() {
+			dropList.clearList();
+		}
+
+		void switchShow() {
+			dropList.switchShow();
+		}
+
+		void setShow(bool isShow) {
+			dropList.setShow(isShow);
+		}
+
+		const std::wstring& getSelectedLabel() { return dropList.getSelectedLabel(); }
+
+	protected:
+		std::string fontFile_;
+
+	private:
+		AdvancedRoundedRectangle rect;
+		DropListModule dropList;
+		BaseText description;
+		int width_, height_, x_, y_;
 	};
 }

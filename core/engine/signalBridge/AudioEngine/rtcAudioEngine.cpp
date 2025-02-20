@@ -206,7 +206,7 @@ namespace rtcengine {
 		adm = nullptr;
 		task_queue_factory = nullptr;
 	}
-	std::string rtcAudioEngine::modifySdp(const std::string& sdp) {
+	std::string rtcAudioEngine::modifySdp(const std::string& sdp,std::string audioformat) {
 		std::istringstream sdpStream(sdp);
 		std::ostringstream filteredSDP;
 		std::string line;
@@ -224,7 +224,12 @@ namespace rtcengine {
 				inpcma = false;
 				inrtpmat = false;
 				af = false;
-				filteredSDP << "m=audio 9 UDP/TLS/RTP/SAVPF 8" << std::endl;
+				if (audioformat == "OPUS") {
+					filteredSDP << "m=audio 9 UDP/TLS/RTP/SAVPF 111" << std::endl;
+				}
+				else if (audioformat == "PCMA") {
+					filteredSDP << "m=audio 9 UDP/TLS/RTP/SAVPF 8" << std::endl;
+				}
 				//filteredSDP << line << std::endl;
 			}
 			else if (line.find("m=video") != std::string::npos) {
@@ -251,7 +256,7 @@ namespace rtcengine {
 					}
 				}
 				if (inrtpmat) {
-					if (shouldKeepCodec(line)) {
+					if (shouldKeepCodec(line,audioformat)) {
 						inpcma = true;
 						filteredSDP << line << std::endl;
 					}
@@ -281,8 +286,13 @@ namespace rtcengine {
 
 		return filteredSDP.str();
 	}
-	bool rtcAudioEngine::shouldKeepCodec(const std::string& line)
+	bool rtcAudioEngine::shouldKeepCodec(const std::string& line, std::string audioformat)
 	{
-		return line.find("PCMA") != std::string::npos;
+		if (audioformat == "OPUS") {
+			return line.find("opus") != std::string::npos;
+		}
+		else if (audioformat == "PCMA") {
+			return line.find("PCMA") != std::string::npos;
+		}
 	}
 }

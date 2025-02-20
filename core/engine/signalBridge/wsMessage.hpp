@@ -137,6 +137,29 @@ public:
         js["meth"] = input;
     }
 
+    // videoformat
+    std::string videoformat() {
+        if (js["videoformat"].is_null()) {
+            return "";
+        }
+        return js["videoformat"];
+    }
+    void set_videoformat(std::string input) {
+        js["videoformat"] = input;
+    }
+
+
+    // audioformat
+    std::string audioformat() {
+        if (js["audioformat"].is_null()) {
+            return "";
+        }
+        return js["audioformat"];
+    }
+    void set_audioformat(std::string input) {
+        js["audioformat"] = input;
+    }
+
     // isresponse
     bool isresponse() {
         if (js["isResponse"].is_null()) {
