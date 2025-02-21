@@ -6,8 +6,6 @@ namespace alllink {
 	public:
 		BaseWidget(int width, int height, int x, int y) {
 			this->create(width, height);
-			//sf::View view(sf::FloatRect(0, 0, width, height));
-			//this->setView(view);
 			width_ = width;
 			height_ = height;
 			x_ = x;
@@ -63,7 +61,7 @@ namespace alllink {
 		}
 
 		void render(sf::RenderTarget* tar) {
-			this->clear(sf::Color(242, 242, 242, 255));
+			this->clear(sf::Color(111, 111, 111, 0));
 			this->draw(description);
 			inputBox.render(this);
 			this->display();
@@ -92,46 +90,76 @@ namespace alllink {
 	class DropDescriptionWidget : public BaseWidget {
 	public:
 		DropDescriptionWidget(int width, int height, int x, int y, const std::string& fontFile)
-			: BaseWidget(width, height, x, y), fontFile_(fontFile), rect(sf::Color::Transparent, 2) {
-			int rectW = width_ - 4;
+			: BaseWidget(width, height, x, y), fontFile_(fontFile), 
+			w(width_ - 4), h(height_ - 4),
+			x(2), y(2) {
+			int rectW = w - 4;
 			int rectH = rectW / 6;
-			rect.init(rectW, rectH, x + 2, y + 2, 6.f);
+			rect = std::make_unique<ClickTextRoundRectangle>(sf::Color(5, 5, 5), 2);
+			rect->init(rectW, rectH, this->x + 2, this->y + 2, 6.f);
 		};
 
-		void setDescription(const std::string& fontFile, const sf::String& text, sf::Color color = sf::Color::Black) {
-			
+		void setDescription(const sf::String& text, sf::Color textColor) {
+			defaultDescription = text;
+			rect->setText(fontFile_, text, textColor);
+			rect->setColor(sf::Color(199, 199, 199), sf::Color(225, 225, 225, 200), sf::Color(225, 225, 225));
 		}
 
-		void setDropList() {
-			dropList.init(width_, height_ * labelNum, x_, y_ + height_, height_, fontFile_);
+		void setDropList(int labelNum) {
+			dropList.init(w, h * labelNum, x, y + rect->getSize().y + 2, h / (labelNum + 2), fontFile_);
+			dropList.setFillColor(sf::Color(220, 220, 220));
 		}
 
 		void addLabel(sf::String labelText, sf::Color fillColor, sf::Color hoverColor,
 			sf::Color pressColor, bool activate = true) {
 			dropList.addLabel(labelText, fillColor, hoverColor, pressColor, activate);
-			labelNum++;
 		}
 
-		void clearList() {
-			dropList.clearList();
+		void reset() {
+			dropList.setShow(false);
+			rect->setDescription(defaultDescription);
 		}
 
-		void switchShow() {
-			dropList.switchShow();
+		std::wstring getSelectedLabel() { return rect->getDescription(); }
+
+		bool eventProcess(sf::Event event, sf::RenderWindow* win) {
+			bool isClick = false;
+			sf::Vector2i mousePosWin = sf::Mouse::getPosition(*win);
+			sf::Vector2f mouseWindowPos = win->mapPixelToCoords(mousePosWin);
+			sf::Vector2f mousePosView(
+				mouseWindowPos.x - x_,
+				mouseWindowPos.y - y_
+			);
+			if (rect->onClick(event, mousePosView, win)) {
+				dropList.setShow(true);
+			}
+			else if (dropList.eventProcess(event, mousePosView, win)) {
+				rect->setDescription(dropList.getSelectedLabel());
+				isClick = true;
+			}
+			else if (event.type == sf::Event::MouseButtonReleased && event.key.code == sf::Mouse::Left) {
+				dropList.setShow(false);
+			}
+			return isClick;
 		}
 
-		void setShow(bool isShow) {
-			dropList.setShow(isShow);
+		void render(sf::RenderTarget* tar) {
+			this->clear(sf::Color(255, 255, 255, 0));
+			rect->render(this);
+			dropList.render(this);
+			this->display();
+			sf::Sprite sprite(this->getTexture());
+			sprite.setPosition(x_, y_);
+			tar->draw(sprite);
 		}
-
-		std::wstring getSelectedLabel() { return rect.getDescription(); }
 
 	protected:
 		std::string fontFile_;
+		std::unique_ptr<ClickTextRoundRectangle> rect;
+		DropListModule dropList;
+		sf::String defaultDescription;
 
 	private:
-		TextRoundRectangle rect;
-		DropListModule dropList;
-		int labelNum = 0;
+		int w, h, x, y;
 	};
 }

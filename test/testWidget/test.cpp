@@ -7,7 +7,7 @@
 int main() {
   using namespace alllink;
   sf::RenderWindow* wnd = new sf::RenderWindow(
-    sf::VideoMode(640,480),
+    sf::VideoMode(1280, 720),
     "widget",
     sf::Style::Default);
   wnd->setFramerateLimit(60);
@@ -43,11 +43,26 @@ int main() {
   inputWidget.setInput(font2File);
   inputWidget.setDescription(font2File, L"服务器地址");
 
+  DropDescriptionWidget dropWidget(264, 240, 640, 20, font2File);
+  dropWidget.setDescription(L"J组公网信令", sf::Color::Black);
+  dropWidget.setDropList(4);
+  dropWidget.addLabel(L"J组公网信令", sf::Color(225, 225, 225), sf::Color(230, 230, 230), sf::Color(200, 200, 200));
+  dropWidget.addLabel(L"J组内网信令", sf::Color(225, 225, 225), sf::Color(230, 230, 230), sf::Color(200, 200, 200));
+  dropWidget.addLabel(L"X组公网信令", sf::Color(225, 225, 225), sf::Color(230, 230, 230), sf::Color(200, 200, 200));
+  dropWidget.addLabel(L"X组内网信令", sf::Color(225, 225, 225), sf::Color(230, 230, 230), sf::Color(200, 200, 200));
+
   TextRectangle textRect;
   textRect.init(98, 48, 200, 400);
   textRect.setText(font2File, L"登录", sf::Color::White);
   textRect.setStateColor(sf::Color(104, 141, 196), sf::Color(213, 229, 240));
   std::string saveText{};
+
+  ClickTextRoundRectangle testRect(sf::Color(117, 188, 255), 2);
+  testRect.init(260, 40, 640, 600, 8.f);
+  testRect.setText(font2File, L"测试", sf::Color::Black);
+  testRect.setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225, 200));
+
+
   while (wnd->isOpen()) {
     while (wnd->pollEvent(event)) {
       if (event.type == sf::Event::Closed) {
@@ -66,15 +81,7 @@ int main() {
         std::cout << "进行登录" << std::endl;
       }
       inputWidget.eventProcess(event, wnd);
-      //else if (input.onClick(event, mousePosView, wnd)) {
-      //  input.setActive(true);
-      //}
-      //else {
-      //  if (event.type == sf::Event::MouseButtonPressed
-      //    && event.key.code == sf::Mouse::Left) {
-      //    input.setActive(false);
-      //  }
-      //}
+
       if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Enter) {
         std::cout << "aaa" << std::endl;
         if (!inputWidget.getInputActive()) {
@@ -87,16 +94,21 @@ int main() {
           }
         }
       }
-      //input.eventProcess(event);
+      
+      if (dropWidget.eventProcess(event, wnd)) {
+        I_LOG("drop choose: {}", WstrConv.to_bytes(dropWidget.getSelectedLabel()));
+      }
+
+      testRect.onClick(event, mousePosView, wnd);
     }
     
     wnd->clear(sf::Color(240, 240, 240));
+    testRect.render(wnd);
     src1.render(wnd);
     src2.render(wnd);
     inputWidget.render(wnd);
     textRect.render(wnd);
-    //I_LOG("draw, color is {}", input.getFillColor().toInteger());
-    //input.render(wnd);
+    dropWidget.render(wnd);
     wnd->display();
   }
 	return 0;

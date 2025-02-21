@@ -672,7 +672,6 @@ namespace alllink {
 						setCursor(win_, curType_);
 					}
 					if (fill_) {
-						//this->setOutlineColor(hoverColor);
 						this->setFillColor(hoverColor);
 					}
 					isHover = true;
@@ -681,7 +680,6 @@ namespace alllink {
 					&& event_.key.code == btn && isPressed) {
 					isPressed = false;
 					if (fill_) {
-						//this->setFillColor(fillColor);
 						this->setFillColor(hoverColor);
 					}
 					flag = true;
@@ -692,7 +690,9 @@ namespace alllink {
 				if (event_.type == sf::Event::MouseButtonPressed
 					&& event_.key.code == btn) {
 					if (!isPressed) {
-						if (fill_) this->setFillColor(pressColor);
+						if (fill_) {
+							this->setFillColor(pressColor);
+						}
 					}
 					isPressed = true;
 				}
@@ -703,7 +703,6 @@ namespace alllink {
 						setCursor(win_, sf::Cursor::Arrow);
 					}
 					if (fill_) {
-						//this->setOutlineColor(sf::Color(0, 0, 0, 0));
 						this->setFillColor(fillColor);
 					}
 					isHover = false;
@@ -1420,6 +1419,55 @@ namespace alllink {
 		BaseText text_;
 		sf::Color textColor_;
 		sf::Color textHoverColor_;
+	};
+
+	class ClickTextRoundRectangle : public VariableStateRoundModule {
+	public:
+		ClickTextRoundRectangle(sf::Color outlineColor, int thickness = 2)
+			: VariableStateRoundModule(outlineColor, thickness) {
+		};
+
+		void init(int width, int height, int x, int y, float radius) {
+			this->setSize(sf::Vector2f(width, height));
+			this->setCornerRadius(radius);
+			this->setPosition(sf::Vector2f(x, y));
+		}
+
+		void setText(const std::string& fontFile, const sf::String& text, sf::Color textColor) {
+			text_.init(fontFile);
+			text_.setCharacterSize(this->getSize().y / 2.5);
+			text_.setFillColor(textColor);
+			text_.setString(text);
+			truncateText(text_, this->getSize().x - 4);
+			text_.setPosition(
+				this->getPosition().x + (this->getSize().x - text_.getGlobalBounds().width) / 2,
+				this->getPosition().y + (this->getSize().y - this->getSize().y / 2) / 2);
+			textColor_ = textColor;
+		}
+
+		void setDescription(const sf::String& text) {
+			text_.setString(text);
+		}
+
+		std::wstring getDescription() const { return text_.getString(); }
+
+		void render(sf::RenderTarget* tar) {
+			tar->draw(*this);
+			tar->draw(text_);
+		}
+
+	protected:
+		void truncateText(sf::Text& text, float maxWidth) {
+			// 如果文本的宽度超过最大宽度，进行截断
+			while (text.getGlobalBounds().width > maxWidth && text.getString().getSize() > 0) {
+				std::wstring currentString = text.getString();
+				currentString.pop_back(); // 删除最后一个字符
+				text.setString(currentString); // 更新文本
+			}
+		}
+
+		BaseText text_;
+		sf::Color textColor_;
 	};
 
 	class VariableStateCircleModule : public sf::CircleShape {
