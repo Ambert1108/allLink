@@ -1116,6 +1116,14 @@ namespace alllink {
 			return out;
 		}
 
+		void setInputVal(const std::string& val) { 
+			text = val;
+			inputText.setString(text);
+			inputText.setFillColor(sf::Color::Black);
+			cursorPosition += text.size();
+			first = false;
+		};
+
 		bool inputEmpty() const { return text.empty(); }
 
 		void resetText() {

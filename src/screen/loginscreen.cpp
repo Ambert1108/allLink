@@ -1,4 +1,5 @@
 #include "screen/screensink.h"
+#include "seeker/iniConfig.hpp"
 
 namespace alllink {
 	LoginScreen::LoginScreen(sf::VideoMode mode, const sf::String& title, sf::Image icon, int style)
@@ -9,7 +10,7 @@ namespace alllink {
 		this->icon_ = icon;
 		this->setFramerateLimit(60);
 		this->setVisible(false);
-		inputSeverAddrWidget = nullptr;
+		serverDropWidget = nullptr;
 		inputUserIdWidget = nullptr;
 		inputUserPwdWidget = nullptr;
 		loginButton = nullptr;
@@ -34,18 +35,45 @@ namespace alllink {
 	}
 
 	int LoginScreen::init() {
-		inputSeverAddrWidget = std::make_unique<EnterDescriptionWidget>(263 * wr, 94 * hr, 34 * wr, 64 * hr);
+		serverDropWidget = std::make_unique<DropDescriptionWidget>(263 * wr, 260 * hr, 100 * wr, 74 * hr, 4 * wr, msyhFile);
 		inputUserIdWidget = std::make_unique<EnterDescriptionWidget>(159 * wr, 94 * hr, 34 * wr, 168 * hr);
 		inputUserPwdWidget = std::make_unique<EnterDescriptionWidget>(159 * wr, 94 * hr, 274 * wr, 168 * hr);
 		loginButton = std::make_unique<TextRectangle>();
 
-		inputSeverAddrWidget->setInput(msyhFile, L"ip:port");
-		inputSeverAddrWidget->setDescription(msyhFile, L"服务器地址");
+		serverDropWidget->setDescription(L"选择信令服务器");
+		serverDropWidget->setTextButton(L"J组公网信令", sf::Color::Black);
+		serverDropWidget->setDropList();
+		int serverNum = seeker::IniConfig::GetInteger("server", "num", 1);
+		for (int i = 0; i < serverNum; i++) {
+			std::string ip = seeker::IniConfig::Get("server", "signling" + std::to_string(i), "");
+			serverList.emplace(i, ip);
+			if (i == 0) {
+				serverMap.emplace(L"J组公网信令", i);
+				serverDropWidget->addLabel(L"J组公网信令", sf::Color(225, 225, 225), sf::Color(230, 230, 230), sf::Color(200, 200, 200));
+			}
+			else if (i == 1) {
+				serverMap.emplace(L"X组公网信令", i);
+				serverDropWidget->addLabel(L"X组公网信令", sf::Color(225, 225, 225), sf::Color(230, 230, 230), sf::Color(200, 200, 200));
+			}
+			else if (i == 2) {
+				serverMap.emplace(L"J组内网信令", i);
+				serverDropWidget->addLabel(L"J组内网信令", sf::Color(225, 225, 225), sf::Color(230, 230, 230), sf::Color(200, 200, 200));
+			}
+			else if (i == 3) {
+				serverMap.emplace(L"X组内网信令", i);
+				serverDropWidget->addLabel(L"X组内网信令", sf::Color(225, 225, 225), sf::Color(230, 230, 230), sf::Color(200, 200, 200));
+			}
+		}
 
-		inputUserIdWidget->setInput(msyhFile, "");
+		std::string user = seeker::IniConfig::Get("this", "userId", "a");
+		std::string pwd = seeker::IniConfig::Get("this", "passwd", "1");
+
+		inputUserIdWidget->setInputBox(msyhFile, "");
+		inputUserIdWidget->setInputVal(user);
 		inputUserIdWidget->setDescription(msyhFile, L"用户名");
 
-		inputUserPwdWidget->setInput(msyhFile, "");
+		inputUserPwdWidget->setInputBox(msyhFile, "");
+		inputUserPwdWidget->setInputVal(pwd);
 		inputUserPwdWidget->setDescription(msyhFile, L"密码");
 
 		loginButton->init(98 * wr, 48 * hr, 176 * wr, 287 * hr);
@@ -77,11 +105,11 @@ namespace alllink {
 			this->cross.render(this);
 			break;
 		}
-		inputSeverAddrWidget->render(this);
 		inputUserIdWidget->render(this);
 		inputUserPwdWidget->render(this);
 		this->draw(screenDescriptionText);
 		loginButton->render(this);
+		serverDropWidget->render(this);
 		this->display();
 	}
 
@@ -89,50 +117,50 @@ namespace alllink {
 		if (!isActive) return;
 		while (this->pollEvent(event)) {
 			this->checkStatus(event);
+			if (serverDropWidget->eventProcess(event, this)) {
+				I_LOG("drop choose: {}", WstrConv.to_bytes(serverDropWidget->getSelectedLabel()));
+			}
 			if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Tab) {
-				currentInputBox = (currentInputBox % 3) + 1;
+				currentInputBox = (currentInputBox % 2) + 1;
 				if (currentInputBox == 1) {
-					inputSeverAddrWidget->setInputActive(true);
+					inputUserIdWidget->setInputActive(true);
 					inputUserPwdWidget->setInputActive(false);
 				}
 				else if (currentInputBox == 2) {
-					inputUserIdWidget->setInputActive(true);
-					inputSeverAddrWidget->setInputActive(false);
-				}
-				else if (currentInputBox == 3) {
 					inputUserPwdWidget->setInputActive(true);
 					inputUserIdWidget->setInputActive(false);
 				}
 			}
 			else {
-				if (inputSeverAddrWidget->eventProcess(event, this)) {
-					currentInputBox = 1;
-					inputUserIdWidget->setInputActive(false);
-					inputUserPwdWidget->setInputActive(false);
-				}
 				if (inputUserIdWidget->eventProcess(event, this)) {
-					currentInputBox = 2;
-					inputSeverAddrWidget->setInputActive(false);
+					currentInputBox = 1;
 					inputUserPwdWidget->setInputActive(false);
 				}
 				if (inputUserPwdWidget->eventProcess(event, this)) {
-					currentInputBox = 3;
-					inputSeverAddrWidget->setInputActive(false);
+					currentInputBox = 2;
 					inputUserIdWidget->setInputActive(false);
 				}
 			}
 			if ((loginButton->onClick(event, getMousePosition(), this) 
 				|| (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Enter)) 
 				&& loginButton->getActive()) {
+				sf::String label = serverDropWidget->getSelectedLabel();
+				auto it = serverMap.find(label);
+				if (it == serverMap.end()) {
+					E_LOG("Failed find label {}", WstrConv.to_bytes(label));
+				}
+				auto it2 = serverList.find(it->second);
+				if (it2 == serverList.end()) {
+					E_LOG("Failed to find ip with id {}", it->second);
+				}
 				std::vector<std::string> info{ 
-					inputSeverAddrWidget->getInput(),
+					it2->second,
 					inputUserIdWidget->getInput(),
 					inputUserPwdWidget->getInput() };
 				hi::PostMsg({ msgTo(MessageType::IS_LOGIN), info});
 				loginButton->setActive(false);
 			}
-			if (!inputSeverAddrWidget->empty()
-				&& !inputUserIdWidget->empty()
+			if (!inputUserIdWidget->empty()
 				&& !inputUserPwdWidget->empty()) {
 				loginButton->setActive(true);
 			}
@@ -145,7 +173,7 @@ namespace alllink {
 	}
 
 	void LoginScreen::reset() {
-		inputSeverAddrWidget->resetInput();
+		serverDropWidget->reset();
 		inputUserIdWidget->resetInput();
 		inputUserPwdWidget->resetInput();
 	}

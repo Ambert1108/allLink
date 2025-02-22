@@ -146,6 +146,5 @@ namespace alllink {
     VisionCentralCallback* callback_;
     Message msg;
     VisionType type_{ VisionType::LOGOUT };
-    bool autoLogin = true;
   };
 }

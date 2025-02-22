@@ -23,7 +23,7 @@ namespace alllink {
 			BaseWidget(width, height, x, y), w(width_ - 4), h((height_ - 4) / 2),
 			x(2), y(h) {};
 
-		void setInput(const std::string& fontFile, const sf::String& defaultText = L"请输入文本", sf::Color color = sf::Color::Black) {
+		void setInputBox(const std::string& fontFile, const sf::String& defaultText = L"请输入文本", sf::Color color = sf::Color::Black) {
 			inputBox.init(w - 5, h / 1.5, x + 5, y);
 			inputBox.setText(fontFile, defaultText, color);
 			inputBox.setColor(sf::Color(215, 215, 215), sf::Color(205, 205, 205), sf::Color(255, 255, 255));
@@ -80,6 +80,8 @@ namespace alllink {
 
 		void setInputActive(bool val) { inputBox.setActive(val); }
 
+		void setInputVal(const std::string& val) { inputBox.setInputVal(val); }
+
 	protected:
 		InputBoxModule inputBox;
 		BaseText description;
@@ -89,24 +91,33 @@ namespace alllink {
 
 	class DropDescriptionWidget : public BaseWidget {
 	public:
-		DropDescriptionWidget(int width, int height, int x, int y, const std::string& fontFile)
+		DropDescriptionWidget(int width, int height, int x, int y, int labelNum, const std::string& fontFile)
 			: BaseWidget(width, height, x, y), fontFile_(fontFile), 
 			w(width_ - 4), h(height_ - 4),
-			x(2), y(2) {
-			int rectW = w - 4;
-			int rectH = rectW / 6;
-			rect = std::make_unique<ClickTextRoundRectangle>(sf::Color(5, 5, 5), 2);
-			rect->init(rectW, rectH, this->x + 2, this->y + 2, 6.f);
+			x(2), y(2), labelSize(labelNum) {
+			rect = std::make_unique<ClickTextRoundRectangle>(sf::Color(5, 5, 5), 0);
+			description.init(fontFile_);
 		};
 
-		void setDescription(const sf::String& text, sf::Color textColor) {
+		void setDescription(const sf::String& text, sf::Color color = sf::Color::Black) {
+			description.setCharacterSize(h / 13);
+			description.setFillColor(color);
+			description.setPosition(x, y + 2);
+			description.setString(text);
+			int rectW = w - 4;
+			int rectH = rectW / (labelSize + 2);
+			rect->init(rectW, rectH, this->x + 2, this->y + (h / 10) + 4, 6.f);
+		}
+
+		void setTextButton(const sf::String& text, sf::Color textColor) {
 			defaultDescription = text;
 			rect->setText(fontFile_, text, textColor);
 			rect->setColor(sf::Color(199, 199, 199), sf::Color(225, 225, 225, 200), sf::Color(225, 225, 225));
 		}
 
-		void setDropList(int labelNum) {
-			dropList.init(w, h * labelNum, x, y + rect->getSize().y + 2, h / (labelNum + 2), fontFile_);
+		void setDropList() {
+			int labelHeight = h / (labelSize + 2);
+			dropList.init(w, labelSize * (labelHeight + 4), x, rect->getPosition().y + rect->getSize().y + 2, labelHeight, fontFile_);
 			dropList.setFillColor(sf::Color(220, 220, 220));
 		}
 
@@ -144,7 +155,8 @@ namespace alllink {
 		}
 
 		void render(sf::RenderTarget* tar) {
-			this->clear(sf::Color(255, 255, 255, 0));
+			this->clear(sf::Color(111, 111, 111, 0));
+			this->draw(description);
 			rect->render(this);
 			dropList.render(this);
 			this->display();
@@ -155,11 +167,13 @@ namespace alllink {
 
 	protected:
 		std::string fontFile_;
+		BaseText description;
 		std::unique_ptr<ClickTextRoundRectangle> rect;
 		DropListModule dropList;
 		sf::String defaultDescription;
 
 	private:
 		int w, h, x, y;
+		int labelSize;
 	};
 }

@@ -40,12 +40,13 @@ int main() {
   //input.setColor(sf::Color(215, 215, 215), sf::Color(205, 205, 205), sf::Color(255, 255, 255));
 
   EnterDescriptionWidget inputWidget(264, 94, 20, 20);
-  inputWidget.setInput(font2File);
+  inputWidget.setInputBox(font2File);
   inputWidget.setDescription(font2File, L"服务器地址");
 
-  DropDescriptionWidget dropWidget(264, 240, 640, 20, font2File);
-  dropWidget.setDescription(L"J组公网信令", sf::Color::Black);
-  dropWidget.setDropList(4);
+  DropDescriptionWidget dropWidget(264, 260, 640, 20, 4, font2File);
+  dropWidget.setDescription(L"选择信令服务器");
+  dropWidget.setTextButton(L"J组公网信令", sf::Color::Black);
+  dropWidget.setDropList();
   dropWidget.addLabel(L"J组公网信令", sf::Color(225, 225, 225), sf::Color(230, 230, 230), sf::Color(200, 200, 200));
   dropWidget.addLabel(L"J组内网信令", sf::Color(225, 225, 225), sf::Color(230, 230, 230), sf::Color(200, 200, 200));
   dropWidget.addLabel(L"X组公网信令", sf::Color(225, 225, 225), sf::Color(230, 230, 230), sf::Color(200, 200, 200));
@@ -56,11 +57,6 @@ int main() {
   textRect.setText(font2File, L"登录", sf::Color::White);
   textRect.setStateColor(sf::Color(104, 141, 196), sf::Color(213, 229, 240));
   std::string saveText{};
-
-  ClickTextRoundRectangle testRect(sf::Color(117, 188, 255), 2);
-  testRect.init(260, 40, 640, 600, 8.f);
-  testRect.setText(font2File, L"测试", sf::Color::Black);
-  testRect.setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225, 200));
 
 
   while (wnd->isOpen()) {
@@ -98,16 +94,13 @@ int main() {
       if (dropWidget.eventProcess(event, wnd)) {
         I_LOG("drop choose: {}", WstrConv.to_bytes(dropWidget.getSelectedLabel()));
       }
-
-      testRect.onClick(event, mousePosView, wnd);
     }
     
     wnd->clear(sf::Color(240, 240, 240));
-    testRect.render(wnd);
+    textRect.render(wnd);
     src1.render(wnd);
     src2.render(wnd);
     inputWidget.render(wnd);
-    textRect.render(wnd);
     dropWidget.render(wnd);
     wnd->display();
   }

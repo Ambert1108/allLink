@@ -87,18 +87,6 @@ namespace alllink {
           break;
         }
         case msgTo(MessageType::START_LOGIN): {
-          // 判断是否能够自动登录
-          if (autoLogin) {
-            std::string addr = seeker::IniConfig::Get("this", "signling", "0.0.0.0");
-            std::string user = seeker::IniConfig::Get("this", "userId", "a");
-            std::string pwd = seeker::IniConfig::Get("this", "passwd", "1");
-
-            callback_->LoginSignaling(linkinfo::ServerInfo(addr), { user, pwd });
-
-            autoLogin = false;
-          }
-          
-
           // 收到开始窗口请求登录交互，显示登录窗口
           loginWnd->OnEnter();
           break;

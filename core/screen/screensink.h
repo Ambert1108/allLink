@@ -136,8 +136,9 @@ namespace alllink {
 
 	private:
 		void reset();
-
-		std::unique_ptr<EnterDescriptionWidget> inputSeverAddrWidget;
+		std::map<sf::String, int> serverMap;
+		std::map<int, std::string> serverList;
+		std::unique_ptr<DropDescriptionWidget> serverDropWidget;
 		std::unique_ptr<EnterDescriptionWidget> inputUserIdWidget;
 		std::unique_ptr<EnterDescriptionWidget> inputUserPwdWidget;
 		std::unique_ptr <TextRectangle> loginButton;
