@@ -23,6 +23,7 @@ public:
     virtual void onRinging(Message resp) = 0;
     virtual void onUnauthorized(Message resp) = 0;
     virtual void onHeartbeatResp() = 0;
+    virtual void onCancel(Message resp) = 0;
 protected:
     virtual ~ConnectEngineObserver() {}
 };

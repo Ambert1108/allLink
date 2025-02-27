@@ -217,6 +217,7 @@ namespace rtcengine{
         virtual void onRinging(Message resp) override;
         virtual void onUnauthorized(Message resp) override;
         virtual void onHeartbeatResp() override;
+        virtual void onCancel(Message resp) override;
 
 
         //
@@ -246,7 +247,7 @@ namespace rtcengine{
 
         int cseq = 0;
 
-        std::string meetingId = "unknown";
+        std::string meetingId{};
 
         std::shared_ptr<oatpp::websocket::WebSocket> signalingSocket = nullptr;
 

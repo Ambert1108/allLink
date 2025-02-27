@@ -48,6 +48,7 @@ void EngineListener::readMessage(const WebSocket &socket, v_uint8 opcode, p_char
                 else if (tmp.statuscode() == 100) { callback->onTrying(tmp); }
                 else if (tmp.statuscode() == 180) { callback->onRinging(tmp); }
                 else if (tmp.statuscode() == 401) { callback->onUnauthorized(tmp); }
+                else if (tmp.meth() == "CANCEL"){ callback->onCancel(tmp); }
 
             }
         } else if (size > 0) { // message frame received

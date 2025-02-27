@@ -203,14 +203,14 @@ namespace rtcengine {
         videoEngine->close();
         audioEngine->close();
 
-        meetingId = "unknown";
+        meetingId.clear();
         videoCodecType = -1;
         audioCodecType = -1;
         videoMcu = -1;
         audioMcu = -1;
         peer_connection_ = nullptr;
         peer_connection_factory_ = nullptr;
-
+        I_LOG("exit meeting");
         return true;
     }
 
@@ -477,14 +477,14 @@ namespace rtcengine {
             remoteJsep = resp.sdp();
             setRemote(remoteJsep);
             if(resp.timePoint() == -1){
-                if(meetingId == "unknown"){
+                if(meetingId.empty()){
                     meetingId = resp.meetingId();
                     OnCreateMeetingSuccess(meetingId, seeker::Time::currentTime());
                 }
                 OnJoinMeetingSuccess(seeker::Time::currentTime());
             }
             else{
-                if(meetingId == "unknown"){
+                if(meetingId.empty()){
                     meetingId = resp.meetingId();
                     OnCreateMeetingSuccess(meetingId, resp.timePoint());
                 }
@@ -497,7 +497,7 @@ namespace rtcengine {
         }
         else if (resp.cmeth() == "BYE") {
             I_LOG("BYE onOK");
-            meetingId = "";
+            meetingId.clear();
         }
     }
 
@@ -538,7 +538,7 @@ namespace rtcengine {
         }
         else if (resp.cmeth() == "INVITE") {
             OnJoinMeetingFailure();
-            this->meetingId = "";
+            this->meetingId.clear();
         }
         else if(resp.cmeth() == "BYE"){
             E_LOG("exitMeeting error");
@@ -547,6 +547,18 @@ namespace rtcengine {
 
     void RtcConnectEngine::onHeartbeatResp() {
         noHeartbeatRespTime = 0;
+    }
+
+    void RtcConnectEngine::onCancel(Message resp) {
+        if(resp.cmeth() == "INVITE") {
+            meetingId.clear();
+            videoCodecType = -1;
+            audioCodecType = -1;
+            videoMcu = -1;
+            audioMcu = -1;
+            peer_connection_ = nullptr;
+            peer_connection_factory_ = nullptr;
+        }
     }
 
 
@@ -610,7 +622,7 @@ namespace rtcengine {
         }
         localJsep = audioEngine->modifySdp(sdp, audioType);
         Message inviteReq;
-        if(meetingId == "unknown") {
+        if(meetingId.empty()) {
             inviteReq.set_from(userInfo.userId);
             inviteReq.set_cseq(cseq++);
             inviteReq.set_call_id(std::to_string(rand()));
