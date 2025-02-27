@@ -46,7 +46,8 @@ namespace alllink {
 
 		/* 加入会议窗口消息 */
 
-		IS_ENTER,
+		IS_CREATE,                      //通知中控器用户创建会议
+		IS_JOIN,                        //通知中控器用户加入指定会议
 
 		/* 会议窗口消息 */
 		
@@ -66,7 +67,8 @@ namespace alllink {
 		/* 信令消息 */
 
 		LOGIN_SUCCESS,
-		MEETING_OK,
+		CREATE_MEETING_OK,
+		JOIN_MEETING_OK,
 		CALL_MODE,
 
 		/* 中控器消息 */
@@ -105,7 +107,8 @@ namespace alllink {
 				{MessageType::SEND_ICE_COMPLETE_TO_PEER, "SEND_ICE_COMPLETE_TO_PEER"},
 				{MessageType::DISCONNECT_PEER, "DISCONNECT_PEER"},
 				{MessageType::RECONNECT_PEER, "RECONNECT_PEER"},
-				{MessageType::MEETING_OK, "MEETING_OK"}
+				{MessageType::CREATE_MEETING_OK, "CREATE_MEETING_OK"},
+				{MessageType::JOIN_MEETING_OK, "JOIN_MEETING_OK"}
 		};
 		auto it = enumMap.find(e);
 		if (it != enumMap.end()) {

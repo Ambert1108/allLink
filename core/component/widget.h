@@ -99,14 +99,14 @@ namespace alllink {
 			description.init(fontFile_);
 		};
 
-		void setDescription(const sf::String& text, sf::Color color = sf::Color::Black) {
-			description.setCharacterSize(h / 13);
+		void setDescription(const sf::String& text, int textSize, sf::Color color = sf::Color::Black) {
+			description.setCharacterSize(textSize);
 			description.setFillColor(color);
 			description.setPosition(x, y + 2);
 			description.setString(text);
 			int rectW = w - 4;
-			int rectH = rectW / (labelSize + 2);
-			rect->init(rectW, rectH, this->x + 2, this->y + (h / 10) + 4, 6.f);
+			int rectH = h / (labelSize + 2) - 2;
+			rect->init(rectW, rectH, this->x + 2, this->y + textSize + 8, 6.f);
 		}
 
 		void setTextButton(const sf::String& text, sf::Color textColor) {
@@ -116,7 +116,7 @@ namespace alllink {
 		}
 
 		void setDropList() {
-			int labelHeight = h / (labelSize + 2);
+			int labelHeight = h / (labelSize + 2) - 2;
 			dropList.init(w, labelSize * (labelHeight + 4), x, rect->getPosition().y + rect->getSize().y + 2, labelHeight, fontFile_);
 			dropList.setFillColor(sf::Color(220, 220, 220));
 		}

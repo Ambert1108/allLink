@@ -35,12 +35,12 @@ namespace alllink {
 	}
 
 	int LoginScreen::init() {
-		serverDropWidget = std::make_unique<DropDescriptionWidget>(263 * wr, 260 * hr, 100 * wr, 74 * hr, 4 * wr, msyhFile);
+		serverDropWidget = std::make_unique<DropDescriptionWidget>(263 * wr, 260 * hr, 100 * wr, 74 * hr, 4, msyhFile);
 		inputUserIdWidget = std::make_unique<EnterDescriptionWidget>(159 * wr, 94 * hr, 34 * wr, 168 * hr);
 		inputUserPwdWidget = std::make_unique<EnterDescriptionWidget>(159 * wr, 94 * hr, 274 * wr, 168 * hr);
 		loginButton = std::make_unique<TextRectangle>();
 
-		serverDropWidget->setDescription(L"选择信令服务器");
+		serverDropWidget->setDescription(L"选择信令服务器", 20);
 		serverDropWidget->setTextButton(L"J组公网信令", sf::Color::Black);
 		serverDropWidget->setDropList();
 		int serverNum = seeker::IniConfig::GetInteger("server", "num", 1);

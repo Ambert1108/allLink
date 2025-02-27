@@ -39,10 +39,39 @@ namespace alllink {
 		inputMeetingIdWidget->setInputBox(msyhFile, L"请输入会议号 xxx-xxx");
 		inputMeetingIdWidget->setDescription(msyhFile, L"会议号");
 
+		videoEncDropWidget = std::make_unique<DropDescriptionWidget>(150 * wr, 130 * hr, 103 * wr, 85 * hr, 2, msyhFile);
+		videoEncDropWidget->setDescription(L"视频编码格式", 12);
+		videoEncDropWidget->setTextButton(L"h264", sf::Color::Black);
+		videoEncDropWidget->setDropList();
+		videoEncDropWidget->addLabel(L"h264", sf::Color(225, 225, 225), sf::Color(230, 230, 230), sf::Color(200, 200, 200));
+		videoEncDropWidget->addLabel(L"vp9", sf::Color(225, 225, 225), sf::Color(230, 230, 230), sf::Color(200, 200, 200));
+		
+		audioEncDropWidget = std::make_unique<DropDescriptionWidget>(150 * wr, 130 * hr, 103 * wr, 170 * hr, 2, msyhFile);
+		audioEncDropWidget->setDescription(L"音频编码格式", 12);
+		audioEncDropWidget->setTextButton(L"opus", sf::Color::Black);
+		audioEncDropWidget->setDropList();
+		audioEncDropWidget->addLabel(L"pcma", sf::Color(225, 225, 225), sf::Color(230, 230, 230), sf::Color(200, 200, 200));
+		audioEncDropWidget->addLabel(L"opus", sf::Color(225, 225, 225), sf::Color(230, 230, 230), sf::Color(200, 200, 200));
+		
+		videoMcuDropWidget = std::make_unique<DropDescriptionWidget>(150 * wr, 130 * hr, 103 * wr, 255 * hr, 2, msyhFile);
+		videoMcuDropWidget->setDescription(L"视频mcu选择", 12);
+		videoMcuDropWidget->setTextButton(L"J组", sf::Color::Black);
+		videoMcuDropWidget->setDropList();
+		videoMcuDropWidget->addLabel(L"J组", sf::Color(225, 225, 225), sf::Color(230, 230, 230), sf::Color(200, 200, 200));
+		videoMcuDropWidget->addLabel(L"Y组", sf::Color(225, 225, 225), sf::Color(230, 230, 230), sf::Color(200, 200, 200));
+		
+		audioMcuDropWidget = std::make_unique<DropDescriptionWidget>(150 * wr, 130 * hr, 103 * wr, 340 * hr, 2, msyhFile);
+		audioMcuDropWidget->setDescription(L"音频mcu选择", 12);
+		audioMcuDropWidget->setTextButton(L"X组", sf::Color::Black);
+		audioMcuDropWidget->setDropList();
+		audioMcuDropWidget->addLabel(L"X组", sf::Color(225, 225, 225), sf::Color(230, 230, 230), sf::Color(200, 200, 200));
+		audioMcuDropWidget->addLabel(L"L组", sf::Color(225, 225, 225), sf::Color(230, 230, 230), sf::Color(200, 200, 200));
+
 		createButton = std::make_unique<TextRectangle>();
 		createButton->init(188 * wr, 48 * hr, 84 * wr, 462 * hr);
 		createButton->setText(msyhFile, L"创建会议", sf::Color::White);
 		createButton->setStateColor(sf::Color(143, 170, 220), sf::Color(218, 227, 243));
+		createButton->setActive(true);
 
 		joinButton = std::make_unique<TextRectangle>();
 		joinButton->init(188 * wr, 48 * hr, 84 * wr, 462 * hr);
@@ -73,12 +102,16 @@ namespace alllink {
 			this->cross.render(this);
 			break;
 		}
-		inputMeetingIdWidget->render(this);
 		if (type_ == EnterType::CREATE) {
 			this->draw(screenDescriptionText);
 			createButton->render(this);
+			audioMcuDropWidget->render(this);
+			videoMcuDropWidget->render(this);
+			audioEncDropWidget->render(this);
+			videoEncDropWidget->render(this);
 		}
 		else {
+			inputMeetingIdWidget->render(this);
 			this->draw(screenDescriptionText);
 			joinButton->render(this);
 		}
@@ -91,30 +124,42 @@ namespace alllink {
 			this->checkStatus(event);
 			inputMeetingIdWidget->eventProcess(event, this);
 			if (type_ == EnterType::CREATE) {
+				if (videoEncDropWidget->eventProcess(event, this)) {
+					I_LOG("drop choose: {}", WstrConv.to_bytes(videoEncDropWidget->getSelectedLabel()));
+				}
+				if (audioEncDropWidget->eventProcess(event, this)) {
+					I_LOG("drop choose: {}", WstrConv.to_bytes(videoEncDropWidget->getSelectedLabel()));
+				}
+				if (videoMcuDropWidget->eventProcess(event, this)) {
+					I_LOG("drop choose: {}", WstrConv.to_bytes(videoEncDropWidget->getSelectedLabel()));
+				}
+				if (audioMcuDropWidget->eventProcess(event, this)) {
+					I_LOG("drop choose: {}", WstrConv.to_bytes(videoEncDropWidget->getSelectedLabel()));
+				}
 				if ((createButton->onClick(event, getMousePosition(), this)
 					|| (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Enter))
 					&& createButton->getActive()) {
-					hi::PostMsg({ msgTo(MessageType::IS_ENTER), inputMeetingIdWidget->getInput() });
-					if (type_ == EnterType::CREATE) createButton->setActive(false);
-					else createButton->setActive(false);
+					std::vector<std::wstring> labelList{};
+					labelList.emplace_back(videoEncDropWidget->getSelectedLabel());
+					labelList.emplace_back(audioEncDropWidget->getSelectedLabel());
+					labelList.emplace_back(videoMcuDropWidget->getSelectedLabel());
+					labelList.emplace_back(audioMcuDropWidget->getSelectedLabel());
+					hi::PostMsg({ msgTo(MessageType::IS_CREATE), labelList });
 				}
 			}
 			else{
 				if ((joinButton->onClick(event, getMousePosition(), this)
 					|| (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Enter))
 					&& joinButton->getActive()) {
-					hi::PostMsg({ msgTo(MessageType::IS_ENTER), inputMeetingIdWidget->getInput() });
-					if (type_ == EnterType::CREATE) createButton->setActive(false);
-					else joinButton->setActive(false);
+					hi::PostMsg({ msgTo(MessageType::IS_JOIN), inputMeetingIdWidget->getInput() });
+					joinButton->setActive(false);
 				}
 			}
 			if (!inputMeetingIdWidget->empty()) {
-				if (type_ == EnterType::CREATE) createButton->setActive(true);
-				else joinButton->setActive(true);
+				if (type_ == EnterType::JOIN) joinButton->setActive(true);
 			}
 			else {
-				if (type_ == EnterType::CREATE) createButton->setActive(false);
-				else joinButton->setActive(false);
+				joinButton->setActive(false);
 			}
 		}
 	}
@@ -131,5 +176,9 @@ namespace alllink {
 
 	void EnterScreen::reset() {
 		inputMeetingIdWidget->resetInput();
+		videoEncDropWidget->reset();
+		audioEncDropWidget->reset();
+		videoMcuDropWidget->reset();
+		audioMcuDropWidget->reset();
 	}
 }

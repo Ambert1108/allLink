@@ -111,7 +111,24 @@ namespace alllink {
           callback_->LoginSignaling(linkinfo::ServerInfo(loginInfo.at(0)), {loginInfo.at(1), loginInfo.at(2)});
           break;
         }
-        case msgTo(MessageType::IS_ENTER): {
+        case msgTo(MessageType::IS_CREATE): {
+          if (type_ == VisionType::LOGOUT) break;
+          // 收到连接窗口连接消息
+          std::vector<std::wstring> list = std::any_cast<std::vector<std::wstring>>(msg.data);
+          if (list.size() != 4) {
+            I_LOG("list is invalid, size is {}", list.size());
+            break;
+          }
+
+          for (const auto& e : list) {
+            I_LOG("{}", WstrConv.to_bytes(e));
+          }
+      
+          // 调用中控器的回调接口进行通话连接
+          callback_->CreateMeeting(list.at(0), list.at(1), list.at(2), list.at(3));
+          break;
+        }
+        case msgTo(MessageType::IS_JOIN): {
           if (type_ == VisionType::LOGOUT) break;
           // 收到连接窗口连接消息
           //std::vector<std::string> meetingInfo = std::any_cast<std::vector<std::string>>(msg.data);
@@ -119,11 +136,10 @@ namespace alllink {
           if (meetingInfo.empty()) {
             break;
           }
-          //I_LOG("[debug] meeting id is {}", meetingInfo.at(0));
-          I_LOG("[debug] meeting id is {}", meetingInfo);
-      
+          I_LOG("meeting id is {}", meetingInfo);
+
           // 调用中控器的回调接口进行通话连接
-          callback_->ConnectToPeer(meetingInfo);
+          callback_->JoinMeeting(meetingInfo);
           std::shared_ptr<StreamScreen> point = std::dynamic_pointer_cast<StreamScreen>(streamWnd);
           if (!point) return;
           point->setSessionId(meetingInfo);
@@ -141,7 +157,6 @@ namespace alllink {
           std::string userId = std::any_cast<std::string>(msg.data);
           point->setUseId(userId);
           I_LOG("login success 4");
-          callback_->CustomMessageCallback(msg);
           if (type_ == VisionType::RECONNECT) {
             callback_->CustomMessageCallback({ msgTo(MessageType::RECONNECT_PEER), nullptr });
           }
@@ -211,14 +226,20 @@ namespace alllink {
           point->setShareList(std::any_cast<std::map<int, std::string>>(msg.data), 2);
           break;
         }
-        case msgTo(MessageType::MEETING_OK): {
+        case msgTo(MessageType::CREATE_MEETING_OK): {
+          std::tuple<std::string, int64_t> result = std::any_cast<std::tuple<std::string, int64_t>>(msg.data);
+          std::shared_ptr<StreamScreen> point = std::dynamic_pointer_cast<StreamScreen>(streamWnd);
+          if (!point) return;
+          point->setSessionId(std::get<0>(result));
+          point->setSessionTimepoint(std::get<1>(result));
+          I_LOG("[Controller::CustomMessageCallback] {} msg send to peer", enumToString(MessageType(msg.id)));
+          break;
+        }
+        case msgTo(MessageType::JOIN_MEETING_OK): {
           std::shared_ptr<StreamScreen> point = std::dynamic_pointer_cast<StreamScreen>(streamWnd);
           if (!point) return;
           point->setSessionTimepoint(std::any_cast<int64_t>(msg.data));
-          I_LOG("[test] send {} to peer", msg.id);
           I_LOG("[Controller::CustomMessageCallback] {} msg send to peer", enumToString(MessageType(msg.id)));
-          // 通知中控器处理消息数据
-          callback_->CustomMessageCallback(msg);
           break;
         }
         case msgTo(MessageType::SWITCH_AUDIO_INPUT_STR):

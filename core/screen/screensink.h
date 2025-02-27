@@ -186,8 +186,12 @@ namespace alllink {
 		void reset();
 
 		std::unique_ptr<EnterDescriptionWidget> inputMeetingIdWidget;
-		std::unique_ptr <TextRectangle> createButton;
-		std::unique_ptr <TextRectangle> joinButton;
+		std::unique_ptr<DropDescriptionWidget> videoEncDropWidget;
+		std::unique_ptr<DropDescriptionWidget> audioEncDropWidget;
+		std::unique_ptr<DropDescriptionWidget> videoMcuDropWidget;
+		std::unique_ptr<DropDescriptionWidget> audioMcuDropWidget;
+		std::unique_ptr<TextRectangle> createButton;
+		std::unique_ptr<TextRectangle> joinButton;
 		BaseText screenDescriptionText;
 		float wr, hr;
 		sf::Vector2i wndPosition;

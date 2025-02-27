@@ -32,15 +32,21 @@ namespace alllink {
     //
 
     // 登录成功
-    virtual void OnLoginSuccess(std::string userId) override;
+    void OnLoginSuccess(std::string userId) override;
     // 登陆失败
-    virtual void OnLoginFailure() override;
+    void OnLoginFailure() override;
+    // 登出成功
+    void OnLogoutSuccess() override;
     // OnAddTrack, 即入会成功
-    virtual void OnReceiveTrack(rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver) override;
-    // 入会成功
-    virtual void OnJoinMeetingSuccess(int64_t timePoint) override;
+    void OnReceiveTrack(rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver) override;
+    // 创建会议成功
+    void OnCreateMeetingSuccess(std::string meetingId, int64_t timePoint) override;
+    // 加入会议成功
+    void OnJoinMeetingSuccess(int64_t timePoint) override;
     // 入会失败
-    virtual void OnJoinMeetingFailure() override;
+    void OnJoinMeetingFailure() override;
+    // 断网后尝试重新连接超时
+    void OnReConnectTimeout() override;
 
     //
     // VisionCnetralCallback implementation.
@@ -50,7 +56,9 @@ namespace alllink {
 
     void DisconnectFromServer() override;
 
-    bool ConnectToPeer(const std::string& to) override;
+    bool CreateMeeting(const std::wstring& videoEnc, const std::wstring& audioEnc, const std::wstring& videoMcu, const std::wstring& audioMcu) override;
+    
+    bool JoinMeeting(const std::string& to) override;
 
     void DisconnectFromCurrentPeer() override;
 

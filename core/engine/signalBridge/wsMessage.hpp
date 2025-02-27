@@ -126,6 +126,17 @@ public:
         js["SDP"] = input;
     }
 
+    // mcuId
+    int mcuId() {
+        if (js["mcuId"].is_null()) {
+            return -1;
+        }
+        return js["mcuId"];
+    }
+    void set_mcuId(int input) {
+        js["mcuId"] = input;
+    }
+
     // meth
     std::string meth() {
         if (js["meth"].is_null()) {
@@ -140,6 +151,7 @@ public:
     // videoformat
     std::string videoformat() {
         if (js["videoformat"].is_null()) {
+            W_LOG("js[\"videoformat\"].is_null()");
             return "";
         }
         return js["videoformat"];
@@ -281,6 +293,7 @@ public:
         js["sdpMid"] = input;
     }
 
+    // timePoint
     int64_t timePoint() const {
         if (js["timePoint"].is_null()) {
             E_LOG("timePoint is null");
@@ -291,5 +304,13 @@ public:
             return -1;
         }
         return js["timePoint"];
+    }
+
+    //meetingId
+    std::string meetingId() {
+        if (js["meetingId"].is_null()) {
+            return "";
+        }
+        return js["meetingId"];
     }
 };

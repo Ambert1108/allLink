@@ -18,6 +18,7 @@ namespace alllink {
 	static std::string joinMeetingFile = "./resources/comp/start/join_meeting.png";
 	static std::string isLoginFile = "./resources/comp/start/is_login.png";
 	static std::string startLoginFile = "./resources/comp/start/start_login.png";
+	static std::string yesFile = "./resources/comp/start/yes.png";
 
 	/*
 	* 素材路径:会议界面

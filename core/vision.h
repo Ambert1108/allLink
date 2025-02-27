@@ -91,8 +91,10 @@ namespace alllink {
     virtual bool LoginSignaling(const linkinfo::ServerInfo& server, const linkinfo::UserInfo& user) = 0;
     /*通知控制器登出信令服务器*/
     virtual void DisconnectFromServer() = 0;
-    /*通知控制器连接对端peer*/
-    virtual bool ConnectToPeer(const std::string& to) = 0;
+    /*通知控制器创建会议*/
+    virtual bool CreateMeeting(const std::wstring& videoEnc, const std::wstring& audioEnc, const std::wstring& videoMcu, const std::wstring& audioMcu) = 0;
+    /*通知控制器加入会议*/
+    virtual bool JoinMeeting(const std::string& to) = 0;
     /*通知控制器与对端断开连接*/
     virtual void DisconnectFromCurrentPeer() = 0;
     /*控制器自定义消息处理函数*/

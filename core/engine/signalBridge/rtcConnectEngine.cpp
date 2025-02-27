@@ -27,27 +27,26 @@ namespace rtcengine {
         threadDestroy = true;
         if (keepaliveThread.joinable()) {
             keepaliveThread.join();
+            I_LOG("keepaliveThread.join");
         }
-        I_LOG("keepaliveThread.join");
 
         if(signalingSocket) {
             signalingSocket->sendClose();
             signalingSocket->stopListening();
             signalingSocket = nullptr;
-            I_LOG("sendClose");
+            I_LOG("signalingSocket close");
         }
 
         if (listenerThread.joinable()) {
             listenerThread.join();
+            I_LOG("listenerThread.join");
         }
-        I_LOG("listenerThread.join");
 
         audioEngine = nullptr;
         videoEngine = nullptr;
-
         peer_connection_ = nullptr;
         peer_connection_factory_ = nullptr;
-        I_LOG("audioEngine/videoEngine/peer_connection_ = nullptr");
+        I_LOG("audioEngine/videoEngine/peer_connection_/peer_connection_factory_ = nullptr");
 
         oatpp::base::Environment::destroy();
     }
@@ -113,46 +112,77 @@ namespace rtcengine {
         return true;
     }
 
-    bool RtcConnectEngine::createMeeting(int mcu_, VideoCodecType videoCodecType_, AudioCodecType audioCodecType_) {
-        this->mcu = mcu_;
+    void RtcConnectEngine::logout() {
+        Message logoutReq;
+        logoutReq.set_userid(userInfo.userId);
+        logoutReq.set_cseq(cseq++);
+        logoutReq.set_meth("LOGOUT");
+        logoutReq.set_isresponse(false);
+        I_LOG("logout Req: {}", logoutReq.js.dump(4));
+        oatpp::String logoutJson = oatpp::String(logoutReq.js.dump());
+        sendSocket(logoutJson);
+    }
+
+    bool RtcConnectEngine::createMeeting(VideoMcu videoMcu_, AudioMcu audioMcu_, VideoCodecType videoCodecType_, AudioCodecType audioCodecType_) {
+        this->videoMcu = videoMcu_;
+        this->audioMcu = audioMcu_;
         this->videoCodecType = videoCodecType_;
         this->audioCodecType = audioCodecType_;
-        I_LOG("mcuMode: {} videoCodecType: {} audioCodecType: {}", mcu, videoCodecType, audioCodecType);
+        I_LOG("videoMcu: {} audioMcu: {} videoCodecType: {} audioCodecType: {}", videoMcu, audioMcu, videoCodecType, audioCodecType);
+
+        if(videoMcu == 0){
+            if(audioMcu == 0){
+                mcu = 0;
+            }
+            else if(audioMcu == 1){
+                mcu = 1;
+            }
+        }
+        else if(videoMcu == 1){
+            if(audioMcu == 0){
+                mcu = 2;
+            }
+            else if(audioMcu == 1){
+                mcu = 3;
+            }
+        }
+
+        if (audioEngine == nullptr) {
+            I_LOG("init audioEngine");
+            audioEngine = std::make_shared<rtcAudioEngine>();
+            I_LOG("init audioEngine done");
+        }
+        if (videoEngine == nullptr) {
+            I_LOG("init videoEngine");
+            videoEngine = std::make_shared<RTCVideoEngine>();
+            I_LOG("init videoEngine done");
+        }
+        I_LOG("createMeeting videoType: {} audioType: {}", videoCodecType, audioCodecType);
+        InitializePeerConnection();
+
+        peer_connection_->CreateOffer(this, webrtc::PeerConnectionInterface::RTCOfferAnswerOptions());
+        audioEngine->setMicrophoneVolume(50);
+
 
         return true;
     }
 
     bool RtcConnectEngine::joinMeeting(std::string meetingId_) {
         I_LOG("in RtcConnectEngine::joinMeeting");
-        std::regex pattern("^\\d{3}-\\d{3}$");
-        if(std::regex_match(meetingId_, pattern)) {
-            if (signalState != State::LOGIN_ON) {
-                E_LOG("please login first");
-                return false;
-            }
-            this->meetingId = meetingId_;
-
-            if (audioEngine == nullptr) {
-                I_LOG("init audioEngine");
-                audioEngine = std::make_shared<rtcAudioEngine>();
-                I_LOG("init audioEngine done");
-            }
-            if (videoEngine == nullptr) {
-                I_LOG("init videoEngine");
-                videoEngine = std::make_shared<RTCVideoEngine>();
-                I_LOG("init videoEngine done");
-            }
-            InitializePeerConnection();
-
-            peer_connection_->CreateOffer(this, webrtc::PeerConnectionInterface::RTCOfferAnswerOptions());
-
-//            std::thread threadGetdevInfo(&RtcConnectEngine::getDevList, this);
-//            getDevInfoThread = std::move(threadGetdevInfo);
-        }
-        else{
-            E_LOG("meetingId error");
+        if (userInfo.userId == "" || userInfo.password == "") {
+            E_LOG("please login first");
             return false;
         }
+        this->meetingId = meetingId_;
+        Message queryReq;
+        queryReq.set_from(userInfo.userId);
+        queryReq.set_to(meetingId);
+        queryReq.set_meth("QUERY");
+        queryReq.set_cseq(cseq++);
+        queryReq.set_call_id(std::to_string(rand()));
+        I_LOG("query Req: {}", queryReq.js.dump(4));
+        oatpp::String queryJson = oatpp::String(queryReq.js.dump());
+        sendSocket(queryJson);
 
         return true;
     }
@@ -172,8 +202,15 @@ namespace rtcengine {
         screenTrackInterface.release();
         videoEngine->close();
         audioEngine->close();
+
+        meetingId = "unknown";
+        videoCodecType = -1;
+        audioCodecType = -1;
+        videoMcu = -1;
+        audioMcu = -1;
         peer_connection_ = nullptr;
         peer_connection_factory_ = nullptr;
+
         return true;
     }
 
@@ -391,15 +428,66 @@ namespace rtcengine {
             signalState = State::LOGIN_ON;
             OnLoginSuccess(userInfo.userId);
         }
+        else if(resp.cmeth() == "LOGOUT"){
+            I_LOG("LOGOUT onOK");
+            signalState = State::NONE;
+            OnLogoutSuccess();
+        }
+        else if(resp.cmeth() == "QUERY"){
+            I_LOG("QUERY onOK");
+            std::regex pattern("^\\d{3}-\\d{3}$");
+            if(std::regex_match(meetingId, pattern)) {
+                if (audioEngine == nullptr) {
+                    I_LOG("init audioEngine");
+                    audioEngine = std::make_shared<rtcAudioEngine>();
+                    I_LOG("init audioEngine done");
+                }
+                if (videoEngine == nullptr) {
+                    I_LOG("init videoEngine");
+                    videoEngine = std::make_shared<RTCVideoEngine>();
+                    I_LOG("init videoEngine done");
+                }
+
+
+                if(resp.videoformat() == "H264"){
+                    this->videoCodecType = VideoCodecType::H264;
+                }
+                else if(resp.videoformat() == "VP9"){
+                    this->videoCodecType = VideoCodecType::VP9;
+                }
+
+                if(resp.audioformat() == "PCMA"){
+                    this->audioCodecType = AudioCodecType::PCMA;
+                }
+                else if(resp.audioformat() == "OPUS"){
+                    this->audioCodecType = AudioCodecType::OPUS;
+                }
+
+                I_LOG("joinMeeting videoType: {} audioType: {}", videoCodecType, audioCodecType);
+                InitializePeerConnection();
+
+                peer_connection_->CreateOffer(this, webrtc::PeerConnectionInterface::RTCOfferAnswerOptions());
+                audioEngine->setMicrophoneVolume(50);
+            }
+
+        }
         else if (resp.cmeth() == "INVITE") {
             I_LOG("INVITE onOK");
             signalState = State::MEETING;
             remoteJsep = resp.sdp();
             setRemote(remoteJsep);
             if(resp.timePoint() == -1){
+                if(meetingId == "unknown"){
+                    meetingId = resp.meetingId();
+                    OnCreateMeetingSuccess(meetingId, seeker::Time::currentTime());
+                }
                 OnJoinMeetingSuccess(seeker::Time::currentTime());
             }
             else{
+                if(meetingId == "unknown"){
+                    meetingId = resp.meetingId();
+                    OnCreateMeetingSuccess(meetingId, resp.timePoint());
+                }
                 OnJoinMeetingSuccess(resp.timePoint());
             }
         }
@@ -522,16 +610,28 @@ namespace rtcengine {
         }
         localJsep = audioEngine->modifySdp(sdp, audioType);
         Message inviteReq;
-        inviteReq.set_from(userInfo.userId);
-        inviteReq.set_to(meetingId);
-        inviteReq.set_cseq(cseq++);
-        inviteReq.set_call_id(std::to_string(rand()));
-        inviteReq.set_sdp(localJsep);
-        inviteReq.set_videoformat(videoType);
-        inviteReq.set_audioformat(audioType);
-        inviteReq.set_meth("INVITE");
-        inviteReq.set_isresponse(false);
-        I_LOG("joinMeeting Req: {}", inviteReq.js.dump(4));
+        if(meetingId == "unknown") {
+            inviteReq.set_from(userInfo.userId);
+            inviteReq.set_cseq(cseq++);
+            inviteReq.set_call_id(std::to_string(rand()));
+            inviteReq.set_sdp(localJsep);
+            inviteReq.set_mcuId(mcu);
+            inviteReq.set_videoformat(videoType);
+            inviteReq.set_audioformat(audioType);
+            inviteReq.set_meth("INVITE");
+            inviteReq.set_isresponse(false);
+            I_LOG("createMeeting Req: {}", inviteReq.js.dump(4));
+        }
+        else{
+            inviteReq.set_from(userInfo.userId);
+            inviteReq.set_to(meetingId);
+            inviteReq.set_cseq(cseq++);
+            inviteReq.set_call_id(std::to_string(rand()));
+            inviteReq.set_sdp(localJsep);
+            inviteReq.set_meth("INVITE");
+            inviteReq.set_isresponse(false);
+            I_LOG("joinMeeting Req: {}", inviteReq.js.dump(4));
+        }
         oatpp::String inviteJson = oatpp::String(inviteReq.js.dump());
         sendSocket(inviteJson);
 
@@ -584,14 +684,14 @@ namespace rtcengine {
         I_LOG("in RtcConnectEngine::keepalive");
         try {
             while (!threadDestroy) {
-                D_LOG("noHeartbeatRespTime: {}", noHeartbeatRespTime);
-                if (noHeartbeatRespTime > 5) {
-                    if(signalingSocket) {
-                        signalingSocket->stopListening();
-                        I_LOG("stopListening");
-                    }
-                    break;
-                }
+//                D_LOG("noHeartbeatRespTime: {}", noHeartbeatRespTime);
+//                if (noHeartbeatRespTime > 5) {
+//                    if(signalingSocket) {
+//                        signalingSocket->stopListening();
+//                        I_LOG("stopListening");
+//                    }
+//                    break;
+//                }
                 D_LOG("send keepalive");
                 Message keepaliveReq;
                 keepaliveReq.set_from(userInfo.userId);

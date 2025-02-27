@@ -100,6 +100,16 @@ namespace rtcengine{
             OPUS = 1
         };
 
+        enum VideoMcu {
+            Y = 0,
+            J = 1
+        };
+
+        enum AudioMcu {
+            X = 0,
+            L = 1
+        };
+
         struct SignalingInfo{
             std::string signalIp = "";
             uint16_t signalPort = -1;
@@ -118,8 +128,10 @@ namespace rtcengine{
         bool connect(std::string signalIp, uint16_t signalPort);
         // 用户登录
         bool login(std::string userId, std::string password);
+        // 用户登出
+        void logout();
         // 创建会议
-        bool createMeeting(int mcu, VideoCodecType videoType_, AudioCodecType audioType_);
+        bool createMeeting(VideoMcu videoMcu_, AudioMcu audioMcu_, VideoCodecType videoType_, AudioCodecType audioType_);
         // 加入会议
         bool joinMeeting(std::string meetingId);
         // 退出会议
@@ -168,22 +180,18 @@ namespace rtcengine{
         virtual void OnLoginSuccess(std::string userId) = 0;
         // 登陆失败
         virtual void OnLoginFailure() = 0;
+        // 登出成功
+        virtual void OnLogoutSuccess() = 0;
         // OnAddTrack, 即入会成功
         virtual void OnReceiveTrack(rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver) = 0;
+        // 创建会议成功
+        virtual void OnCreateMeetingSuccess(std::string meetingId, int64_t timePoint) = 0;
         // 入会失败
         virtual void OnJoinMeetingSuccess(int64_t timePoint) = 0;
         // 入会失败
         virtual void OnJoinMeetingFailure() = 0;
-//        //获取到麦克风设备信息
-//        virtual void OnAudioInputDevInfo(std::map<int16_t, std::string> list) = 0;
-//        // 获取扬声器设备信息
-//        virtual void OnAudioOutputDevInfo(std::map<int16_t, std::string> list) = 0;
-//        // 获取摄像头设备信息
-//        virtual void OnVideoInputDevInfo(std::map<int16_t, std::string> list) = 0;
-//        // 获取屏幕设备信息
-//        virtual void OnScreenInfo(std::map<int, std::string> list) = 0;
-//        // 获取窗口信息
-//        virtual void OnWindowInfo(std::map<int, std::string> list) = 0;
+        // 断网后尝试重新连接超时
+        virtual void OnReConnectTimeout() = 0;
 
         std::atomic<bool> threadDestroy = false;
 
@@ -318,11 +326,15 @@ namespace rtcengine{
 
         int noHeartbeatRespTime = 0;
 
-        int videoCodecType;
+        int videoCodecType = -1;
 
-        int audioCodecType;
+        int audioCodecType = -1;
 
-        int mcu;
+        int videoMcu = -1;
+
+        int audioMcu = -1;
+
+        int mcu = -1;
 
     };
 
