@@ -67,6 +67,12 @@ namespace alllink {
 		audioMcuDropWidget->addLabel(L"X组", sf::Color(225, 225, 225), sf::Color(230, 230, 230), sf::Color(200, 200, 200));
 		audioMcuDropWidget->addLabel(L"L组", sf::Color(225, 225, 225), sf::Color(230, 230, 230), sf::Color(200, 200, 200));
 
+		isBooking = std::make_unique<CheckBoxModule>();
+		isBooking->init(sf::Vector2f(16 * wr, 16 * wr), sf::Vector2f(103 * wr, 420 * hr));
+		isBooking->setDescribe(msyhFile, L"预定会议", 14 * hr);
+		isBooking->setBox(sf::Color::White, yesFile);
+		isBooking->setInteractiveColor(sf::Color(173, 173, 173), sf::Color(37, 194, 94));
+
 		createButton = std::make_unique<TextRectangle>();
 		createButton->init(188 * wr, 48 * hr, 84 * wr, 462 * hr);
 		createButton->setText(msyhFile, L"创建会议", sf::Color::White);
@@ -109,6 +115,7 @@ namespace alllink {
 			videoMcuDropWidget->render(this);
 			audioEncDropWidget->render(this);
 			videoEncDropWidget->render(this);
+			isBooking->render(this);
 		}
 		else {
 			inputMeetingIdWidget->render(this);
@@ -135,6 +142,11 @@ namespace alllink {
 				}
 				if (audioMcuDropWidget->eventProcess(event, this)) {
 					I_LOG("drop choose: {}", WstrConv.to_bytes(videoEncDropWidget->getSelectedLabel()));
+				}
+				sf::Vector2i mousePosWin = sf::Mouse::getPosition(*this);
+				sf::Vector2f mousePosView = this->mapPixelToCoords(mousePosWin);
+				if (isBooking->onClick(event, mousePosView, this)) {
+					if (isBooking->data()) I_LOG("booking meeting");
 				}
 				if ((createButton->onClick(event, getMousePosition(), this)
 					|| (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Enter))

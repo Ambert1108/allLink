@@ -190,6 +190,7 @@ namespace alllink {
 		std::unique_ptr<DropDescriptionWidget> audioEncDropWidget;
 		std::unique_ptr<DropDescriptionWidget> videoMcuDropWidget;
 		std::unique_ptr<DropDescriptionWidget> audioMcuDropWidget;
+		std::unique_ptr<CheckBoxModule> isBooking;
 		std::unique_ptr<TextRectangle> createButton;
 		std::unique_ptr<TextRectangle> joinButton;
 		BaseText screenDescriptionText;

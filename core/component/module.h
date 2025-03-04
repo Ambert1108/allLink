@@ -1084,6 +1084,14 @@ namespace alllink {
 				this->getPosition().y + (this->getSize().y - this->getSize().y / 2) / 2);
 		}
 
+		void updateText(const sf::String& text) {
+			text_.setString(text);
+			truncateText(text_, this->getSize().x - 4);
+			text_.setPosition(
+				this->getPosition().x + (this->getSize().x - text_.getGlobalBounds().width) / 2,
+				this->getPosition().y + (this->getSize().y - this->getSize().y / 2) / 2);
+		}
+
 		void setStateColor(sf::Color active, sf::Color inactive) {
 			activeColor = active;
 			inactiveColor = inactive;
