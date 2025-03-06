@@ -139,12 +139,10 @@ namespace alllink {
     leaveMeeting->setColor(sf::Color::White, sf::Color::Red, sf::Color(191, 23, 23));
     leaveMeeting->setText(msyhFile, L"离开会议", sf::Color::Black, sf::Color::White);
 
-    meetingDescribe = std::make_unique<BaseText>();
-    meetingDescribe->init(msyhFile);
-    meetingDescribe->setCharacterSize(18 * hr);
-    meetingDescribe->setString(L"会议号 unknown");
-    meetingDescribe->setFillColor(sf::Color::Black);
-    meetingDescribe->setPosition(((1920 - meetingDescribe->getGlobalBounds().width) / 2) * wr, 11 * hr);
+    meetingDescribe = std::make_unique<ClickTextRectangle>();
+    meetingDescribe->init(150 * wr, 40 * hr, ((1920 - meetingDescribe->getGlobalBounds().width) / 2) * wr, 0);
+    meetingDescribe->setText(msyhFile, L"会议号 unknown", sf::Color::Black);
+    meetingDescribe->setColor(sf::Color(200, 200, 200, 0), sf::Color(230, 230, 230, 100), sf::Color(215, 215, 215, 100));
 
     bottom.setPosition(0, 1000 * hr);
     bottom.setSize(sf::Vector2f(1920 * wr, 80 * hr));
@@ -293,7 +291,7 @@ namespace alllink {
       if (shareState) openShare->render(this);
       else closeShare->render(this);
       meetingTime->render(this);
-      this->draw(*meetingDescribe.get());
+      meetingDescribe->render(this);
       if (settingPop) {
         this->draw(*settingBackground.get());
         if (micArrowClick) {
@@ -344,6 +342,12 @@ namespace alllink {
         if (leaveMeeting->onClick(event, mousePosView, this)) {
           I_LOG("leave meeting");
           hi::PostMsg({ msgTo(MessageType::MEETING_END), nullptr });
+        }
+        if (meetingDescribe->onClick(event, mousePosView, this)) {
+          I_LOG("meeting click");
+          auto tmpStr = meetingDescribe->getDescription();
+          auto res = tmpStr.erase(0, 4);
+          toClipBoard(WstrConv.to_bytes(res));
         }
         if (!micState) {
           if (closeMic->onClick(event, mousePosView, this)) {
@@ -497,7 +501,7 @@ namespace alllink {
 
   void StreamScreen::setSessionId(std::string id) {
     std::wstring s = L"会议号 " + WstrConv.from_bytes(id);
-    meetingDescribe->setString(s);
+    meetingDescribe->setDescription(s);
   }
 
   void StreamScreen::setSessionTimepoint(int64_t timepoint) { timePoint = timepoint; }

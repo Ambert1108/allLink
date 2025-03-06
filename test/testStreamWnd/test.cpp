@@ -87,12 +87,10 @@ int main() {
   leaveMeeting.setColor(sf::Color::White, sf::Color::Red, sf::Color(191, 23, 23));
   leaveMeeting.setText(font2File, L"离开会议", sf::Color::Black, sf::Color::White);
 
-  BaseText meetingDescribe;
-  meetingDescribe.init(font2File);
-  meetingDescribe.setCharacterSize(18);
-  meetingDescribe.setString(L"会议号 000-512");
-  meetingDescribe.setFillColor(sf::Color::Black);
-  meetingDescribe.setPosition((1920 - meetingDescribe.getGlobalBounds().width) / 2, 11);
+  ClickTextRectangle meetingDescribe;
+  meetingDescribe.init(150, 40, ((1920 - meetingDescribe.getGlobalBounds().width) / 2), 0);
+  meetingDescribe.setText(font2File, L"333-161", sf::Color::Black);
+  meetingDescribe.setColor(sf::Color(200, 200, 200, 0), sf::Color(230, 230, 230, 100), sf::Color(215, 215, 215, 100));
 
   bool micState = false;
   bool camState = false;
@@ -266,6 +264,11 @@ int main() {
         if (leaveMeeting.onClick(event, mousePosView, wnd)) {
           I_LOG("离开会议");
         }
+        if (meetingDescribe.onClick(event, mousePosView, wnd)) {
+          std::string id = WstrConv.to_bytes(meetingDescribe.getDescription());
+          I_LOG("获取会议id:{}", id);
+          toClipBoard(id);
+        }
         if (!micState) {
           if (closeMic.onClick(event, mousePosView, wnd)) {
             I_LOG("开启麦克风");
@@ -394,7 +397,7 @@ int main() {
       if (shareState) openShare.render(wnd);
       else closeShare.render(wnd);
       meetingTime.render(wnd);
-      wnd->draw(meetingDescribe);
+      meetingDescribe.render(wnd);
       if (settingPop) {
         wnd->draw(background);
         if (micArrowClick) {

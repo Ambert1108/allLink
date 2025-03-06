@@ -338,7 +338,7 @@ namespace alllink {
 		std::unique_ptr<VariableStateGraphicRoundModule> openShare;
 		std::unique_ptr<HorizonGraphicTextsModule> meetingTime;
 		std::unique_ptr<TextRoundRectangle> leaveMeeting;
-		std::unique_ptr<BaseText> meetingDescribe;
+		std::unique_ptr<ClickTextRectangle> meetingDescribe;
 		std::unique_ptr<SeekBarModule> volumeBar;
 		std::unique_ptr<VariableStateVertxRoundModule> audioDevArrow, camDevArrow, shareScreenArrow;
 		std::unique_ptr<DropListModule> audioInputDevList, audioOutputDevList, videoDevList, screenList, windowList;

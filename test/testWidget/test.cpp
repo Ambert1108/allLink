@@ -44,7 +44,7 @@ int main() {
   inputWidget.setDescription(font2File, L"服务器地址");
 
   DropDescriptionWidget dropWidget(264, 260, 640, 20, 4, font2File);
-  dropWidget.setDescription(L"选择信令服务器");
+  dropWidget.setDescription(L"选择信令服务器", 12);
   dropWidget.setTextButton(L"J组公网信令", sf::Color::Black);
   dropWidget.setDropList();
   dropWidget.addLabel(L"J组公网信令", sf::Color(225, 225, 225), sf::Color(230, 230, 230), sf::Color(200, 200, 200));
@@ -77,6 +77,15 @@ int main() {
         std::cout << "进行登录" << std::endl;
       }
       inputWidget.eventProcess(event, wnd);
+      if (inputWidget.getInputActive()) {
+        if (event.key.code == sf::Keyboard::V) {
+          if (sf::Keyboard::isKeyPressed(sf::Keyboard::LControl)) {
+            std::string val = getClipBoard();
+            I_LOG("剪切板内容:{}", val);
+            inputWidget.setInputVal(val);
+          }
+        }
+      }
 
       if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Enter) {
         std::cout << "aaa" << std::endl;

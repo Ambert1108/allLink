@@ -130,6 +130,14 @@ namespace alllink {
 		while (this->pollEvent(event)) {
 			this->checkStatus(event);
 			inputMeetingIdWidget->eventProcess(event, this);
+			if (inputMeetingIdWidget->getInputActive()) {
+				if (event.key.code == sf::Keyboard::V) {
+					if (sf::Keyboard::isKeyPressed(sf::Keyboard::LControl)) {
+						std::string val = getClipBoard();
+						inputMeetingIdWidget->setInputVal(val);
+					}
+				}
+			}
 			if (type_ == EnterType::CREATE) {
 				if (videoEncDropWidget->eventProcess(event, this)) {
 					I_LOG("drop choose: {}", WstrConv.to_bytes(videoEncDropWidget->getSelectedLabel()));

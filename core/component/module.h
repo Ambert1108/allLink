@@ -3,7 +3,8 @@
 #include <SFML/Window.hpp>
 #include <SFML/System.hpp>
 
-//#include <windows.h>
+#include <windows.h>
+#include <shlobj.h>
 #include <locale>
 #include <codecvt>
 #include <vector>
@@ -13,6 +14,62 @@
 
 
 namespace alllink {
+	static void toClipBoard(std::string text_) {
+		HWND hWnd = NULL;
+		if (!OpenClipboard(hWnd)) {
+			// 处理打开剪贴板失败的情况
+			return;
+		}
+		EmptyClipboard();
+
+		// 分配足够的内存（包括终止空字符）
+		size_t bufferSize = text_.size() + 1;
+		HANDLE hHandle = GlobalAlloc(GMEM_MOVEABLE, bufferSize);
+		if (!hHandle) {
+			CloseClipboard();
+			return;
+		}
+
+		// 锁定内存并复制数据
+		char* pData = static_cast<char*>(GlobalLock(hHandle));
+		if (pData) {
+			strcpy_s(pData, bufferSize, text_.c_str()); // 安全复制字符串
+			GlobalUnlock(hHandle);
+		}
+		else {
+			GlobalFree(hHandle);
+			CloseClipboard();
+			return;
+		}
+
+		// 设置剪贴板数据
+		SetClipboardData(CF_TEXT, hHandle);
+		CloseClipboard();
+
+		I_LOG("Copying text to clipBoard: {}", text_.c_str());
+	}
+
+	static std::string getClipBoard() {
+		HWND hWnd = NULL;
+		OpenClipboard(hWnd);
+		std::string retStr = "";
+		if (IsClipboardFormatAvailable(CF_TEXT))
+		{
+			HGLOBAL hglbCopy = GetClipboardData(CF_TEXT);
+			if (hglbCopy)
+			{
+				char* lptstrCopy = (char*)GlobalLock(hglbCopy);
+				if (lptstrCopy)
+				{
+					retStr.append(lptstrCopy);
+					GlobalUnlock(hglbCopy);
+				}
+			}
+		}
+		CloseClipboard();
+		return retStr;
+	}
+
 	static std::wstring_convert<std::codecvt_utf8<wchar_t>> WstrConv;
 
 	static int setCursor(sf::RenderWindow* win_, sf::Cursor::Type cursorType) {
@@ -919,8 +976,13 @@ namespace alllink {
 		void setInputVal(const std::string& val) { 
 			text = val;
 			inputText.setString(text);
+			truncateText(inputText, this->getSize().x - 20);
+			if (inputText.getGlobalBounds().width >= this->getSize().x - 20) {
+				inputText.setFillColor(sf::Color(220, 20, 20));
+			}
 			inputText.setFillColor(sf::Color::Black);
-			cursorPosition += text.size();
+			text = inputText.getString();
+			cursorPosition = text.size();
 			first = false;
 		};
 
@@ -1052,6 +1114,15 @@ namespace alllink {
 			cursorPosition = 0;
 		}
 
+		void truncateText(sf::Text& text, float maxWidth) {
+			// 如果文本的宽度超过最大宽度，进行截断
+			while (text.getGlobalBounds().width > maxWidth && text.getString().getSize() > 0) {
+				std::wstring currentString = text.getString();
+				currentString.pop_back(); // 删除最后一个字符
+				text.setString(currentString); // 更新文本
+			}
+		}
+
 		sf::String defaultDesc;
 		BaseText inputText;
 		std::string text{};
@@ -1125,6 +1196,53 @@ namespace alllink {
 		bool isActive;
 		sf::Color activeColor;
 		sf::Color inactiveColor;
+	};
+
+	class ClickTextRectangle : public VariableStateModule {
+	public:
+
+		void init(int width, int height, int x, int y) {
+			this->setSize(sf::Vector2f(width, height));
+			this->setPosition(sf::Vector2f(x, y));
+		}
+
+		void setText(const std::string& fontFile, const sf::String& text, sf::Color textColor) {
+			text_.init(fontFile);
+			text_.setCharacterSize(this->getSize().y / 2.5);
+			text_.setFillColor(textColor);
+			text_.setString(text);
+			truncateText(text_, this->getSize().x - 4);
+			text_.setPosition(
+				this->getPosition().x + (this->getSize().x - text_.getGlobalBounds().width) / 2,
+				this->getPosition().y + (this->getSize().y - this->getSize().y / 2) / 2);
+			I_LOG("x:{} y:{}", this->getPosition().x + (this->getSize().x - text_.getGlobalBounds().width) / 2,
+				this->getPosition().y + (this->getSize().y - this->getSize().y / 2) / 2);
+			textColor_ = textColor;
+		}
+
+		void setDescription(const sf::String& text) {
+			text_.setString(text);
+		}
+
+		std::wstring getDescription() const { return text_.getString(); }
+
+		void render(sf::RenderTarget* tar) {
+			tar->draw(*this);
+			tar->draw(text_);
+		}
+
+	protected:
+		void truncateText(sf::Text& text, float maxWidth) {
+			// 如果文本的宽度超过最大宽度，进行截断
+			while (text.getGlobalBounds().width > maxWidth && text.getString().getSize() > 0) {
+				std::wstring currentString = text.getString();
+				currentString.pop_back(); // 删除最后一个字符
+				text.setString(currentString); // 更新文本
+			}
+		}
+
+		BaseText text_;
+		sf::Color textColor_;
 	};
 
 	class TextRoundRectangle : public VariableStateRoundModule {
