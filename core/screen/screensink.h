@@ -179,6 +179,8 @@ namespace alllink {
 
 		void setType(EnterType type);
 
+		void setBookingId(std::string id);
+
 	protected:
 		void needClose() override { OnExit(); }
 
@@ -193,6 +195,7 @@ namespace alllink {
 		std::unique_ptr<CheckBoxModule> isBooking;
 		std::unique_ptr<TextRectangle> createButton;
 		std::unique_ptr<TextRectangle> joinButton;
+		std::unique_ptr<ClickTextRectangle> meetingDescribe;
 		BaseText screenDescriptionText;
 		float wr, hr;
 		sf::Vector2i wndPosition;

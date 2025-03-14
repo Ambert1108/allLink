@@ -47,6 +47,7 @@ namespace alllink {
 		/* 加入会议窗口消息 */
 
 		IS_CREATE,                      //通知中控器用户创建会议
+		IS_BOOKING,                     //通知中控器用户预定会议
 		IS_JOIN,                        //通知中控器用户加入指定会议
 
 		/* 会议窗口消息 */
@@ -68,6 +69,7 @@ namespace alllink {
 
 		LOGIN_SUCCESS,
 		CREATE_MEETING_OK,
+		BOOKING_MEETING_OK,
 		JOIN_MEETING_OK,
 		CALL_MODE,
 

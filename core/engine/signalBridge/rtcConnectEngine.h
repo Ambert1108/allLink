@@ -64,9 +64,9 @@ namespace rtcengine{
 
 
     class RtcConnectEngine : public ConnectEngineObserver,
-        public webrtc::PeerConnectionObserver,
-        public webrtc::CreateSessionDescriptionObserver,
-        public rtc::VideoSinkInterface<webrtc::VideoFrame> {
+                             public webrtc::PeerConnectionObserver,
+                             public webrtc::CreateSessionDescriptionObserver,
+                             public rtc::VideoSinkInterface<webrtc::VideoFrame> {
     public:
         enum State {
             NONE,
@@ -130,12 +130,16 @@ namespace rtcengine{
         bool login(std::string userId, std::string password);
         // 用户登出
         void logout();
+        //预定会议
+        bool scheduleMeeting(VideoMcu videoMcu_, AudioMcu audioMcu_, VideoCodecType videoType_, AudioCodecType audioType_);
         // 创建会议
         bool createMeeting(VideoMcu videoMcu_, AudioMcu audioMcu_, VideoCodecType videoType_, AudioCodecType audioType_);
         // 加入会议
         bool joinMeeting(std::string meetingId);
         // 退出会议
         bool exitMeeting();
+        // 结束会议
+        void closeMeeting();
         // 开启摄像头
         bool openCamera();
         // 关闭摄像头
@@ -192,7 +196,12 @@ namespace rtcengine{
         virtual void OnJoinMeetingFailure() = 0;
         // 断网后尝试重新连接超时
         virtual void OnReConnectTimeout() = 0;
-
+        //告知预定会议成功
+        virtual void OnScheduleMeeting(std::string& meetingId) = 0;
+        //预定会议失败
+        virtual void OnScheduleMeetingFailure() = 0;
+        //告知会议已被结束
+        virtual void OnCloseMeeting() = 0;
         std::atomic<bool> threadDestroy = false;
 
     private:
@@ -208,7 +217,6 @@ namespace rtcengine{
         void setRemote(std::string jsep);
         void getDevList();
         void reconnect();
-
         //
         // signaling virtual func
         //
@@ -218,8 +226,8 @@ namespace rtcengine{
         virtual void onUnauthorized(Message resp) override;
         virtual void onHeartbeatResp() override;
         virtual void onCancel(Message resp) override;
-
-
+        virtual void onClose() override;
+        bool Closeflag = false;
         //
         // PeerConnectionObserver implementation.
         //

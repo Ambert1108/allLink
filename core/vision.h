@@ -93,6 +93,8 @@ namespace alllink {
     virtual void DisconnectFromServer() = 0;
     /*通知控制器创建会议*/
     virtual bool CreateMeeting(const std::wstring& videoEnc, const std::wstring& audioEnc, const std::wstring& videoMcu, const std::wstring& audioMcu) = 0;
+    /*通知控制器预定会议*/
+    virtual void BookingMeeting(const std::wstring& videoEnc, const std::wstring& audioEnc, const std::wstring& videoMcu, const std::wstring& audioMcu) = 0;
     /*通知控制器加入会议*/
     virtual bool JoinMeeting(const std::string& to) = 0;
     /*通知控制器与对端断开连接*/

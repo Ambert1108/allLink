@@ -37,16 +37,22 @@ namespace alllink {
     void OnLoginFailure() override;
     // 登出成功
     void OnLogoutSuccess() override;
-    // OnAddTrack, 即入会成功
+    // OnAddTrack, 即创建会议成功
     void OnReceiveTrack(rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver) override;
     // 创建会议成功
     void OnCreateMeetingSuccess(std::string meetingId, int64_t timePoint) override;
     // 加入会议成功
     void OnJoinMeetingSuccess(int64_t timePoint) override;
-    // 入会失败
+    // 加入会议失败
     void OnJoinMeetingFailure() override;
     // 断网后尝试重新连接超时
     void OnReConnectTimeout() override;
+    //预定会议成功
+    void OnScheduleMeeting(std::string& meetingId) override;
+    //预定会议失败
+    void OnScheduleMeetingFailure() override;
+    //结束已结束
+    void OnCloseMeeting() override;
 
     //
     // VisionCnetralCallback implementation.
@@ -58,6 +64,8 @@ namespace alllink {
 
     bool CreateMeeting(const std::wstring& videoEnc, const std::wstring& audioEnc, const std::wstring& videoMcu, const std::wstring& audioMcu) override;
     
+    void BookingMeeting(const std::wstring& videoEnc, const std::wstring& audioEnc, const std::wstring& videoMcu, const std::wstring& audioMcu) override;
+
     bool JoinMeeting(const std::string& to) override;
 
     void DisconnectFromCurrentPeer() override;

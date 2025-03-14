@@ -91,6 +91,12 @@ namespace alllink {
 		screenDescriptionText.setPosition(
 			(this->getSize().x - screenDescriptionText.getGlobalBounds().width) / 2,
 			52);
+
+		meetingDescribe = std::make_unique<ClickTextRectangle>();
+		meetingDescribe->init(140 * wr, 40 * hr, 36 * wr, 250 * hr);
+		meetingDescribe->setText(msyhFile, L"未预定会议", sf::Color::Black);
+		meetingDescribe->setColor(sf::Color(200, 200, 200, 0), sf::Color(230, 230, 230, 100), sf::Color(215, 215, 215, 100));
+
 		return 0;
 	}
 
@@ -120,6 +126,7 @@ namespace alllink {
 		else {
 			inputMeetingIdWidget->render(this);
 			this->draw(screenDescriptionText);
+			meetingDescribe->render(this);
 			joinButton->render(this);
 		}
 		this->display();
@@ -154,7 +161,7 @@ namespace alllink {
 				sf::Vector2i mousePosWin = sf::Mouse::getPosition(*this);
 				sf::Vector2f mousePosView = this->mapPixelToCoords(mousePosWin);
 				if (isBooking->onClick(event, mousePosView, this)) {
-					if (isBooking->data()) I_LOG("booking meeting");
+					I_LOG("booking meeting");
 				}
 				if ((createButton->onClick(event, getMousePosition(), this)
 					|| (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Enter))
@@ -164,10 +171,22 @@ namespace alllink {
 					labelList.emplace_back(audioEncDropWidget->getSelectedLabel());
 					labelList.emplace_back(videoMcuDropWidget->getSelectedLabel());
 					labelList.emplace_back(audioMcuDropWidget->getSelectedLabel());
-					hi::PostMsg({ msgTo(MessageType::IS_CREATE), labelList });
+					if (isBooking->data()) {
+						hi::PostMsg({ msgTo(MessageType::IS_BOOKING), labelList });
+					}
+					else {
+						hi::PostMsg({ msgTo(MessageType::IS_CREATE), labelList });
+					}
 				}
 			}
 			else{
+				sf::Vector2i mousePosWin = sf::Mouse::getPosition(*this);
+				sf::Vector2f mousePosView = this->mapPixelToCoords(mousePosWin);
+				if (meetingDescribe->onClick(event, mousePosView, this)) {
+					I_LOG("meeting click");
+					auto str = meetingDescribe->getDescription();
+					toClipBoard(WstrConv.to_bytes(str));
+				}
 				if ((joinButton->onClick(event, getMousePosition(), this)
 					|| (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Enter))
 					&& joinButton->getActive()) {
@@ -194,11 +213,16 @@ namespace alllink {
 		else if (type_ == EnterType::JOIN) screenDescriptionText.setString(L"加入会议");
 	}
 
+	void EnterScreen::setBookingId(std::string id) {
+		meetingDescribe->setDescription(id);
+	}
+
 	void EnterScreen::reset() {
-		inputMeetingIdWidget->resetInput();
-		videoEncDropWidget->reset();
 		audioEncDropWidget->reset();
 		videoMcuDropWidget->reset();
+		videoEncDropWidget->reset();
 		audioMcuDropWidget->reset();
+		isBooking->reset();
+		inputMeetingIdWidget->resetInput();
 	}
 }

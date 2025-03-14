@@ -66,6 +66,19 @@ namespace alllink {
 
   }
 
+  void Controller::OnScheduleMeeting(std::string& meetingId) {
+    I_LOG("schedule meeting success");
+    hi::PostMsg({ msgTo(MessageType::BOOKING_MEETING_OK), meetingId });
+  }
+  
+  void Controller::OnScheduleMeetingFailure() {
+
+  }
+  
+  void Controller::OnCloseMeeting() {
+
+  }
+
   //
   // VisionCnetralCallback implementation.
   //
@@ -96,10 +109,10 @@ namespace alllink {
     AudioCodecType ac = AudioCodecType::OPUS;
     VideoMcu vm = VideoMcu::J;
     AudioMcu am = AudioMcu::X;
-    //if (videoEnc == L"vp9") {
-    //  vc = VideoCodecType::VP9;
-    //  I_LOG("choose vp9");
-    //}
+    if (videoEnc == L"vp9") {
+      vc = VideoCodecType::VP9;
+      I_LOG("choose vp9");
+    }
     if (audioEnc == L"pcma") {
       ac = AudioCodecType::PCMA;
       I_LOG("choose pcma");
@@ -123,8 +136,35 @@ namespace alllink {
     hi::PostMsg({ msgTo(MessageType::VIDEO_DEV_INFO), videoInputDevMap });
     hi::PostMsg({ msgTo(MessageType::SHARE_SCREEN_INFO), shareScreenMap });
     hi::PostMsg({ msgTo(MessageType::SHARE_WINDOW_INFO), shareWindowMap });
-    I_LOG("[Controller::CreateMeeting] join meeting {} start ...", meetId_);
+    I_LOG("[Controller::CreateMeeting] create meeting start ...");
     return true;
+  }
+
+  void Controller::BookingMeeting(const std::wstring& videoEnc, const std::wstring& audioEnc,
+    const std::wstring& videoMcu, const std::wstring& audioMcu) {
+    //用户触发
+    VideoCodecType vc = VideoCodecType::H264;
+    AudioCodecType ac = AudioCodecType::OPUS;
+    VideoMcu vm = VideoMcu::J;
+    AudioMcu am = AudioMcu::X;
+    if (videoEnc == L"vp9") {
+      vc = VideoCodecType::VP9;
+      I_LOG("choose vp9");
+    }
+    if (audioEnc == L"pcma") {
+      ac = AudioCodecType::PCMA;
+      I_LOG("choose pcma");
+    }
+    if (videoMcu == L"Y组") {
+      vm = VideoMcu::Y;
+      I_LOG("choose Y组");
+    }
+    if (audioMcu == L"L组") {
+      am = AudioMcu::L;
+      I_LOG("choose L组");
+    }
+    scheduleMeeting(vm, am, vc, ac);
+    I_LOG("[Controller::CreateMeeting] booking meeting start ...");
   }
 
   bool Controller::JoinMeeting(const std::string& to) {

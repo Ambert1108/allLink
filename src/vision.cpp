@@ -128,6 +128,23 @@ namespace alllink {
           callback_->CreateMeeting(list.at(0), list.at(1), list.at(2), list.at(3));
           break;
         }
+        case msgTo(MessageType::IS_BOOKING): {
+          if (type_ == VisionType::LOGOUT) break;
+          // 收到连接窗口连接消息
+          std::vector<std::wstring> list = std::any_cast<std::vector<std::wstring>>(msg.data);
+          if (list.size() != 4) {
+            I_LOG("list is invalid, size is {}", list.size());
+            break;
+          }
+
+          for (const auto& e : list) {
+            I_LOG("{}", WstrConv.to_bytes(e));
+          }
+
+          // 调用中控器的回调接口进行预定会议
+          callback_->BookingMeeting(list.at(0), list.at(1), list.at(2), list.at(3));
+          break;
+        }
         case msgTo(MessageType::IS_JOIN): {
           if (type_ == VisionType::LOGOUT) break;
           // 收到连接窗口连接消息
@@ -233,6 +250,14 @@ namespace alllink {
           point->setSessionId(std::get<0>(result));
           point->setSessionTimepoint(std::get<1>(result));
           I_LOG("[Controller::CustomMessageCallback] {} msg send to peer", enumToString(MessageType(msg.id)));
+          break;
+        }
+        case msgTo(MessageType::BOOKING_MEETING_OK): {
+          std::string meetingId = std::any_cast<std::string>(msg.data);
+          std::shared_ptr<EnterScreen> point = std::dynamic_pointer_cast<EnterScreen>(enterWnd);
+          if (!point) return;
+          point->setBookingId(meetingId);
+          point->OnExit();
           break;
         }
         case msgTo(MessageType::JOIN_MEETING_OK): {
