@@ -342,12 +342,15 @@ namespace alllink {
 		std::unique_ptr<HorizonGraphicTextsModule> meetingTime;
 		std::unique_ptr<TextRoundRectangle> leaveMeeting;
 		std::unique_ptr<ClickTextRectangle> meetingDescribe;
+		std::unique_ptr<VariableStateGraphicModule> meetingInfo;
 		std::unique_ptr<SeekBarModule> volumeBar;
 		std::unique_ptr<VariableStateVertxRoundModule> audioDevArrow, camDevArrow, shareScreenArrow;
 		std::unique_ptr<DropListModule> audioInputDevList, audioOutputDevList, videoDevList, screenList, windowList;
 		std::unique_ptr<VariableStateRoundModule> settingBackground;
-		sf::RectangleShape bottom, top, sense;
-		BaseText seekbarDescribe, micDescribe, spDescribe, camDescribe, screenDescribe, windowDescribe;
+		sf::RectangleShape bottom, top, sense, infoArea;
+		BaseText seekbarDescribe, micDescribe, spDescribe, camDescribe, screenDescribe, windowDescribe, framerate, videoBitrate;
+		std::wstring framerateInfo = L"(发送/接收)帧率: ";
+		std::wstring videoBitrateInfo = L"(发送/接收)视频码率: ";
 		std::unique_ptr<VideoRenderer> remote_renderer_;
 		sf::Texture* remoteSrc = nullptr;
 		VideoModule remoteVideo{};
@@ -363,6 +366,7 @@ namespace alllink {
 		bool micArrowClick = false;
 		bool camArrowClick = false;
 		bool shareArrowClick = false;
+		bool infoClick = false;
 		sf::Vector2f micPos{ 5, 400 };
 		sf::Vector2f camPos{ 50, 400 };
 		sf::Vector2f sharePos{ 190, 400 };

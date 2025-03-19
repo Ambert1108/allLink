@@ -9,7 +9,8 @@ void ScreenCapturer::startCapturer() {
   auto options = webrtc::DesktopCaptureOptions::CreateDefault();
   options.set_allow_directx_capturer(true);
   options.set_prefer_cursor_embedded(true);
-  screen_capturer_ = webrtc::DesktopCapturer::CreateScreenCapturer(options);
+  origin_screen_capturer_ = webrtc::DesktopCapturer::CreateScreenCapturer(options);
+  screen_capturer_ = std::make_unique<webrtc::DesktopAndCursorComposer>(std::move(origin_screen_capturer_), options);
   //window_capturer_ = webrtc::DesktopCapturer::CreateWindowCapturer(options);
   //current_capturer_ = screen_capturer_.get();
   //current_capturer_ = window_capturer_.get();
@@ -27,8 +28,9 @@ void ScreenCapturer::startCapturer() {
 void ScreenCapturer::startWindowCapturer() {
   auto options = webrtc::DesktopCaptureOptions::CreateDefault();
   options.set_allow_directx_capturer(true);
-  //screen_capturer_ = webrtc::DesktopCapturer::CreateScreenCapturer(options);
-  window_capturer_ = webrtc::DesktopCapturer::CreateWindowCapturer(options);
+  options.set_prefer_cursor_embedded(true);
+  origin_window_capturer_ = webrtc::DesktopCapturer::CreateWindowCapturer(options);
+  window_capturer_ = std::make_unique<webrtc::DesktopAndCursorComposer>(std::move(origin_window_capturer_), options);
   //current_capturer_ = screen_capturer_.get();
   //current_capturer_ = window_capturer_.get();
   window_capturer_->Start(this);

@@ -45,6 +45,10 @@ namespace alllink {
     void OnJoinMeetingSuccess(int64_t timePoint) override;
     // 加入会议失败
     void OnJoinMeetingFailure() override;
+    //断网后尝试重新连接成功
+    void OnReconnectSuccess() override;
+    // 断网后尝试重新连接失败
+    void OnReconnectFailure() override;
     // 断网后尝试重新连接超时
     void OnReConnectTimeout() override;
     //预定会议成功

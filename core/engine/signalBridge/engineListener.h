@@ -25,6 +25,7 @@ public:
     virtual void onHeartbeatResp() = 0;
     virtual void onCancel(Message resp) = 0;
     virtual void onClose() = 0;
+    virtual void onReconnect() = 0;
 protected:
     virtual ~ConnectEngineObserver() {}
 };
@@ -36,6 +37,7 @@ class EngineListener : public oatpp::websocket::WebSocket::Listener {
 public:
 
     EngineListener(std::mutex& writeMutex);
+    ~EngineListener();
 
     void RegisterObserver(ConnectEngineObserver* callback);
 
@@ -61,11 +63,12 @@ public:
     void readMessage(const WebSocket& socket, v_uint8 opcode, p_char8 data, oatpp::v_io_size size) override;
 
     std::atomic<bool> analysisStop = false;
+    std::atomic<bool> reconnectStop = false;
 
     void analysisResp();
 
     std::thread analysisThread;
-
+    std::thread reconnectThread;
 private:
 
     static constexpr const char* TAG = "Listener";
@@ -82,6 +85,8 @@ private:
     oatpp::data::stream::BufferOutputStream m_messageBuffer;
 
     ConnectEngineObserver* callback = nullptr;
+    int64_t lastHearbeatTime;
+    void reconnect();
 };
 
 #endif // WSListener_hpp

@@ -16,7 +16,7 @@
 #include "rtc_base/thread.h"
 #include <modules/desktop_capture/desktop_capture_options.h>
 #include <third_party/libyuv/include/libyuv.h>
-
+#include <modules/desktop_capture/desktop_and_cursor_composer.h>
 
 class ScreenCapturer : public rtc::AdaptedVideoTrackSource,
   public webrtc::DesktopCapturer::Callback {
@@ -56,8 +56,11 @@ public:
   bool working = false;
 
 private:
-  std::unique_ptr<webrtc::DesktopCapturer> screen_capturer_;
-  std::unique_ptr<webrtc::DesktopCapturer> window_capturer_;
+  std::unique_ptr<webrtc::DesktopCapturer> origin_screen_capturer_;
+  std::unique_ptr<webrtc::DesktopCapturer> origin_window_capturer_;
+
+  std::unique_ptr<webrtc::DesktopAndCursorComposer> screen_capturer_;
+  std::unique_ptr<webrtc::DesktopAndCursorComposer> window_capturer_;
   rtc::scoped_refptr<webrtc::I420Buffer> i420_buffer_;
   bool isOnResult = false;
   std::mutex mutex_;

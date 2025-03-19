@@ -32,6 +32,7 @@ namespace alllink {
 	static std::string openShareFile = "./resources/comp/meeting/open_share.png";
 
 	static std::string meetingTimeFile = "./resources/comp/meeting/16/meeting_time.png";
+	static std::string infoFile = "./resources/comp/meeting/info.png";
 
 	/*
 	* 素材路径:图标

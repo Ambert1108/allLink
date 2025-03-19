@@ -119,7 +119,12 @@ namespace rtcengine{
             std::string userId = "";
             std::string password = "";
         };
-
+        struct MediaInfo {
+            double inFrameRate = 0.0;
+            double outFrameRate = 0.0;
+            double inBitrate = 0.0;
+            double outBitrate = 0.0;
+        };
 
         RtcConnectEngine();
         ~RtcConnectEngine();
@@ -176,6 +181,8 @@ namespace rtcengine{
 
         void getWindowInfo(std::map<int, std::string>& list);
 
+        void getMediaInfo(MediaInfo& mediaInfo);
+
 
         //
         // 回调函数
@@ -194,6 +201,10 @@ namespace rtcengine{
         virtual void OnJoinMeetingSuccess(int64_t timePoint) = 0;
         // 入会失败
         virtual void OnJoinMeetingFailure() = 0;
+        //告知 与信令服务器重连成功
+        virtual void OnReconnectSuccess() = 0;
+        //告知 与信令服务器重连失败
+        virtual void OnReconnectFailure() = 0;
         // 断网后尝试重新连接超时
         virtual void OnReConnectTimeout() = 0;
         //告知预定会议成功
@@ -202,7 +213,10 @@ namespace rtcengine{
         virtual void OnScheduleMeetingFailure() = 0;
         //告知会议已被结束
         virtual void OnCloseMeeting() = 0;
+        //告知当前媒体信息
+        //virtual void OnGetMediaInfo(MediaInfo &mediaInfo) = 0;
         std::atomic<bool> threadDestroy = false;
+        //std::atomic<bool> MediaInfothreadDestroy = false;
 
     private:
         void socketTask(const std::shared_ptr<oatpp::websocket::WebSocket>& websocket);
@@ -216,7 +230,7 @@ namespace rtcengine{
         void setLocal(std::string jsep);
         void setRemote(std::string jsep);
         void getDevList();
-        void reconnect();
+        bool reconnect();
         //
         // signaling virtual func
         //
@@ -227,6 +241,9 @@ namespace rtcengine{
         virtual void onHeartbeatResp() override;
         virtual void onCancel(Message resp) override;
         virtual void onClose() override;
+        virtual void onReconnect() override;
+        //void onReconnect();
+        //void checkRe();
         bool Closeflag = false;
         //
         // PeerConnectionObserver implementation.
@@ -262,8 +279,9 @@ namespace rtcengine{
         std::shared_ptr<EngineListener> signalingListener = nullptr;
 
         std::thread listenerThread;
-
+        std::thread reconnectThread;
         std::thread keepaliveThread;
+        //std::thread getMediaInfoThread;
 
 //        std::thread getDevInfoThread;
 
@@ -302,7 +320,6 @@ namespace rtcengine{
         bool isNotified = false;
 
         State signalState{ NONE };
-
         UserInfo userInfo;
 
         SignalingInfo signalInfo;
@@ -333,7 +350,7 @@ namespace rtcengine{
 
         int windowListSize = 0;
 
-        int noHeartbeatRespTime = 0;
+        int64_t noHeartbeatRespTime = 0;
 
         int videoCodecType = -1;
 

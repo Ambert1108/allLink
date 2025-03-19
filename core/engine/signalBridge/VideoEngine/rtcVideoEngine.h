@@ -23,6 +23,9 @@
 #include "api/peer_connection_interface.h"
 #include "api/rtp_sender_interface.h"
 #include "api/rtp_parameters.h"
+#include "api/stats/rtc_stats_collector_callback.h"
+#include "api/stats/rtc_stats_report.h"
+#include <api/stats/rtcstats_objects.h>
 #include "api/video_codecs/video_encoder.h"
 #include "api/video_codecs/video_encoder_factory.h"
 #include "api/video_codecs/video_decoder_factory.h"
@@ -145,6 +148,17 @@ namespace rtcengine {
 		void getVideoFactory(int mode, std::unique_ptr<webrtc::VideoEncoderFactory>& video_encoder_factory, 
 			std::unique_ptr<webrtc::VideoDecoderFactory>& video_decoder_factory);
 
+		void collectStats();
+
+		void processStatsReport(const webrtc::RTCStatsReport& report);
+
+		void getCurrentFrameRate(double& outfps, double& infps);
+
+		void getCurrentBitrate(double& outbt, double& inbt);
+
+		void startStatsCollection();  
+		void stopStatsCollection();  
+		
 		void close();
 
 		rtc::scoped_refptr<webrtc::PeerConnectionInterface> peer_connection_;
@@ -162,5 +176,21 @@ namespace rtcengine {
 		bool screenState = true;
 		bool isWinfirst = true;
 		bool isScreenfirst = false;
+		double outFramerate = 0.0;
+		double outBitrate = 0.0;
+		double inFramerate = 0.0;
+		double inBitrate = 0.0;
+		std::mutex stats_mutex_;
+		std::thread stats_thread_;
+		std::atomic<bool> stats_thread_running_{ false };
+
+	private:
+		class MyStatsCallback : public webrtc::RTCStatsCollectorCallback {
+		public:
+			explicit MyStatsCallback(RTCVideoEngine* engine) : engine_(engine) {}
+			void OnStatsDelivered(const rtc::scoped_refptr<const webrtc::RTCStatsReport>& report) override;
+		private:
+			RTCVideoEngine* engine_;
+		};
 	};
 }

@@ -706,7 +706,7 @@ namespace alllink {
 
 		void setTexture(const std::string& textureFile, bool resetRect = false) {
 			texture_->loadFromFile(textureFile);
-			image_.setTexture(*texture_, resetRect);
+			image_.setTexture(*texture_, resetRect); 
 		}
 
 		virtual void setImage() {

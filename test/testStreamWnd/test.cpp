@@ -35,6 +35,7 @@ int main() {
   std::string closeShareFile = "./resources/comp/meeting/close_Share.png";
   std::string openShareFile = "./resources/comp/meeting/open_Share.png";
   std::string timeFile = "./resources/comp/meeting/16/meeting_time.png";
+  std::string infoFile = "./resources/comp/meeting/info.png";
 
   VariableStateGraphicRoundModule closeMic, openMic, closeCam, openCam, closeShare, openShare;
   closeMic.init(80, 50, 20, 1020, 6.f);
@@ -92,6 +93,12 @@ int main() {
   meetingDescribe.setText(font2File, L"333-161", sf::Color::Black);
   meetingDescribe.setColor(sf::Color(200, 200, 200, 0), sf::Color(230, 230, 230, 100), sf::Color(215, 215, 215, 100));
 
+  VariableStateGraphicModule meetingInfo;
+  meetingInfo.init(32, 32, 1880, 4);
+  meetingInfo.setTexture(infoFile, true);
+  meetingInfo.setImage();
+  meetingInfo.setColor(sf::Color(200, 200, 200, 0), sf::Color(230, 230, 230, 100), sf::Color(215, 215, 215, 100));
+
   bool micState = false;
   bool camState = false;
   bool shareState = false;
@@ -106,6 +113,23 @@ int main() {
   top.setPosition(0, 0);
   top.setSize(sf::Vector2f(1920, 40));
   top.setFillColor(sf::Color(255, 255, 255));
+
+  sf::RectangleShape infoArea;
+  infoArea.setPosition(1561, 41);
+  infoArea.setSize(sf::Vector2f(350, 50));
+  infoArea.setFillColor(sf::Color(210, 210, 210, 150));
+
+  BaseText framerate, bitrate;
+  framerate.init(fontFile);
+  framerate.setString(L"(输入/输出)帧率: 30.0/29.5");
+  framerate.setCharacterSize(15);
+  framerate.setFillColor(sf::Color::Black);
+  framerate.setPosition(sf::Vector2f(infoArea.getPosition().x + 2, infoArea.getPosition().y + 2));
+  bitrate.init(fontFile);
+  bitrate.setString(L"(输入/输出)视频码率: 1855.2kbps/766.1kbps");
+  bitrate.setCharacterSize(15);
+  bitrate.setFillColor(sf::Color::Black);
+  bitrate.setPosition(sf::Vector2f(infoArea.getPosition().x + 2, framerate.getPosition().y + framerate.getGlobalBounds().height + 6));
 
   VariableStateVertxRoundModule micArrow;
   micArrow.set(14, 50, 101, 1020, 5.f);
@@ -248,6 +272,7 @@ int main() {
   bool micArrowClick = false;
   bool camArrowClick = false;
   bool shareArrowClick = false;
+  bool infoClick = false;
 
   while (wnd->isOpen()) {
     sf::Vector2f mousePosView;
@@ -268,6 +293,9 @@ int main() {
           std::string id = WstrConv.to_bytes(meetingDescribe.getDescription());
           I_LOG("获取会议id:{}", id);
           toClipBoard(id);
+        }
+        if (meetingInfo.onClick(event, mousePosView, wnd)) {
+          infoClick = !infoClick;
         }
         if (!micState) {
           if (closeMic.onClick(event, mousePosView, wnd)) {
@@ -398,6 +426,7 @@ int main() {
       else closeShare.render(wnd);
       meetingTime.render(wnd);
       meetingDescribe.render(wnd);
+      meetingInfo.render(wnd);
       if (settingPop) {
         wnd->draw(background);
         if (micArrowClick) {
@@ -418,6 +447,11 @@ int main() {
           screenDrop.render(wnd);
           windowDrop.render(wnd);
         }
+      }
+      if (infoClick) {
+        wnd->draw(infoArea);
+        wnd->draw(framerate);
+        wnd->draw(bitrate);
       }
       micArrow.render(wnd);
       camArrow.render(wnd);

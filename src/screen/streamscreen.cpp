@@ -144,6 +144,13 @@ namespace alllink {
     meetingDescribe->setText(msyhFile, L"会议号 unknown", sf::Color::Black);
     meetingDescribe->setColor(sf::Color(200, 200, 200, 0), sf::Color(230, 230, 230, 100), sf::Color(215, 215, 215, 100));
 
+    meetingInfo = std::make_unique<VariableStateGraphicModule>();
+    meetingInfo->init(32 * wr, 32 * wr, 1880 * wr, 4 * hr);
+    meetingInfo->setTexture(infoFile, true);
+    meetingInfo->setImage();
+    meetingInfo->setColor(sf::Color(200, 200, 200, 0), sf::Color(230, 230, 230, 100), sf::Color(215, 215, 215, 100));
+
+
     bottom.setPosition(0, 1000 * hr);
     bottom.setSize(sf::Vector2f(1920 * wr, 80 * hr));
     bottom.setFillColor(sf::Color(255, 255, 255));
@@ -155,6 +162,21 @@ namespace alllink {
     sense.setPosition(sf::Vector2f(15 * wr, 1000 * hr));
     sense.setSize(sf::Vector2f(480 * wr, 80 * hr));
     sense.setFillColor(sf::Color::Transparent);
+
+    infoArea.setPosition(1561 * wr, 41 * hr);
+    infoArea.setSize(sf::Vector2f(350 * wr, 50 * hr));
+    infoArea.setFillColor(sf::Color(210, 210, 210, 150));
+
+    framerate.init(fzchFile);
+    framerate.setString(framerateInfo + L"0/0");
+    framerate.setCharacterSize(15);
+    framerate.setFillColor(sf::Color::Black);
+    framerate.setPosition(sf::Vector2f(infoArea.getPosition().x + 2, infoArea.getPosition().y + 2));
+    videoBitrate.init(fzchFile);
+    videoBitrate.setString(videoBitrateInfo + L"0.0kbps/0.0kbps");
+    videoBitrate.setCharacterSize(15);
+    videoBitrate.setFillColor(sf::Color::Black);
+    videoBitrate.setPosition(sf::Vector2f(infoArea.getPosition().x + 2, framerate.getPosition().y + framerate.getGlobalBounds().height + 6));
 
     audioDevArrow->set(14 * wr, 50 * hr, 101 * wr, 1020 * hr, 5.f);
     audioDevArrow->setVer({
@@ -292,6 +314,7 @@ namespace alllink {
       else closeShare->render(this);
       meetingTime->render(this);
       meetingDescribe->render(this);
+      meetingInfo->render(this);
       if (settingPop) {
         this->draw(*settingBackground.get());
         if (micArrowClick) {
@@ -312,6 +335,11 @@ namespace alllink {
           screenList->render(this);
           windowList->render(this);
         }
+      }
+      if (infoClick) {
+        this->draw(infoArea);
+        this->draw(framerate);
+        this->draw(videoBitrate);
       }
       audioDevArrow->render(this);
       camDevArrow->render(this);
@@ -348,6 +376,9 @@ namespace alllink {
           auto tmpStr = meetingDescribe->getDescription();
           auto res = tmpStr.erase(0, 4);
           toClipBoard(WstrConv.to_bytes(res));
+        }
+        if (meetingInfo->onClick(event, mousePosView, this)) {
+          infoClick = !infoClick;
         }
         if (!micState) {
           if (closeMic->onClick(event, mousePosView, this)) {

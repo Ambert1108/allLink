@@ -62,6 +62,14 @@ namespace alllink {
 
   }
 
+  void Controller::OnReconnectSuccess() {
+
+  }
+
+  void Controller::OnReconnectFailure() {
+
+  }
+
   void Controller::OnReConnectTimeout() {
 
   }
