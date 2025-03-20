@@ -141,7 +141,7 @@ namespace alllink {
     leaveMeeting->setText(msyhFile, L"离开会议", sf::Color::Black, sf::Color::White);
 
     meetingDescribe = std::make_unique<ClickTextRectangle>();
-    meetingDescribe->init(150 * wr, 40 * hr, ((1920 - meetingDescribe->getGlobalBounds().width) / 2) * wr, 0);
+    meetingDescribe->init(150 * wr, 36 * hr, ((1920 - meetingDescribe->getGlobalBounds().width) / 2) * wr, 2 * hr);
     meetingDescribe->setText(msyhFile, L"会议号 unknown", sf::Color::Black);
     meetingDescribe->setColor(sf::Color(200, 200, 200, 0), sf::Color(230, 230, 230, 100), sf::Color(215, 215, 215, 100));
 
@@ -172,12 +172,12 @@ namespace alllink {
     framerate.setString(framerateInfo + L"0/0");
     framerate.setCharacterSize(15);
     framerate.setFillColor(sf::Color::Black);
-    framerate.setPosition(sf::Vector2f(infoArea.getPosition().x + 2, infoArea.getPosition().y + 2));
+    framerate.setPosition(sf::Vector2f(infoArea.getPosition().x + 8, infoArea.getPosition().y + 2));
     videoBitrate.init(fzchFile);
     videoBitrate.setString(videoBitrateInfo + L"0.0kbps/0.0kbps");
     videoBitrate.setCharacterSize(15);
     videoBitrate.setFillColor(sf::Color::Black);
-    videoBitrate.setPosition(sf::Vector2f(infoArea.getPosition().x + 2, framerate.getPosition().y + framerate.getGlobalBounds().height + 6));
+    videoBitrate.setPosition(sf::Vector2f(infoArea.getPosition().x + 8, framerate.getPosition().y + framerate.getGlobalBounds().height + 6));
 
     audioDevArrow->set(14 * wr, 50 * hr, 101 * wr, 1020 * hr, 5.f);
     audioDevArrow->setVer({
