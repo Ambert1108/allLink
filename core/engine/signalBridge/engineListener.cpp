@@ -49,8 +49,8 @@ void EngineListener::readMessage(const WebSocket &socket, v_uint8 opcode, p_char
                 Message tmp;
                 tmp.js = json::parse(wholeMessage->c_str());
                 lastHearbeatTime = seeker::Time::currentTime();
-                if(tmp.cmeth() == "Heartbeat") {
-                    D_LOG("readMessage: {}", tmp.js.dump(4));
+                if (tmp.cmeth() == "Heartbeat" || tmp.meth() == "Heartbeat") {
+                    //D_LOG("readMessage: {}", tmp.js.dump(4));
                     callback->onHeartbeatResp();
                 }
                 else{
@@ -77,7 +77,6 @@ void EngineListener::reconnect()
     try
     {
         while (!reconnectStop) {
-            I_LOG("checkout reconnect start [{}]", lastHearbeatTime);
             if (lastHearbeatTime == 0) {
                 Sleep(1000);
                 continue;
@@ -93,11 +92,10 @@ void EngineListener::reconnect()
             }
         }
     }
-    catch (const std::exception&)
+    catch (...)
     {
 
     }
-    I_LOG("checkout reconnect end");
 }
 
 //void EngineListener::analysisResp() {

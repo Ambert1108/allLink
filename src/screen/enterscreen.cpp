@@ -185,7 +185,9 @@ namespace alllink {
 				if (meetingDescribe->onClick(event, mousePosView, this)) {
 					I_LOG("meeting click");
 					auto str = meetingDescribe->getDescription();
-					toClipBoard(WstrConv.to_bytes(str));
+					if (str != L"未预定会议") {
+						toClipBoard(WstrConv.to_bytes(str));
+					}
 				}
 				if ((joinButton->onClick(event, getMousePosition(), this)
 					|| (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Enter))

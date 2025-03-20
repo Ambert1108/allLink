@@ -1215,8 +1215,6 @@ namespace alllink {
 			text_.setPosition(
 				this->getPosition().x + (this->getSize().x - text_.getGlobalBounds().width) / 2,
 				this->getPosition().y + (this->getSize().y - this->getSize().y / 2) / 2);
-			I_LOG("x:{} y:{}", this->getPosition().x + (this->getSize().x - text_.getGlobalBounds().width) / 2,
-				this->getPosition().y + (this->getSize().y - this->getSize().y / 2) / 2);
 			textColor_ = textColor;
 		}
 
