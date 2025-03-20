@@ -67,6 +67,9 @@ namespace alllink {
 
 		std::string user = seeker::IniConfig::Get("this", "userId", "a");
 		std::string pwd = seeker::IniConfig::Get("this", "passwd", "1");
+		I_LOG("default user is {}, pwd is {}", user, pwd);
+		if (user.empty()) user = "unknown";
+		if (pwd.empty()) pwd = "unknown";
 
 		inputUserIdWidget->setInputBox(msyhFile, "");
 		inputUserIdWidget->setInputVal(user);
