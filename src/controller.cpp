@@ -306,6 +306,12 @@ namespace alllink {
         hi::PostMsg({ msgTo(MessageType::SHARE_WINDOW_INFO), shareWindowMap });
       break;
     }
+    case msgTo(MessageType::REQUEST_MEETING_INFO): {
+      MediaInfo info;
+      getMediaInfo(info);
+      hi::PostMsg({ msgTo(MessageType::MEETING_MEDIA_INFO), info });
+      break;
+    }
     case msgTo(MessageType::DISCONNECT_PEER): {
       //if (peerConnection_.get()) {
       //  DeletePeerConnection();

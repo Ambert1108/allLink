@@ -17,6 +17,8 @@
 #include "screen/screensink.h"
 #include "seeker/iniConfig.hpp"
 
+#include "engine/signalBridge/rtcConnectEngine.h"
+
 namespace linkinfo {
   struct UserInfo {
     std::string id_;

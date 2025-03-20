@@ -200,13 +200,6 @@ namespace alllink {
           // 调用DisconnectFromCurrentPeer方法通知中控器断开连接
           callback_->CustomMessageCallback(msg);
           break;
-        case msgTo(MessageType::CALL_MODE): {
-          std::shared_ptr<StreamScreen> point = std::dynamic_pointer_cast<StreamScreen>(streamWnd);
-          if (!point) return;
-          int mode = std::any_cast<int>(msg.data);
-          point->setSessionMode(mode);
-          break;
-        }
         case msgTo(MessageType::RECONNECT_SERVER_FAILED): {
           std::shared_ptr<StartScreen> point = std::dynamic_pointer_cast<StartScreen>(wnd);
           if (!point) break;
@@ -241,6 +234,20 @@ namespace alllink {
           std::shared_ptr<StreamScreen> point = std::dynamic_pointer_cast<StreamScreen>(streamWnd);
           if (!point) return;
           point->setShareList(std::any_cast<std::map<int, std::string>>(msg.data), 2);
+          break;
+        }
+        case msgTo(MessageType::MEETING_MEDIA_INFO): {
+          rtcengine::RtcConnectEngine::MediaInfo info = 
+            std::any_cast<rtcengine::RtcConnectEngine::MediaInfo>(msg.data);
+          std::shared_ptr<StreamScreen> point = std::dynamic_pointer_cast<StreamScreen>(streamWnd);
+          if (!point) return;
+          std::wostringstream woss1, woss2, woss3, woss4;
+          woss1 << std::fixed << std::setprecision(2) << info.inFrameRate;
+          woss2 << std::fixed << std::setprecision(2) << info.outFrameRate;
+          point->setMeetingFrame(woss2.str(), woss1.str());
+          woss3 << std::fixed << std::setprecision(2) << info.inBitrate;
+          woss4 << std::fixed << std::setprecision(2) << info.outBitrate;
+          point->setMeetingVideoBitrate(woss4.str(), woss3.str());
           break;
         }
         case msgTo(MessageType::CREATE_MEETING_OK): {
@@ -278,6 +285,7 @@ namespace alllink {
         case msgTo(MessageType::SET_SHARE):
         case msgTo(MessageType::REQUEST_IFRAME):
         case msgTo(MessageType::REQUEST_WINDOW_LIST):
+        case msgTo(MessageType::REQUEST_MEETING_INFO):
         case msgTo(MessageType::SEND_SDP_TO_PEER): 
         case msgTo(MessageType::SEND_ICE_COMPLETE_TO_PEER):
         case msgTo(MessageType::SEND_ICE_TO_PEER):

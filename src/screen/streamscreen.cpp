@@ -56,6 +56,7 @@ namespace alllink {
     camState = false;
     micState = false;
     shareState = false;
+    infoClick = false;
     volumeBar->reset();
     audioInputDevList->reset();
     audioOutputDevList->reset();
@@ -71,7 +72,7 @@ namespace alllink {
 
     // 初始化本地及远端精灵尺寸，其中远端精灵尺寸需要适配不同分辨率屏幕
     remoteVideo.init(1920 * wr, 1080 * hr, 0, 0);
-
+    infoData = std::make_shared<MeetingInfo>();
 
     closeMic = std::make_unique<VariableStateGraphicRoundModule>();
     openMic = std::make_unique<VariableStateGraphicRoundModule>();
@@ -336,14 +337,15 @@ namespace alllink {
           windowList->render(this);
         }
       }
-      if (infoClick) {
-        this->draw(infoArea);
-        this->draw(framerate);
-        this->draw(videoBitrate);
-      }
       audioDevArrow->render(this);
       camDevArrow->render(this);
       shareScreenArrow->render(this);
+    }
+
+    if (infoClick) {
+      this->draw(infoArea);
+      this->draw(framerate);
+      this->draw(videoBitrate);
     }
     this->display();
 	}
@@ -379,6 +381,8 @@ namespace alllink {
         }
         if (meetingInfo->onClick(event, mousePosView, this)) {
           infoClick = !infoClick;
+          if (infoClick) getMeetingDataTimePoint = seeker::time::currentTime();
+          else getMeetingDataTimePoint = 0;
         }
         if (!micState) {
           if (closeMic->onClick(event, mousePosView, this)) {
@@ -505,7 +509,7 @@ namespace alllink {
       }
     }
     std::wstring time = L"会议时长 " +
-      WstrConv.from_bytes(parseTime(seeker::time::currentTime() - timePoint));
+      WstrConv.from_bytes(parseTime(seeker::time::currentTime() - meetingTimePoint));
     meetingTime->setText(time, sf::Color(0, 0, 0));
 
     if (volumeBar->update(this)) {
@@ -513,6 +517,10 @@ namespace alllink {
       I_LOG("volume data is {}", volume);
       // 向中控器发送消息，调整麦克风音量
       hi::PostMsg({ msgTo(MessageType::SWITCH_MIC_VOLUME), volume });
+    }
+    if (infoClick && seeker::time::currentTime() - getMeetingDataTimePoint >= 1000) {
+      hi::PostMsg({ msgTo(MessageType::REQUEST_MEETING_INFO), nullptr });
+      getMeetingDataTimePoint = seeker::time::currentTime();
     }
 	}
 
@@ -526,16 +534,12 @@ namespace alllink {
     I_LOG("remote render stop");
   }
 
-  void StreamScreen::setSessionMode(int mode) {
-    this->mode = mode;
-  }
-
   void StreamScreen::setSessionId(std::string id) {
     std::wstring s = L"会议号 " + WstrConv.from_bytes(id);
     meetingDescribe->setDescription(s);
   }
 
-  void StreamScreen::setSessionTimepoint(int64_t timepoint) { timePoint = timepoint; }
+  void StreamScreen::setSessionTimepoint(int64_t timepoint) { meetingTimePoint = timepoint; }
 
   void StreamScreen::setDevList(const std::map<int16_t, std::string>& list, int type) {
     if (type == 0) {
@@ -597,9 +601,18 @@ namespace alllink {
         }
         I_LOG("insert {}", name);
       }
-      tp = seeker::time::currentTime();
     }
   }
+
+  void StreamScreen::setMeetingFrame(std::wstring recvFrame, std::wstring sendFrame) {
+    framerate.setString(framerateInfo + sendFrame + L"/" + recvFrame);
+  }
+
+  void StreamScreen::setMeetingVideoBitrate(std::wstring recvBitrate, std::wstring sendBitrate) {
+    videoBitrate.setString(videoBitrateInfo + sendBitrate + L"kbps/" + recvBitrate + L"kbps");
+  }
+
+  std::shared_ptr<alllink::StreamScreen::MeetingInfo> StreamScreen::getInfoData() { return infoData; }
 
   // 远端流收到视频帧和本地捕捉到视频帧都会调用此函数
   void StreamScreen::OnPaint() {

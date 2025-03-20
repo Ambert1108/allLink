@@ -64,6 +64,7 @@ namespace alllink {
 		SET_SHARE,                      //通知中控器设置屏幕共享状态
 		REQUEST_IFRAME,                 //通知中控器请求I帧
 		REQUEST_WINDOW_LIST,            //通知中控器请求窗口列表
+		REQUEST_MEETING_INFO,           //通知中控器请求会议信息
 
 		/* 信令消息 */
 
@@ -71,7 +72,6 @@ namespace alllink {
 		CREATE_MEETING_OK,
 		BOOKING_MEETING_OK,
 		JOIN_MEETING_OK,
-		CALL_MODE,
 
 		/* 中控器消息 */
 
@@ -88,7 +88,8 @@ namespace alllink {
 		AUDIO_OUTPUT_DEV_INFO,          //通知视觉控制器读取音频输出设备信息
 		VIDEO_DEV_INFO,                 //通知视觉控制器读取摄像头设备信息
 		SHARE_SCREEN_INFO,              //通知视觉控制器读取可共享屏幕信息
-		SHARE_WINDOW_INFO               //通知视觉控制器读取可共享窗口信息
+		SHARE_WINDOW_INFO,              //通知视觉控制器读取可共享窗口信息
+		MEETING_MEDIA_INFO              //通知视觉控制器读取会议媒体信息
 	};
 
 	static constexpr int msgTo(MessageType msg) { return static_cast<int>(msg); }
@@ -104,6 +105,7 @@ namespace alllink {
 				{MessageType::SET_SHARE, "SET_SHARE"},
 				{MessageType::REQUEST_IFRAME, "REQUEST_IFRAME"},
 				{MessageType::REQUEST_WINDOW_LIST, "REQUEST_WINDOW_LIST"},
+				{MessageType::REQUEST_MEETING_INFO, "REQUEST_MEETING_INFO"},
 				{MessageType::SEND_SDP_TO_PEER, "SEND_SDP_TO_PEER"},
 				{MessageType::SEND_ICE_TO_PEER, "SEND_ICE_TO_PEER"},
 				{MessageType::SEND_ICE_COMPLETE_TO_PEER, "SEND_ICE_COMPLETE_TO_PEER"},

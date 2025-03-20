@@ -241,8 +241,6 @@ namespace alllink {
 
 		void stopRemoteRenderer();
 
-		void setSessionMode(int mode);
-
 		void setSessionId(std::string id);
 
 		void setSessionTimepoint(int64_t timepoint);
@@ -253,6 +251,10 @@ namespace alllink {
 		void setDevList(const std::map<int16_t, std::string>& list, int type);
 
 		void setShareList(const std::map<int, std::string>& list, int type);
+
+		void setMeetingFrame(std::wstring recvFrame, std::wstring sendFrame);
+
+		void setMeetingVideoBitrate(std::wstring recvBitrate, std::wstring sendBitrate);
 
 		struct ImageData {
 			BITMAPINFO bmi;
@@ -329,6 +331,15 @@ namespace alllink {
 			T* obj_;
 		};
 
+		struct MeetingInfo {
+			std::wstring sendFrame{};
+			std::wstring recvFrame{};
+			std::wstring sendVideoBitrate{};
+			std::wstring recvVideoBitrate{};
+		};
+
+		std::shared_ptr<MeetingInfo> getInfoData();
+
 	protected:
 		void OnPaint();
 
@@ -351,6 +362,8 @@ namespace alllink {
 		BaseText seekbarDescribe, micDescribe, spDescribe, camDescribe, screenDescribe, windowDescribe, framerate, videoBitrate;
 		std::wstring framerateInfo = L"(发送/接收)帧率: ";
 		std::wstring videoBitrateInfo = L"(发送/接收)视频码率: ";
+		int64_t getMeetingDataTimePoint = 0;
+		std::shared_ptr<MeetingInfo> infoData;
 		std::unique_ptr<VideoRenderer> remote_renderer_;
 		sf::Texture* remoteSrc = nullptr;
 		VideoModule remoteVideo{};
@@ -371,8 +384,6 @@ namespace alllink {
 		sf::Vector2f camPos{ 50, 400 };
 		sf::Vector2f sharePos{ 190, 400 };
 		int micVolume = 50;
-		int mode = 0; //1v1通话:0, 会议流程:1
-		int64_t timePoint = 0;
-		int64_t tp = 0;
+		int64_t meetingTimePoint = 0;
 	};
 }
