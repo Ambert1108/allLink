@@ -7,8 +7,8 @@ EngineListener::EngineListener(std::mutex &writeMutex) : m_writeMutex(writeMutex
     }
     lastHearbeatTime = 0;
     reconnectStop = false;
-    std::thread thread(&EngineListener::reconnect, this);
-    reconnectThread = std::move(thread);
+    //std::thread thread(&EngineListener::reconnect, this);
+    //reconnectThread = std::move(thread);
 }
 
 EngineListener::~EngineListener()
@@ -82,7 +82,7 @@ void EngineListener::reconnect()
                 continue;
             }
             auto new_time = seeker::Time::currentTime();
-            if (new_time - lastHearbeatTime > 3000) {
+            if (new_time - lastHearbeatTime > 7000) {
                 W_LOG("no receive timeout [{}]", new_time - lastHearbeatTime);
                 callback->onReconnect();
                 lastHearbeatTime = 0;
