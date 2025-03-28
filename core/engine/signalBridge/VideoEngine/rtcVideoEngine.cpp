@@ -370,20 +370,24 @@ namespace rtcengine {
 
 	void RTCVideoEngine::collectStats() {
 		if (!peer_connection_) return;
-		auto senders = peer_connection_->GetSenders();
+	  auto senders = peer_connection_->GetSenders();
 		for (const auto& sender : senders) {
 			if (sender->track() &&
 				sender->track()->kind() == webrtc::MediaStreamTrackInterface::kVideoKind) {
 				auto callback = rtc::make_ref_counted<MyStatsCallback>(this);
 			
 				peer_connection_->GetStats(sender, callback);
-	/*			peer_connection_->GetStats(sender,
-					rtc::make_ref_counted<webrtc::RTCStatsCollectorCallback>(
-						[this](const rtc::scoped_refptr<const webrtc::RTCStatsReport>& report) {
-							this->processStatsReport(*report);
-						}
-					)
-				);*/
+			}
+		}
+
+
+		auto receivers = peer_connection_->GetReceivers();
+		for (const auto& receiver : receivers) {
+			if (receiver->track() &&
+				receiver->track()->kind() == webrtc::MediaStreamTrackInterface::kVideoKind) {
+				auto callback = rtc::make_ref_counted<MyStatsCallback>(this);
+
+				peer_connection_->GetStats(receiver, callback);
 			}
 		}
 
