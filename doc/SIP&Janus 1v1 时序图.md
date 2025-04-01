@@ -7,6 +7,16 @@
 > 基于Janus-nosip插件实现rtp中继；
 
 
+
+### 注意
+
+- F2和信令向caller Janus发送`generate`没有必然顺序；
+- F7和信令向callee Janus发送`generate`没有必然顺序；
+- F8和信令与Janus的交互没有必然顺序；
+
+
+
+
 ```mermaid
 sequenceDiagram
   actor Alice
