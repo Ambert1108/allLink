@@ -44,20 +44,20 @@ sequenceDiagram
   Bob-->>Bob: setRemoteDesc
   Bob-->>Bob: init PeerconnectionFactory
   Bob-->>Bob: create Peerconnection
+  signaling-->>Alice: F4 100 Trying
   Bob-->>Bob: add audio&video track
   Bob-->>Bob: create JSEP answer&setLocalDesc
-  signaling-->>Alice: F4 100 Trying
   Bob-->>signaling: F5 180 Ringing (JSEP answer)
   Bob-->>Bob: generate ICE Candidate
-  Bob-->>signaling: F6 INFO（trickle）
+  signaling-->>Alice: F6 180 Ringing
+  Bob-->>signaling: F7 INFO（trickle）
   signaling->>janus: trickle（send ICE Candidate）
   signaling->>janus: message（generate：JSEP anser）
   janus->>signaling: event（generated：Normal anser）
   signaling->>janus: message（process：Normal anser）
   janus->>signaling: event（processed：JSEP anser）
-  signaling-->>Alice: F7 180 Ringing（JSEP anser）
   Bob-->>signaling: F8 200 OK
-  signaling-->>Alice: F9 200 OK
+  signaling-->>Alice: F9 200 OK（JSEP anser）
   Alice-->>Alice: setRemoteDesc
   Alice->>Bob: F10 ACK
   
