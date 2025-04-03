@@ -157,7 +157,7 @@ namespace rtcengine {
 		void getCurrentBitrate(double& outbt, double& inbt);
 
 		void startStatsCollection();  
-		void stopStatsCollection();  
+		void stopStatsCollection();
 		
 		void close();
 

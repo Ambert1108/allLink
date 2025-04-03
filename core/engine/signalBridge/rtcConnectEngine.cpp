@@ -1060,7 +1060,7 @@ namespace rtcengine {
 		videoEngine->getCurrentFrameRate(mediaInfo.outFrameRate, mediaInfo.inFrameRate);
 		videoEngine->getCurrentBitrate(mediaInfo.outBitrate, mediaInfo.inBitrate);
 	}
-
+	 
 	void RtcConnectEngine::onReconnect() {
 		int64_t timepoint = seeker::time::currentTime();
 		State lastsignalState = signalState;

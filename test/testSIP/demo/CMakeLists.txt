@@ -1,5 +1,5 @@
-set(TARGET_NAME "testSIP")
-aux_source_directory("${PROJECT_SOURCE_DIR}/test/testSIP" CPP_LIST)
+set(TARGET_NAME "demo")
+aux_source_directory("${PROJECT_SOURCE_DIR}/test/testSIP/demo" CPP_LIST)
 
 add_executable(${TARGET_NAME} "audio.cpp")
 

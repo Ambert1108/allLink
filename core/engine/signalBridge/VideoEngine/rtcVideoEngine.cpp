@@ -370,31 +370,27 @@ namespace rtcengine {
 
 	void RTCVideoEngine::collectStats() {
 		if (!peer_connection_) return;
-	  auto senders = peer_connection_->GetSenders();
+		auto senders = peer_connection_->GetSenders();
 		for (const auto& sender : senders) {
 			if (sender->track() &&
 				sender->track()->kind() == webrtc::MediaStreamTrackInterface::kVideoKind) {
 				auto callback = rtc::make_ref_counted<MyStatsCallback>(this);
-			
 				peer_connection_->GetStats(sender, callback);
+
 			}
 		}
-
-
 		auto receivers = peer_connection_->GetReceivers();
 		for (const auto& receiver : receivers) {
 			if (receiver->track() &&
 				receiver->track()->kind() == webrtc::MediaStreamTrackInterface::kVideoKind) {
 				auto callback = rtc::make_ref_counted<MyStatsCallback>(this);
-
 				peer_connection_->GetStats(receiver, callback);
+
 			}
 		}
-
 	}
 
-	void RTCVideoEngine::MyStatsCallback::OnStatsDelivered(
-		const rtc::scoped_refptr<const webrtc::RTCStatsReport>& report) {
+	void RTCVideoEngine::MyStatsCallback::OnStatsDelivered(const rtc::scoped_refptr<const webrtc::RTCStatsReport>& report) {
 		if (engine_) {
 			engine_->processStatsReport(*report);
 		}
@@ -402,21 +398,18 @@ namespace rtcengine {
 
 	void RTCVideoEngine::processStatsReport(const webrtc::RTCStatsReport& report) {
 		std::lock_guard<std::mutex> lock(stats_mutex_);
-		static uint64_t out_last_bytes = 0;
-		static int64_t out_last_time = 0;
-		static uint64_t in_last_bytes = 0;
-		static int64_t in_last_time = 0;
+		static::uint64_t out_last_bytes = 0;
+		static::int64_t out_last_time = 0;
+		static::uint64_t in_last_bytes = 0;
+		static::uint64_t in_last_time = 0;
 
 		for (const auto& stats : report) {
-			//I_LOG("Stat type: {}", stats.type());
 			if (stats.type() == webrtc::RTCOutboundRtpStreamStats::kType) {
 				const auto& outbound_rtp = stats.cast_to<webrtc::RTCOutboundRtpStreamStats>();
 				if (outbound_rtp.kind.has_value() && *outbound_rtp.kind == "video") {
-					// 帧率
 					if (outbound_rtp.frames_per_second.has_value()) {
 						outFramerate = *outbound_rtp.frames_per_second;
 					}
-					// 码率
 					if (outbound_rtp.bytes_sent.has_value()) {
 						uint64_t current_bytes = *outbound_rtp.bytes_sent;
 						int64_t current_time = seeker::time::currentTime();
@@ -425,7 +418,6 @@ namespace rtcengine {
 							if (interval_sec < 1000) continue;
 							outBitrate = (current_bytes - out_last_bytes) * 8 / interval_sec;
 						}
-						//I_LOG("current_bytes={},out_last_bytes={},outBitrate={}", current_bytes, out_last_bytes,outBitrate);
 						out_last_bytes = current_bytes;
 						out_last_time = current_time;
 					}
@@ -434,40 +426,41 @@ namespace rtcengine {
 			else if (stats.type() == webrtc::RTCInboundRtpStreamStats::kType) {
 				const auto& inbound_rtp = stats.cast_to<webrtc::RTCInboundRtpStreamStats>();
 				if (inbound_rtp.kind.has_value() && *inbound_rtp.kind == "video") {
-					// 帧率
 					if (inbound_rtp.frames_per_second.has_value()) {
 						inFramerate = *inbound_rtp.frames_per_second;
-					}			
-					// 码率
-					if (inbound_rtp.bytes_received.has_value()) {		
+					}
+					if (inbound_rtp.bytes_received.has_value()) {
 						uint64_t current_bytes = *inbound_rtp.bytes_received;
 						int64_t current_time = seeker::time::currentTime();
 						if (in_last_time > 0 && in_last_bytes > 0) {
 							double interval_sec = current_time - in_last_time;
 							if (interval_sec < 1000) continue;
-							inBitrate = current_bytes - in_last_bytes * 8 / interval_sec;
+							//I_LOG("({} - {}) * 8 / {}", current_bytes, in_last_bytes, interval_sec);
+							inBitrate = (current_bytes - in_last_bytes) * 8 / interval_sec;
 						}
-						//I_LOG("current_bytes={},out_last_bytes={},outBitrate={}", current_bytes, in_last_bytes, inBitrate);
 						in_last_bytes = current_bytes;
 						in_last_time = current_time;
 					}
-				}
+				} 
 			}
 		}
+
 	}
 
 	void RTCVideoEngine::getCurrentFrameRate(double& outfps, double& infps) {
 		std::lock_guard<std::mutex> lock(stats_mutex_);
-		//I_LOG("outFramerate={},infps={}", outFramerate, inFramerate);
+
 		outfps = outFramerate;
 		infps = inFramerate;
+
 	}
 
 	void RTCVideoEngine::getCurrentBitrate(double& outbt, double& inbt) {
 		std::lock_guard<std::mutex> lock(stats_mutex_);
-		//I_LOG("outbt={},inbt={}", outBitrate, inBitrate);
+
 		outbt = outBitrate;
 		inbt = inBitrate;
+		//I_LOG("send bitrate:{}, recv bitrate:{}", inbt, outbt);
 	}
 
 	void RTCVideoEngine::startStatsCollection() {
@@ -475,8 +468,8 @@ namespace rtcengine {
 		stats_thread_running_ = true;
 		stats_thread_ = std::thread([this] {
 			while (stats_thread_running_) {
-				collectStats();  
-				std::this_thread::sleep_for(std::chrono::seconds(1)); // 每秒统计一次
+				collectStats();
+				std::this_thread::sleep_for(std::chrono::seconds(1));
 			}
 			});
 	}

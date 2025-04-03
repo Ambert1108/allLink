@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.11)
-project(AllLink VERSION 0.3.6)
+project(AllLink VERSION 0.3.7)
 set(ObjType console CACHE STRING "build object type")
 set(PROJECT_INCLUDE ${PROJECT_SOURCE_DIR}/inc)
 list(APPEND PROJECT_INCLUDE ${PROJECT_SOURCE_DIR}/core)
@@ -68,11 +68,6 @@ file(GLOB_RECURSE WEBRTC_OBJ "D:/tools/webrtc/lib/*.obj")
 message(STATUS "webrtc include:${WEBRTC_INCLUDE}")
 message(STATUS "webrtc lib:${WEBRTC_LIB}")
 message(STATUS "webrtc obj:${WEBRTC_OBJ}")
-
-set(WEBRTC_EXCLUDE_SOURCES 
-    third_party/boringssl/src/stack.c
-    third_party/boringssl/src/pkcs7_x509.c
-)
 list(APPEND PROJECT_INCLUDE ${WEBRTC_INCLUDE})
 list(APPEND PROJECT_LIBS ${WEBRTC_OBJ} ${WEBRTC_LIB})
 
@@ -201,4 +196,8 @@ add_subdirectory(src)
 #add_subdirectory(test/win32Test)
 #add_subdirectory(test/outscreenRender)
 #add_subdirectory(test/game1)
-add_subdirectory(test/testSIP)
+add_subdirectory(test/testSIP/call)
+add_subdirectory(test/testSIP/demo)
+add_subdirectory(test/testSIP/inviateTest)
+add_subdirectory(test/testSIP/perf)
+add_subdirectory(test/testSIP/simpleua)

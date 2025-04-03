@@ -1,6 +1,8 @@
 #include <pjsua2.hpp>
 #include <iostream>
 #include <SFML/Graphics.hpp>
+#include "seeker/logger.h"
+#include "seeker/loggerApi.h"
 
 using namespace pj;
 
@@ -9,8 +11,12 @@ class MyAccount : public Account {
 public:
   virtual void onRegState(OnRegStateParam& prm) {
     AccountInfo ai = getInfo();
-    std::cout << (ai.regIsActive ? "*** Register:" : "*** Unregister:")
-      << " code=" << prm.code << std::endl;
+    if (ai.regIsActive) {
+      I_LOG("Register success, code={}, reason={}\n{}", prm.code, prm.reason, prm.rdata.wholeMsg);
+    }
+    else {
+      I_LOG("UnRegister, code={}, reason={}", prm.code, prm.reason);
+    }
   }
 };
 
@@ -38,7 +44,7 @@ int main()
 
   // Start the library (worker threads etc)
   ep.libStart();
-  std::cout << "*** PJSUA2 STARTED ***" << std::endl;
+  I_LOG("PJSUA2 STARTED");
 
   // Configure an AccountConfig
   AccountConfig acfg;
