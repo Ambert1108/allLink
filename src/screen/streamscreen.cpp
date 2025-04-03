@@ -605,11 +605,11 @@ namespace alllink {
   }
 
   void StreamScreen::setMeetingFrame(std::wstring recvFrame, std::wstring sendFrame) {
-    framerate.setString(framerateInfo + sendFrame + L"/" + recvFrame);
+    framerate.setString(framerateInfo + recvFrame + L"/" + sendFrame);
   }
 
   void StreamScreen::setMeetingVideoBitrate(std::wstring recvBitrate, std::wstring sendBitrate) {
-    videoBitrate.setString(videoBitrateInfo + sendBitrate + L"kbps/" + recvBitrate + L"kbps");
+    videoBitrate.setString(videoBitrateInfo + recvBitrate + L"kbps/" + sendBitrate + L"kbps");
   }
 
   std::shared_ptr<alllink::StreamScreen::MeetingInfo> StreamScreen::getInfoData() { return infoData; }

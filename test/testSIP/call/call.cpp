@@ -1,6 +1,3 @@
-//
-// Created by 姚惠晶 on 2025/4/1.
-//
 #include <iostream>
 #include <pjsua2.hpp>
 #include <csignal>
@@ -20,7 +17,7 @@ const int SERVER_PORT = 5060;
 const int SIP_PORT = 30522;
 const std::string USERNAME = "zzx_call";
 const std::string PASSWORD = "123456";
-const std::string TARGET_NUMBER = "zzx2"; // 新增被叫号码常量
+const std::string TARGET_NUMBER = "faust"; // 新增被叫号码常量
 
 std::string getSipHeader(const SipHeaderVector& vec) {
   if (vec.empty()) {
