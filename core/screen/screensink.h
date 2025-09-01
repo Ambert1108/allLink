@@ -350,6 +350,7 @@ namespace alllink {
 		std::unique_ptr<VariableStateGraphicRoundModule> openCam;
 		std::unique_ptr<VariableStateGraphicRoundModule> closeShare;
 		std::unique_ptr<VariableStateGraphicRoundModule> openShare;
+		std::unique_ptr<VariableStateGraphicRoundModule> personPlus;
 		std::unique_ptr<HorizonGraphicTextsModule> meetingTime;
 		std::unique_ptr<TextRoundRectangle> leaveMeeting;
 		std::unique_ptr<ClickTextRectangle> meetingDescribe;
@@ -385,5 +386,39 @@ namespace alllink {
 		sf::Vector2f sharePos{ 190, 400 };
 		int micVolume = 50;
 		int64_t meetingTimePoint = 0;
+	};
+
+	class InviteScreen : public CustomScreen {
+	public:
+		InviteScreen(sf::VideoMode mode, const sf::String& title,
+			sf::Image icon, int style = CustomScreen::Style::All);
+
+		~InviteScreen();
+
+		bool OnEnter() override;
+
+		bool OnExit() override;
+
+		int init() override;
+
+		void show() override;
+
+		void eventProcess() override;
+
+		void OnFailed() override;
+
+		void setSessionId(const std::string& id);
+
+	protected:
+		void needClose() override { OnExit(); }
+
+	private:
+		void reset();
+		std::unique_ptr<EnterDescriptionWidget> inputUserIdWidget;
+		std::unique_ptr<TextRectangle> inviteButton;
+		BaseText screenDescriptionText;
+		float wr, hr;
+		sf::Vector2i wndPosition;
+		std::string sessionId;
 	};
 }

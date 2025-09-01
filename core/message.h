@@ -65,6 +65,8 @@ namespace alllink {
 		REQUEST_IFRAME,                 //通知中控器请求I帧
 		REQUEST_WINDOW_LIST,            //通知中控器请求窗口列表
 		REQUEST_MEETING_INFO,           //通知中控器请求会议信息
+		START_INVITE,                   //通知视觉控制器显示外呼窗口
+		INVITE_USER,                    //通知中控器外呼其他用户入会
 
 		/* 信令消息 */
 
@@ -106,6 +108,7 @@ namespace alllink {
 				{MessageType::REQUEST_IFRAME, "REQUEST_IFRAME"},
 				{MessageType::REQUEST_WINDOW_LIST, "REQUEST_WINDOW_LIST"},
 				{MessageType::REQUEST_MEETING_INFO, "REQUEST_MEETING_INFO"},
+				{MessageType::INVITE_USER, "INVITE_USER"},
 				{MessageType::SEND_SDP_TO_PEER, "SEND_SDP_TO_PEER"},
 				{MessageType::SEND_ICE_TO_PEER, "SEND_ICE_TO_PEER"},
 				{MessageType::SEND_ICE_COMPLETE_TO_PEER, "SEND_ICE_COMPLETE_TO_PEER"},

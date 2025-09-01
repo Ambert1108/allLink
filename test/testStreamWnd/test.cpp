@@ -259,6 +259,10 @@ int main() {
   background.setPosition(sf::Vector2f(micPos.x, micPos.y));
   background.setFillColor(sf::Color(220, 220, 220));
 
+  EnterDescriptionWidget inputWidget(264, 94, 400, 1020);
+  inputWidget.setInputBox(font2File);
+  inputWidget.setDescription(font2File, L"服务器地址");
+
   sf::RectangleShape sense;
   sense.setSize(sf::Vector2f(480, 80));
   sense.setPosition(sf::Vector2f(15, 1000));
@@ -273,6 +277,8 @@ int main() {
   bool camArrowClick = false;
   bool shareArrowClick = false;
   bool infoClick = false;
+
+  std::string saveText{};
 
   while (wnd->isOpen()) {
     sf::Vector2f mousePosView;
@@ -403,6 +409,27 @@ int main() {
         shareArrowClick = false;
         setCursor(wnd, sf::Cursor::Arrow);
       }
+      inputWidget.eventProcess(event, wnd);
+      if (inputWidget.getInputActive()) {
+        if (event.key.code == sf::Keyboard::V) {
+          if (sf::Keyboard::isKeyPressed(sf::Keyboard::LControl)) {
+            std::string val = getClipBoard();
+            I_LOG("剪切板内容:{}", val);
+            inputWidget.setInputVal(val);
+          }
+        }
+      }
+
+      if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Enter) {
+        if (!inputWidget.getInputActive()) {
+          saveText = inputWidget.getInput();
+          //if (saveText.empty()) textRect.setActive(false);
+          //else {
+            I_LOG("save:{}", saveText);
+            //textRect.setActive(true);
+          //}
+        }
+      }
     }
     std::wstring time = L"会议时长 " + 
       converter.from_bytes(parseTime(seeker::time::currentTime() - timePoint));
@@ -456,6 +483,7 @@ int main() {
       micArrow.render(wnd);
       camArrow.render(wnd);
       shareArrow.render(wnd);
+      inputWidget.render(wnd);
     }
     wnd->display();
   }

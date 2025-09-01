@@ -80,6 +80,7 @@ namespace alllink {
     openCam = std::make_unique<VariableStateGraphicRoundModule>();
     closeShare = std::make_unique<VariableStateGraphicRoundModule>();
     openShare = std::make_unique<VariableStateGraphicRoundModule>();
+    personPlus = std::make_unique<VariableStateGraphicRoundModule>();
     volumeBar = std::make_unique<SeekBarModule>();
     audioDevArrow = std::make_unique<VariableStateVertxRoundModule>();
     camDevArrow = std::make_unique<VariableStateVertxRoundModule>();
@@ -126,6 +127,12 @@ namespace alllink {
     openShare->setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225, 200));
     openShare->setImageSize(40 * wr, 40 * wr);
     openShare->setImageColor(sf::Color(242, 80, 125));
+
+    personPlus->init(80 * wr, 50 * hr, 420 * wr, 1020 * hr, 6.f);
+    personPlus->setTexture(personPlusFile);
+    personPlus->setColor(sf::Color(255, 255, 255, 0), sf::Color(235, 235, 235, 200), sf::Color(225, 225, 225, 200));
+    personPlus->setImageSize(40 * wr, 40 * wr);
+    personPlus->setImageColor(sf::Color::Black);
 
     meetingTime = std::make_unique<HorizonGraphicTextsModule>(false);
     meetingTime->init(240 * wr, 16 * hr, 6 * wr, 12 * hr);
@@ -313,6 +320,7 @@ namespace alllink {
 
       if (shareState) openShare->render(this);
       else closeShare->render(this);
+      personPlus->render(this);
       meetingTime->render(this);
       meetingDescribe->render(this);
       meetingInfo->render(this);
@@ -383,6 +391,10 @@ namespace alllink {
           infoClick = !infoClick;
           if (infoClick) getMeetingDataTimePoint = seeker::time::currentTime();
           else getMeetingDataTimePoint = 0;
+        }
+        if (personPlus->onClick(event, mousePosView, this)) {
+          I_LOG("invite user");
+          hi::PostMsg({ msgTo(MessageType::START_INVITE), nullptr });
         }
         if (!micState) {
           if (closeMic->onClick(event, mousePosView, this)) {

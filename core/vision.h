@@ -149,6 +149,7 @@ namespace alllink {
     std::shared_ptr<BaseScreen> streamWnd = nullptr; //流式窗口
     std::shared_ptr<BaseScreen> loginWnd = nullptr;
     std::shared_ptr<BaseScreen> enterWnd = nullptr;
+    std::shared_ptr<BaseScreen> inviteWnd = nullptr;
     VisionCentralCallback* callback_;
     Message msg;
     VisionType type_{ VisionType::LOGOUT };
