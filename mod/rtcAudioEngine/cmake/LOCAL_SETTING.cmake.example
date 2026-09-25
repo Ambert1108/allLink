@@ -1,0 +1,24 @@
+
+
+#set(CMAKE_BUILD_TYPE "Debug")
+
+set(CMAKE_BUILD_TYPE "Release")
+
+if(WIN32)
+	message(" ===================== SET PATH FOR WIN32 ======================")
+	set(CMAKE_PREFIX_PATH "D:/CodeLibs/onnxruntime-win-x64-gpu-1.13.1" ${CMAKE_PREFIX_PATH})
+	set(CMAKE_PREFIX_PATH "D:/CodeLibs/ffmpeg_sdl" ${CMAKE_PREFIX_PATH})
+	set(CMAKE_PREFIX_PATH "D:/CodeLibs/jrtplib-3.11.1/local" ${CMAKE_PREFIX_PATH})
+	set(CMAKE_PREFIX_PATH "D:/CodeLibs/asio-1.16.1" ${CMAKE_PREFIX_PATH})
+	set(CMAKE_PREFIX_PATH "D:/CodeLibs/curl-7.85.0/builds/libcurl-vc19-x64-release-static-ipv6-sspi-schannel" ${CMAKE_PREFIX_PATH})
+	#set(CMAKE_LIBRARY_PATH "D:/CodeLibs/curl-7.85.0/builds/libcurl-vc19-x64-release-static-ipv6-sspi-schannel/lib" ${CMAKE_PREFIX_PATH})
+
+
+elseif(UNIX)
+	message(" ===================== SET PATH FOR UNIX ======================")
+	set(CMAKE_PREFIX_PATH "/usr/local/grpc" ${CMAKE_PREFIX_PATH})
+	message(FATAL_ERROR " ===================== UNKNOWN OS ======================")
+endif()
+
+
+

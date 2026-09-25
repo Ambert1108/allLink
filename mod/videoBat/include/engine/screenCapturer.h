@@ -1,0 +1,69 @@
+﻿#pragma once
+
+#include <api/scoped_refptr.h>
+#include <api/video/i420_buffer.h>
+#include <modules/desktop_capture/desktop_capturer.h>
+#include <modules/desktop_capture/desktop_frame.h>
+#include "rtc_base/thread.h"
+#include "media/base/adapted_video_track_source.h"
+#include "third_party/abseil-cpp/absl/types/optional.h"
+#include "pc/peer_connection_message_handler.h"
+#include<iostream>
+#include<seeker/common.h>
+#include<seeker/loggerApi.h>
+#include<seeker/logger.h>
+#include "rtc_base/thread.h"
+#include "rtc_base/thread.h"
+#include <modules/desktop_capture/desktop_capture_options.h>
+#include <third_party/libyuv/include/libyuv.h>
+#include <modules/desktop_capture/desktop_and_cursor_composer.h>
+
+class ScreenCapturer : public rtc::AdaptedVideoTrackSource,
+  public webrtc::DesktopCapturer::Callback {
+public:
+  ScreenCapturer();
+
+  void startCapturer();
+
+  void startWindowCapturer();
+
+  void setScreen(uint8_t id);
+
+  void setWindow(int id);
+
+  void CaptureFrame();
+
+  void CaptureWindowFrame();
+
+  bool is_screencast() const override;
+
+  absl::optional<bool> needs_denoising() const override;
+
+  webrtc::MediaSourceInterface::SourceState state() const override;
+
+  bool remote() const override;
+
+  void OnCaptureResult(webrtc::DesktopCapturer::Result result,
+    std::unique_ptr<webrtc::DesktopFrame> frame) override;
+  //void OnMessage(rtc::Message* msg) override;
+
+  void captureThread();
+
+  void captureWindowThread();
+
+  void stopCapturer();
+
+  bool working = false;
+
+private:
+  std::unique_ptr<webrtc::DesktopCapturer> origin_screen_capturer_;
+  std::unique_ptr<webrtc::DesktopCapturer> origin_window_capturer_;
+
+  std::unique_ptr<webrtc::DesktopAndCursorComposer> screen_capturer_;
+  std::unique_ptr<webrtc::DesktopAndCursorComposer> window_capturer_;
+  rtc::scoped_refptr<webrtc::I420Buffer> i420_buffer_;
+  bool isOnResult = false;
+  std::mutex mutex_;
+  std::thread screenThread_;
+  //mutable volatile int ref_count_;
+};

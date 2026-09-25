@@ -84,9 +84,7 @@ namespace alllink {
 				|| (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Enter)) 
 				&& inviteButton->getActive()) {
 				
-				std::vector<std::string> info{ 
-					sessionId,
-					inputUserIdWidget->getInput() };
+				std::string info{ inputUserIdWidget->getInput() };
 				hi::PostMsg({ msgTo(MessageType::INVITE_USER), info});
 				inviteButton->setActive(false);
 			}

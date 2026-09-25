@@ -87,6 +87,14 @@ namespace alllink {
 
   }
 
+  void Controller::OnOutboundSuccess() {
+    I_LOG("[Controller::OnOutboundSuccess] invite user success");
+  }
+
+  void Controller::OnOutboundFailure() {
+    I_LOG("[Controller::OnOutboundSuccess] invite user failed");
+  }
+
   //
   // VisionCnetralCallback implementation.
   //
@@ -184,6 +192,11 @@ namespace alllink {
     }
     I_LOG("[Controller::JoinMeeting] join meeting {} start ...", meetId_);
     return true;
+  }
+
+  void Controller::InviteUser(const std::string& to) {
+    outbound(to);
+    I_LOG("[Controller::InviteUser] invite user:{} to meeting:{}", to, meetId_);
   }
 
   void Controller::DisconnectFromCurrentPeer() {

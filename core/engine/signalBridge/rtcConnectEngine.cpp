@@ -502,6 +502,24 @@ namespace rtcengine {
 		}
 	}
 
+  void RtcConnectEngine::outbound(std::string targetUserId) {
+        I_LOG("in RtcConnectEngine::outbound");
+        this->outboundUser = targetUserId;
+        Message outboundReq;
+        outboundReq.set_from(userInfo.userId);
+        outboundReq.set_to(meetingId);
+        outboundReq.set_meth("INFO");
+        outboundReq.set_cseq(cseq++);
+        outboundReq.set_call_id(std::to_string(rand()));
+        outboundReq.set_signal(outboundUser);
+        outboundReq.set_isresponse(false);
+        I_LOG("outbound Req: {}", outboundReq.js.dump(4));
+        oatpp::String outboundJson = oatpp::String(outboundReq.js.dump());
+        sendSocket(outboundJson);
+
+        return;
+    }
+
 
 	//
 	// signaling virtual func
@@ -577,10 +595,14 @@ namespace rtcengine {
 			}
 			videoEngine->startStatsCollection();
 		}
-		else if (resp.cmeth() == "INFO" && resp.signal() == "31") {
+		else if (resp.cmeth() == "INFO" && resp.signal() == "31") {   // 屏幕共享响应
 			I_LOG("INFO 31 onOK");
 			videoEngine->requestKeyFrame();
 		}
+        else if (resp.cmeth() == "INFO" && resp.signal() == outboundUser){   // 外呼响应
+            I_LOG("INFO outbound onOK");
+            OnOutboundSuccess();
+        }
 		else if (resp.cmeth() == "BYE") {
 			I_LOG("BYE onOK");
 			meetingId.clear();
@@ -640,6 +662,10 @@ namespace rtcengine {
 		else if (resp.cmeth() == "BYE") {
 			E_LOG("exitMeeting error");
 		}
+        else if (resp.cmeth() == "INFO" && resp.signal() == outboundUser){
+            I_LOG("INFO outbound onUnauthorized");
+            OnOutboundFailure();
+        }
 	}
 
 	void RtcConnectEngine::onHeartbeatResp() {
@@ -732,7 +758,7 @@ namespace rtcengine {
 		sendCandidateDone = true;
 		if (new_state == webrtc::PeerConnectionInterface::kIceGatheringComplete) {
 			I_LOG("send trickle complete");
-			//            sendTrickleComplete();
+			sendTrickleComplete();
 		}
 	}
 
@@ -1060,7 +1086,7 @@ namespace rtcengine {
 		videoEngine->getCurrentFrameRate(mediaInfo.outFrameRate, mediaInfo.inFrameRate);
 		videoEngine->getCurrentBitrate(mediaInfo.outBitrate, mediaInfo.inBitrate);
 	}
-	 
+
 	void RtcConnectEngine::onReconnect() {
 		int64_t timepoint = seeker::time::currentTime();
 		State lastsignalState = signalState;

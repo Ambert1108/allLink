@@ -163,9 +163,6 @@ namespace alllink {
           std::shared_ptr<StreamScreen> point = std::dynamic_pointer_cast<StreamScreen>(streamWnd);
           if (!point) return;
           point->setSessionId(meetingInfo);
-          std::shared_ptr<InviteScreen> point2 = std::dynamic_pointer_cast<InviteScreen>(inviteWnd);
-          if (!point2) return;
-          point2->setSessionId(meetingInfo);
           break;
         }
         case msgTo(MessageType::LOGIN_SUCCESS): {
@@ -212,15 +209,14 @@ namespace alllink {
           inviteWnd->OnExit();
 
           // 取出外呼信息
-          std::vector<std::string> inviteInfo = std::any_cast<std::vector<std::string>>(msg.data);
-          if (inviteInfo.empty() || inviteInfo.size() < 2) {
-            W_LOG("[VisionCentralContoller::update] invite info is invaild");
+          std::string inviteInfo = std::any_cast<std::string>(msg.data);
+          if (inviteInfo.empty()) {
+            W_LOG("[VisionCentralContoller::update] invite info is empty!");
             break;
           }
 
           // 调用xxx方法通知中控器向信令发起外呼请求
-          //callback_->DisconnectFromCurrentPeer();
-          I_LOG("need invite {} from {}", inviteInfo.at(1), inviteInfo.at(0));
+          callback_->InviteUser(inviteInfo);
           break;
         }
         case msgTo(MessageType::DISCONNECT_PEER):
@@ -289,10 +285,6 @@ namespace alllink {
           std::string sessionId = std::get<0>(result);
           point->setSessionId(sessionId);
           point->setSessionTimepoint(std::get<1>(result));
-
-          std::shared_ptr<InviteScreen> point2 = std::dynamic_pointer_cast<InviteScreen>(inviteWnd);
-          if (!point2) return;
-          point2->setSessionId(sessionId);
           I_LOG("[Controller::CustomMessageCallback] {} msg send to peer", enumToString(MessageType(msg.id)));
           break;
         }

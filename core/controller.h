@@ -55,8 +55,12 @@ namespace alllink {
     void OnScheduleMeeting(std::string& meetingId) override;
     //预定会议失败
     void OnScheduleMeetingFailure() override;
-    //结束已结束
+    //会议已结束
     void OnCloseMeeting() override;
+    //发起外呼成功
+    void OnOutboundSuccess() override;
+    //发起外呼失败
+    void OnOutboundFailure() override;
 
     //
     // VisionCnetralCallback implementation.
@@ -71,6 +75,8 @@ namespace alllink {
     void BookingMeeting(const std::wstring& videoEnc, const std::wstring& audioEnc, const std::wstring& videoMcu, const std::wstring& audioMcu) override;
 
     bool JoinMeeting(const std::string& to) override;
+
+    void InviteUser(const std::string& to) override;
 
     void DisconnectFromCurrentPeer() override;
 

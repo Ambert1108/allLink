@@ -1,0 +1,26 @@
+
+
+#set(CMAKE_BUILD_TYPE "Debug")
+
+set(CMAKE_BUILD_TYPE "Release")
+
+if(WIN32)
+	message(" ===================== SET PATH FOR WIN32 ======================")
+	set(CMAKE_PREFIX_PATH "D:/path/ffmpeg_sdl" ${CMAKE_PREFIX_PATH})
+
+
+
+elseif(UNIX)
+	message(" ===================== SET PATH FOR UNIX ======================")
+	set(CMAKE_PREFIX_PATH "/home/melon/tools/jrtp-3.11.2/" ${CMAKE_PREFIX_PATH})
+	set(CMAKE_PREFIX_PATH "/home/melon/tools/curl/" ${CMAKE_PREFIX_PATH})
+	set(CMAKE_PREFIX_PATH "/home/melon/tools/asio-1.16.1/" ${CMAKE_PREFIX_PATH})
+	set(CMAKE_PREFIX_PATH "/home/local/tools/ffmpeg_sdl/" ${CMAKE_PREFIX_PATH})
+	set(CMAKE_PREFIX_PATH "/usr/local/onnxruntime/" ${CMAKE_PREFIX_PATH})
+	set(CMAKE_PREFIX_PATH "/usr/local/opencv/" ${CMAKE_PREFIX_PATH})
+else()
+	message(FATAL_ERROR " ===================== UNKNOWN OS ======================")
+endif()
+
+
+
